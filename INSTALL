@@ -1,0 +1,19 @@
+rsvndump alpha
+CopyLeft 2008 by Jonas Gehring <jonas.gehring@boolsoft.org>
+
+
+DEPENDENCIES
+============
+To compile rsvndump, the subversion development files and
+the apr development files must be present on your system
+
+
+BUILD
+=====
+To configure and build rsvndump, cd to src and run
+
+    ./configure
+    make
+
+The configuration script will look for subversion headers and
+will check pkg-config for existence of apr. 
