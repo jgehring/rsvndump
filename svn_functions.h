@@ -40,6 +40,8 @@ extern list_t svn_list_changes(const char *path, int rev);
 extern list_t svn_list_props(const char *path, int rev);
 extern nodekind_t svn_get_kind(const char *path, int rev);
 extern char svn_repo_info(const char *path, char **url, char **prefix);
+extern char svn_checkout(const char *repo, const char *path, int rev);
+extern char svn_update_path(const char *path, int rev);
 
 
 #endif

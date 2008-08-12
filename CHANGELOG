@@ -1,4 +1,9 @@
+0.3	20080812	Speeded up dumping process by checking out every revision
+			  and check file kind & properties locally
+			Added --online flag to restore old behaviour
+
 0.2	20080811	Fixed horrible memory leak(s)
 			Added dumping of rename copyfrom information
 			Added correct uri encoding of path names
+
 0.1	20080810	Initial release

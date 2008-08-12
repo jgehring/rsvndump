@@ -21,19 +21,25 @@ USAGE
 rsvndump [options] <url>
 
 Valid options:
-    -q [--quiet]            be quiet
-    -u [--username] arg     username
-    -p [--password] arg     password
-    -l [--logfile] arg      output of 'svn -q log|tac'
-                            if not specified, read from stdin
-    -o [--outfile] arg      write data to file
-                            if not specified, print to stdout
+    -q [--quiet]              be quiet
+    -u [--username] arg       username
+    -p [--password] arg       password
+    -l [--logfile] arg        output of 'svn -q log|tac'
+                              if not specified, read from stdin
+    -o [--outfile] arg        write data to file
+                              if not specified, print to stdout
+    -d [--download-dir] arg   directory for svn file downloads
+                              if not specified, create a temporary dir
+    --online                  do not store anything on the disk
+                              (the download dir is ignored then)
 
 By defeault, rsvndump reads the svn log data from stdin and
 prints the dump to stdout. However, since the tac command
 needs the complete svn log to reverse it and rsvndump is
 pretty slow, it might be not be useful to supply a stream from
 stdin. You should propably use the -l option instead.
+If the rpository is located in your network, the --online option
+will speed up dumping (while it will slow things down otherwise)
 
 
 CAVEATS

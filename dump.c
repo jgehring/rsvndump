@@ -54,6 +54,30 @@ static int compare_changes(const void *a, const void *b)
 }
 
 
+// Allocates and returns the real path for a node
+static char *get_real_path(char *nodename)
+{
+	char *realpath;
+	if (online) {
+		realpath = malloc(strlen(repo_url)+strlen(nodename+repo_prefix_len)+2);
+		strcpy(realpath, repo_url);
+		if ((repo_url[strlen(repo_url)-1] != '/') && (nodename[repo_prefix_len] != '/')) {
+			strcat(realpath, "/");
+		}
+		strcat(realpath, nodename+repo_prefix_len);
+	} else {
+		realpath = malloc(strlen(repo_dir)+strlen(nodename+repo_prefix_len)+2);
+		strcpy(realpath, repo_dir);
+		if ((repo_dir[strlen(repo_dir)-1] != '/') && (nodename[repo_prefix_len] != '/')) {
+			strcat(realpath, "/");
+		}
+		strcat(realpath, nodename+repo_prefix_len);
+	}
+
+	return realpath;
+}
+
+
 // Gets the string length of a property
 static int strlen_property(prop_t *prop)
 {
@@ -107,12 +131,7 @@ static void free_node(change_entry_t *entry)
 // Dumps a node
 static void dump_node(change_entry_t *entry)
 {
-	char *realpath = malloc(strlen(repo_url)+strlen(entry->path+repo_prefix_len)+2);	
-	strcpy(realpath, repo_url);
-	if ((repo_url[strlen(repo_url)-1] != '/') && (entry->path[repo_prefix_len] != '/')) {
-		strcat(realpath, "/");
-	}
-	strcat(realpath, entry->path+repo_prefix_len);
+	char *realpath = get_real_path(entry->path);
 
 	// Write node header
 	if (*(entry->path+repo_prefix_len) == '/') {
@@ -201,40 +220,11 @@ static void dump_node(change_entry_t *entry)
 }
 
 
-#if 0
-// Dumps a complete revision
-static char dump_revision(revision_t *rev)
-{
-	int i;
-
-	// Write revision header
-	fprintf(output, "Revision-number: %d\n", rev_number);	
-	fprintf(output, "Prop-content-length: %d\n", rev->props_length);
-	fprintf(output, "Content-length: %d\n", rev->props_length);	
-
-	// Write properties
-	for (i = 0; i < rev->properties.size; i++) {
-		dump_property((prop_t *)rev->properties.elements + i);
-	}
-	fprintf(output, "PROPS-END\n");
-	fprintf(output, "\n");
-
-	// Write nodes 
-	for (i = 0; i < rev->nodes.size; i++) {
-		dump_node((node_t *)rev->nodes.elements + i);
-	}
-	fprintf(output, "\n");
-	
-	++rev_number;
-	return 0;
-}
-#endif
-
-
 // Dumps an entire repository
 char dump_repository()
 {
 	int i;
+	char first = 1;
 	char *linebuffer = malloc(MAX_LINE_SIZE);
 	list_init(&rev_map, sizeof(int)),
 
@@ -277,6 +267,15 @@ char dump_repository()
 		list_add(&rev_map, &repo_rev_number);
 
 		props_length = PROPS_END_LEN;
+
+		if (!online) {
+			if (first != 0) {
+				svn_checkout(repo_url, repo_dir, repo_rev_number);
+				first = 0;
+			} else {
+				svn_update_path(repo_dir, repo_rev_number);
+			}
+		}
 		
 		// Write revision properties
 		char *author, *logmsg, *date;
@@ -329,12 +328,7 @@ char dump_repository()
 		list_t changes = svn_list_changes(repo_url, repo_rev_number);
 		for (i = 0; i < changes.size; i++) {
 			change_entry_t *entry = ((change_entry_t *)changes.elements + i);
-			char *realpath = malloc(strlen(repo_url)+strlen(entry->path+repo_prefix_len)+2);
-			strcpy(realpath, repo_url);
-			if ((repo_url[strlen(repo_url)-1] != '/') && (entry->path[repo_prefix_len] != '/')) {
-				strcat(realpath, "/");
-			}
-			strcat(realpath, entry->path+repo_prefix_len);
+			char *realpath = get_real_path(entry->path);
 
 			if (entry->action != NK_DELETE) {
 				entry->kind = svn_get_kind(realpath, repo_rev_number);

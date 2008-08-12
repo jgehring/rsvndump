@@ -24,15 +24,18 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 
 // Globals
 char *repo_url = NULL;
+char *repo_dir = NULL;
 char *repo_uuid = NULL;
 char *repo_username = NULL;
 char *repo_password = NULL;
 int repo_prefix_len;
-char quiet = 0;
+char quiet = 0, online = 0;
 FILE *input, *output;
 
 
@@ -44,13 +47,17 @@ static void print_usage()
 	printf("\n");
 	printf("USAGE: "APPNAME" [options] <url>\n\n");
 	printf("Valid options:\n");
-	printf("    -q [--quiet]            be quiet\n");
-	printf("    -u [--username] arg     username\n");
-	printf("    -p [--password] arg     password\n");
-	printf("    -l [--logfile] arg      output of 'svn -q log|tac'\n");
-       	printf("                            if not specified, read from stdin\n");
-	printf("    -o [--outfile] arg      write data to file\n");
-       	printf("                            if not specified, print to stdout\n");
+	printf("    -q [--quiet]              be quiet\n");
+	printf("    -u [--username] arg       username\n");
+	printf("    -p [--password] arg       password\n");
+	printf("    -l [--logfile] arg        output of 'svn -q log|tac'\n");
+       	printf("                              if not specified, read from stdin\n");
+	printf("    -o [--outfile] arg        write data to file\n");
+       	printf("                              if not specified, print to stdout\n");
+	printf("    -d [--download-dir] arg   directory for svn file downloads\n");
+       	printf("                              if not specified, create a temporary dir\n");
+	printf("    --online                  do not store anything on the disk\n");
+       	printf("                              (the download dir is ignored then)\n");
 	printf("\n");
 }
 
@@ -60,6 +67,9 @@ static void free_globals()
 {
 	if (repo_url != NULL) {
 		free(repo_url);
+	}
+	if (repo_dir != NULL) {
+		free(repo_dir);
 	}
 	if (repo_uuid != NULL) {
 		free(repo_uuid);
@@ -112,6 +122,19 @@ int main(int argc, char **argv)
 				return EXIT_FAILURE;
 			}
 		}
+		else if (i+1 < argc && (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--download-dir"))) {
+			struct stat st;
+			stat(argv[++i], &st);
+			if (st.st_mode & S_IFDIR) {
+				fprintf(stderr, "Error: '%s' is not a directory or does not exist\n", argv[i]);
+				free_globals();
+				return EXIT_FAILURE;
+			}
+			repo_dir = strdup(argv[i]);
+		}
+		else if (!strcmp(argv[i], "--online")) {
+			online = 1;
+		}
 		else {
 			repo_url = strdup(argv[i]);
 		}
@@ -120,6 +143,16 @@ int main(int argc, char **argv)
 	if (repo_url == NULL) {
 		print_usage();
 		return EXIT_FAILURE;
+	}
+
+	if (repo_dir == NULL && !online) {
+		repo_dir = strdup("/tmp/"APPNAME"XXXXXX");
+		repo_dir = mkdtemp(repo_dir);
+		if (repo_dir == NULL) {
+			fprintf(stderr, "Error creating download directory\n");
+			free_globals();
+			return EXIT_FAILURE;
+		}
 	}
 
 	svn_init();

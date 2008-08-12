@@ -43,6 +43,17 @@ static svn_client_ctx_t *ctx = NULL;
 static char initialized = 0;
 
 
+// URI encoding
+static const char *encode_path(const char *path)
+{
+	if (online) {
+		return svn_path_uri_encode(path, revpool ? revpool : pool);
+	} else {
+		return path;
+	}
+}
+
+
 // Subversion callbacks
 static svn_error_t *prompt_and_read_line(const char *prompt, char *buffer, size_t max, char pass)
 {
@@ -271,7 +282,7 @@ svn_stream_t *svn_open(char *path, int rev, char **buffer, int *len)
 		revision.value.number = rev;
 	}
 
-	svn_error_t *err = svn_client_cat2(stream, svn_path_uri_encode(path, filepool), &revision, &revision, ctx, filepool);
+	svn_error_t *err = svn_client_cat2(stream, encode_path(path), &revision, &revision, ctx, filepool);
 	if (err) {
 #ifdef DEBUG
 		fprintf(stderr, "error: svn_open(%s,%d,%p,%p)\n\n", path, rev, buffer, len);
@@ -440,7 +451,7 @@ list_t svn_list_props(const char *path, int rev)
 	mlist = &list;
 
 	apr_array_header_t *props;
-	svn_error_t *err = svn_client_proplist(&props, svn_path_uri_encode(path, revpool), &revision, FALSE, ctx, revpool);
+	svn_error_t *err = svn_client_proplist(&props, encode_path(path), &revision, FALSE, ctx, revpool);
 	if (err) {
 #ifdef DEBUG
 		fprintf(stderr, "error: svn_list_props(%s,%d)\n\n", path, rev);
@@ -483,7 +494,7 @@ nodekind_t svn_get_kind(const char *path, int rev)
 		revision.value.number = rev;
 	}
 
-	svn_error_t *err = svn_client_ls(&dirents, svn_path_uri_encode(path, revpool), &revision, FALSE, ctx, revpool);
+	svn_error_t *err = svn_client_ls(&dirents, encode_path(path), &revision, FALSE, ctx, revpool);
 	if (err) {
 #ifdef DEBUG
 		fprintf(stderr, "error: svn_get_kind(%s,%d)\n\n", path, rev);
@@ -547,6 +558,54 @@ char svn_repo_info(const char *path, char **url, char **prefix)
 		*prefix = strdup("\0");
 	}
 	free(murl);
+
+	return 0;
+}
+
+
+// Checkout a given repository to a given path
+char svn_checkout(const char *repo, const char *path, int rev)
+{
+	svn_opt_revision_t revision;
+	if (rev == HEAD_REVISION) {
+		revision.kind = svn_opt_revision_head;
+	} else {
+		revision.kind = svn_opt_revision_number;
+		revision.value.number = rev;
+	}
+
+	svn_error_t *err = svn_client_checkout(NULL, repo, svn_path_uri_encode(path, revpool), &revision, TRUE, ctx, revpool);
+	if (err) {
+#ifdef DEBUG
+		fprintf(stderr, "error: svn_checkout(%s,%s,%d)\n\n", repo, path, rev);
+#endif
+		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		return 1;
+	}
+	
+	return 0;
+}
+
+
+// Update the specified path to a given revision
+char svn_update_path(const char *path, int rev)
+{
+	svn_opt_revision_t revision;
+	if (rev == HEAD_REVISION) {
+		revision.kind = svn_opt_revision_head;
+	} else {
+		revision.kind = svn_opt_revision_number;
+		revision.value.number = rev;
+	}
+
+	svn_error_t *err = svn_client_update(NULL, svn_path_uri_encode(path, revpool), &revision, TRUE, ctx, revpool);
+	if (err) {
+#ifdef DEBUG
+		fprintf(stderr, "error: svn_update_path(%s,%d)\n\n", path, rev);
+#endif
+		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		return 1;
+	}
 
 	return 0;
 }
