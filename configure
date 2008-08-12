@@ -1,0 +1,106 @@
+#!/bin/bash
+# Short program to setup a Makefile
+
+echo 
+
+# Let's go detect stuff
+if [ -n ${CC} ]; then
+	CC=cc
+fi
+
+
+SVNINCLUDEDIR="/usr/include/subversion-1"
+echo -n "Checking for subversion-1 include dir... " 
+RES=`find /usr/include/ -type d|grep subversion-1`
+if [ -z "${RES}" ]; then
+	SVNINCLUDEDIR="/usr/local/include/subversion-1"
+	RES=`find /usr/local/include/ -type d|grep subversion-1`
+fi
+if [ -z "${RES}" ]; then
+	echo "not found!"
+	echo
+	echo "Failed!"
+	echo "subversion-1 was not found in /usr/include and /usr/local/include"
+	echo
+	exit 1
+fi
+echo "ok"
+
+echo -n "Checking for apr-1... " 
+pkg-config --exists apr-1
+if [ "$?" != "0" ]; then
+	echo "not found!"
+	echo
+	echo "Failed!"
+	echo "pkg-config does not know about apr-1"
+	echo
+	exit 1
+fi
+echo "ok"
+
+
+# Setup variables
+MAPPNAME="rsvndump"
+MDEFINES=""
+MCFLAGS="-Wall -O2"
+# Use -pipe option if the system has more than 128MB of memory
+if [ `head -n 1 /proc/meminfo |sed 's/[^0-9]*\([0-9]*\).*$/\1/'` -ge "131072" ]; then
+	MCFLAGS="$MCFLAGS -pipe"
+fi
+MCFLAGS="$MCFLAGS `pkg-config --cflags apr-1`"
+MCFLAGS="$MCFLAGS -I. -I$SVNINCLUDEDIR"
+MLDFLAGS="-lsvn_client-1"
+MLDFLAGS="$MLDFLAGS `pkg-config --libs apr-1`"
+
+MOBJECTS=" main.o dump.o svn_functions.o list.o"
+
+
+# Write makefile
+echo "APPNAME           = ${MAPPNAME}" > Makefile
+echo "DEFINES          += ${MDEFINES}" >> Makefile
+echo "CFLAGS           += ${MCFLAGS}" >> Makefile
+echo "LDFLAGS          += ${MLDFLAGS}" >> Makefile
+echo "OBJECTS           = ${MOBJECTS}" >> Makefile
+echo "all: rsvndump" >> Makefile
+echo >> Makefile
+echo "%.o: %.c main.h %.h" >> Makefile
+echo "	\$(CC) -c -o \$@ \$(DEFINES) \$(CFLAGS) \$<" >> Makefile
+echo >> Makefile
+echo '
+rsvndump: $(OBJECTS)
+	$(CC) -o $(APPNAME) $(OBJECTS) $(LDFLAGS)
+
+install: all
+	cp -f $(APPNAME) /usr/local/bin/$(APPNAME)
+	strip /usr/local/bin/$(APPNAME)
+
+uninstall: 
+	rm -f $(APPNAME) /usr/local/bin/$(APPNAME)
+	rm -rf /etc/$(APPNAME)
+    
+debug: DEFINES	+= -DDEBUG
+debug: CFLAGS	+= -g
+debug: rsvndump 
+
+clean:
+	rm -f *~
+	rm -f *.o
+
+distclean: clean
+	rm -f $(APPNAME) 
+	rm -f Makefile
+
+help:
+	@echo "Targets ( * marks the default target )":
+	@echo "     * all ($(APPNAME))"
+	@echo "       debug "
+	@echo "       clean "
+	@echo "       install "
+	@echo "       uinstall "
+	@echo "       distclean "
+' >> Makefile
+
+echo
+echo "Good. You can start make now."
+echo 
+exit 0

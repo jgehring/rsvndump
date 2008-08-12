@@ -1,0 +1,84 @@
+rsvndump 0.2
+CopyLeft 2008 by Jonas Gehring <jonas.gehring@boolsoft.org>
+
+
+ABOUT
+=====
+rsvndump is a command line tool to dump a SVN repository
+that resides on a remote server.
+However, since rsvndump allows you to dump onlythere are 
+quite a few differences to a normal dump:
+
+ > Revision numbers are not synced with the remote repository
+   but are simply counted, starting from 0. 
+ > The url that has been specified serves as the new repository
+   url. This means that it will be stripped from every directory
+   and file. 
+
+
+USAGE
+=====
+rsvndump [options] <url>
+
+Valid options:
+    -q [--quiet]            be quiet
+    -u [--username] arg     username
+    -p [--password] arg     password
+    -l [--logfile] arg      output of 'svn -q log|tac'
+                            if not specified, read from stdin
+    -o [--outfile] arg      write data to file
+                            if not specified, print to stdout
+
+By defeault, rsvndump reads the svn log data from stdin and
+prints the dump to stdout. However, since the tac command
+needs the complete svn log to reverse it and rsvndump is
+pretty slow, it might be not be useful to supply a stream from
+stdin. You should propably use the -l option instead.
+
+
+CAVEATS
+=======
+rsvndump is a quick hack and surely has bugs and security issues
+
+rsvndump is very slow because every file needs to be accessed
+three times (check for node type, check for properties, get
+content). The first access could theoretically be merged with
+one of the others, but I am too lazy right now.
+
+Don't forget the 'tac' in 'svn -q log |tac'
+
+
+NOTES
+=====
+SSL certificates are not being saved, so you have to accept them
+everytime you run rsvndump. The same is true for usernames and
+passwords.
+
+Revision ranges or exclusion of specific revisions can be contolled
+by modifying the svn log data.
+
+
+CREDITS
+=======
+rsvndump 0.2
+written by Jonas Gehring <jonas.gehring@boolsoft.org>
+
+
+LICENSE
+=======
+rsvndump - remote svn repository dump
+Copyright (C) 2008 Jonas Gehring
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.

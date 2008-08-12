@@ -1,0 +1,4 @@
+0.2	20080811	Fixed horrible memory leak(s)
+			Added dumping of rename copyfrom information
+			Added correct uri encoding of path names
+0.1	20080810	Initial release
