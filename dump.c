@@ -24,6 +24,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 
 #define MAX_LINE_SIZE 4096 
@@ -191,7 +193,13 @@ static void dump_node(change_entry_t *entry)
 
 		fprintf(output, "Prop-content-length: %d\n", prop_length);
 		if (entry->kind == NK_FILE && entry->action != NK_DELETE) {
-			stream = svn_open(realpath, repo_rev_number, &textbuffer, &textlen); 
+			if (online) {
+				stream = svn_open(realpath, repo_rev_number, &textbuffer, &textlen); 
+			} else {
+				struct stat st;
+				stat(realpath, &st);
+				textlen = (int)st.st_size;
+			}
 			fprintf(output, "Text-content-length: %d\n", textlen);
 		}
 		fprintf(output, "Content-length: %d\n", prop_length+textlen);
@@ -200,15 +208,23 @@ static void dump_node(change_entry_t *entry)
 		for (i = 0; i < props.size; i++) {
 			dump_property((prop_t *)props.elements + i);
 			free_property((prop_t *)props.elements + i);
-
 		}
 		fprintf(output, PROPS_END);
 
 		if (entry->kind == NK_FILE && entry->action != NK_DELETE) {
-			for (i = 0; i < textlen; i++) {
-				fputc(textbuffer[i], output);
+			if (online) {
+				for (i = 0; i < textlen; i++) {
+					fputc(textbuffer[i], output);
+				}
+				svn_close(stream);
+			} else {
+				FILE *f = fopen(realpath, "r");
+				int c;
+				while ((c = fgetc(f)) != EOF) {
+					fputc(c, output);
+				}
+				fclose(f);
 			}
-			svn_close(stream);
 		}
 		list_free(&props);
 	}
@@ -337,7 +353,7 @@ char dump_repository()
 			}
 
 			free(realpath);
-			if (!quiet) {
+			if (!quiet && online) {
 				fprintf(stderr, "\033[1A");
 				fprintf(stderr, "* Dumping revision %d (local: %d)... %d%%\n", repo_rev_number, rev_number, (i*50)/changes.size);
 			}
@@ -348,7 +364,11 @@ char dump_repository()
 			free_node((change_entry_t *)changes.elements + i);
 			if (!quiet) {
 				fprintf(stderr, "\033[1A");
-				fprintf(stderr, "* Dumping revision %d (local: %d)... %d%%\n", repo_rev_number, rev_number, 50+(i*50)/changes.size);
+				if (online) {
+					fprintf(stderr, "* Dumping revision %d (local: %d)... %d%%\n", repo_rev_number, rev_number, 50+(i*50)/changes.size);
+				} else {
+					fprintf(stderr, "* Dumping revision %d (local: %d)... %d%%\n", repo_rev_number, rev_number, (i*100)/changes.size);
+				}
 			}
 		}
 		list_free(&changes);
@@ -378,4 +398,3 @@ char dump_repository()
 	free(linebuffer);
 	return 0;
 }
-

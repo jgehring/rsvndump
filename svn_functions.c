@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <svn_client.h>
 #include <svn_pools.h>
@@ -484,6 +486,18 @@ list_t svn_list_props(const char *path, int rev)
 // Lists a repository using a given function for "printing"
 nodekind_t svn_get_kind(const char *path, int rev)
 {
+	if (!online) {
+		// If working "offline", it is assumed that the requested revision
+		// has just been checked out
+		struct stat st;
+		stat(path, &st);
+		if (st.st_mode & S_IFDIR) {
+			return NK_DIRECTORY;
+		} else {
+			return NK_FILE;
+		}
+	}
+
 	svn_opt_revision_t revision;
 	apr_hash_t *dirents;
 
