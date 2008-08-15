@@ -1,2 +1,4 @@
 > Path name resolving must be fixed, i.e. only list changes
   of files that share the prefix of the specified url
+> Use deltas in diffs
+> MD-5 sums?
