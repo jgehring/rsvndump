@@ -133,14 +133,20 @@ static void free_node(change_entry_t *entry)
 // Dumps a node
 static void dump_node(change_entry_t *entry)
 {
+    char *tpath;
+	if (*(entry->path+repo_prefix_len) == '/') {
+		tpath = entry->path+repo_prefix_len+1;
+	} else {
+		tpath = entry->path+repo_prefix_len;
+	}
+    if (entry->kind == NK_NONE || !entry->path || strlen(tpath) == 0) {
+        return;
+    }
+
 	char *realpath = get_real_path(entry->path);
 
 	// Write node header
-	if (*(entry->path+repo_prefix_len) == '/') {
-		fprintf(output, "Node-path: %s\n", entry->path+repo_prefix_len+1);
-	} else {
-		fprintf(output, "Node-path: %s\n", entry->path+repo_prefix_len);
-	}
+    fprintf(output, "Node-path: %s\n", tpath);
 	if (entry->action != NK_DELETE) {
 		fprintf(output, "Node-kind: %s\n", entry->kind == NK_FILE ? "file" : "dir");
 	}
@@ -185,8 +191,8 @@ static void dump_node(change_entry_t *entry)
 		char *textbuffer = NULL;
 		int textlen = 0;
 
-		list_t props = svn_list_props(realpath, repo_rev_number);
 		int i;
+		list_t props = svn_list_props(realpath, repo_rev_number);
 		for (i = 0; i < props.size; i++) {
 			prop_length += strlen_property((prop_t *)props.elements + i);
 		}
@@ -219,11 +225,16 @@ static void dump_node(change_entry_t *entry)
 				svn_close(stream);
 			} else {
 				FILE *f = fopen(realpath, "r");
-				int c;
-				while ((c = fgetc(f)) != EOF) {
-					fputc(c, output);
-				}
-				fclose(f);
+                if (f != NULL) {
+                    int c;
+                    while ((c = fgetc(f)) != EOF) {
+                        fputc(c, output);
+                    }
+                    fclose(f);
+                } else {
+                    fprintf(stderr, "\nFatal: Unable to open '%s' for reading (%d)\n", realpath, errno); 
+                    exit(1);
+                }
 			}
 		}
 		list_free(&props);
@@ -341,7 +352,12 @@ char dump_repository()
 		fprintf(output, "\n");
 
 		// Write nodes
-		list_t changes = svn_list_changes(repo_url, repo_rev_number);
+        list_t changes;
+//        if (online) {
+		    changes = svn_list_changes(repo_base, repo_url+strlen(repo_base)+1, repo_rev_number);
+//        } else {
+//            changes = svn_list_changes(repo_dir, NULL, repo_rev_number);
+//        }
 		for (i = 0; i < changes.size; i++) {
 			change_entry_t *entry = ((change_entry_t *)changes.elements + i);
 			char *realpath = get_real_path(entry->path);

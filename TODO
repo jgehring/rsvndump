@@ -1,0 +1,2 @@
+> Path name resolving must be fixed, i.e. only list changes
+  of files that share the prefix of the specified url

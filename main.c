@@ -30,6 +30,7 @@
 
 // Globals
 char *repo_url = NULL;
+char *repo_base = NULL;
 char *repo_dir = NULL;
 char *repo_uuid = NULL;
 char *repo_username = NULL;
@@ -67,6 +68,9 @@ static void free_globals()
 {
 	if (repo_url != NULL) {
 		free(repo_url);
+	}
+	if (repo_base != NULL) {
+		free(repo_base);
 	}
 	if (repo_dir != NULL) {
 		free(repo_dir);
@@ -115,7 +119,7 @@ int main(int argc, char **argv)
 			}
 		}
 		else if (i+1 < argc && (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--outfile"))) {
-			output = fopen(argv[++i], "w");
+			output = fopen64(argv[++i], "w");
 			if (output == NULL) {
 				fprintf(stderr, "Error opening outfile\n");
 				free_globals();
@@ -125,7 +129,7 @@ int main(int argc, char **argv)
 		else if (i+1 < argc && (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--download-dir"))) {
 			struct stat st;
 			stat(argv[++i], &st);
-			if (st.st_mode & S_IFDIR) {
+			if (!(st.st_mode & S_IFDIR)) {
 				fprintf(stderr, "Error: '%s' is not a directory or does not exist\n", argv[i]);
 				free_globals();
 				return EXIT_FAILURE;
@@ -160,6 +164,7 @@ int main(int argc, char **argv)
 	char *turl = NULL, *tpref = NULL;
 	svn_repo_info(repo_url, &turl, &tpref);
 	if (turl) {
+        repo_base = strdup(turl);
 		free(turl);
 	}
 	repo_prefix_len = strlen(tpref);

@@ -36,7 +36,7 @@ extern void svn_free_rev_pool();
 svn_stream_t *svn_open(char *path, int rev, char **buffer, int *len);
 void svn_close(svn_stream_t *stream);
 extern char svn_log(const char *path, int rev, char **author, char **logmsg, char **date);
-extern list_t svn_list_changes(const char *path, int rev);
+extern list_t svn_list_changes(const char *path, const char *repo, int rev);
 extern list_t svn_list_props(const char *path, int rev);
 extern nodekind_t svn_get_kind(const char *path, int rev);
 extern char svn_repo_info(const char *path, char **url, char **prefix);

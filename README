@@ -1,4 +1,4 @@
-rsvndump 0.2
+rsvndump 0.3
 CopyLeft 2008 by Jonas Gehring <jonas.gehring@boolsoft.org>
 
 
@@ -24,7 +24,7 @@ Valid options:
     -q [--quiet]              be quiet
     -u [--username] arg       username
     -p [--password] arg       password
-    -l [--logfile] arg        output of 'svn -q log|tac'
+    -l [--logfile] arg        output of 'svn -q -r 0:HEAD log'
                               if not specified, read from stdin
     -o [--outfile] arg        write data to file
                               if not specified, print to stdout
@@ -37,22 +37,28 @@ By defeault, rsvndump reads the svn log data from stdin and
 prints the dump to stdout. However, since the tac command
 needs the complete svn log to reverse it and rsvndump is
 pretty slow, it might be not be useful to supply a stream from
-stdin. You should propably use the -l option instead.
-If the rpository is located in your network, the --online option
-will speed up dumping (while it will slow things down otherwise)
+stdin. 
+
+
+ONLINE vs. OFFLINE
+==================
+By default, rsvndump uses an offline mode, which means that a working
+copy of the repository is kept at the local disk. The copy is then updated
+to every revision specified in the logfile, and all information is fetched
+using the copy. This provides a fast dump for really remote repositories,
+because all data can be transfered at once. 
+However, if you want to dump a repository in your local network that does
+not consist of very much files, online mode will propably be faster than
+offline mode. In online mode, all information is fetched directly from the
+repository and no additional data is stored on the local hard disk.
 
 
 CAVEATS
 =======
 rsvndump is a quick hack and surely has bugs and security issues
 
-rsvndump is very slow because every file needs to be accessed
-three times (check for node type, check for properties, get
-content). The first access could theoretically be merged with
-one of the others, but I am too lazy right now.
-
-Don't forget the 'tac' in 'svn -q log |tac'
-
+Don't forget the revision range in 'svn -q -r 0:HEAD log'
+ 
 
 NOTES
 =====
@@ -66,7 +72,7 @@ by modifying the svn log data.
 
 CREDITS
 =======
-rsvndump 0.2
+rsvndump 0.3
 written by Jonas Gehring <jonas.gehring@boolsoft.org>
 
 

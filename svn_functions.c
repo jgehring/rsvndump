@@ -49,9 +49,9 @@ static char initialized = 0;
 static const char *encode_path(const char *path)
 {
 	if (online) {
-		return svn_path_uri_encode(path, revpool ? revpool : pool);
+		return svn_path_uri_encode(svn_path_canonicalize(path, revpool ? revpool : pool), revpool ? revpool : pool);
 	} else {
-		return path;
+		return svn_path_canonicalize(path, revpool ? revpool : pool);
 	}
 }
 
@@ -404,7 +404,7 @@ static svn_error_t *svn_log_rec(void *baton, apr_hash_t *changed_paths, svn_revn
 	return SVN_NO_ERROR;
 }
 
-list_t svn_list_changes(const char *path, int rev)
+list_t svn_list_changes(const char *repo, const char *path, int rev)
 {
 	svn_opt_revision_t start, end;
 	if (rev == HEAD_REVISION) {
@@ -423,7 +423,10 @@ list_t svn_list_changes(const char *path, int rev)
 
 	apr_array_header_t *paths
 		= apr_array_make (revpool, 1, sizeof (const char *));
-	APR_ARRAY_PUSH(paths, const char *) = svn_path_uri_encode(path, revpool);
+	APR_ARRAY_PUSH(paths, const char *) = encode_path(repo);
+    if (path && strlen(path)) {
+	    APR_ARRAY_PUSH(paths, const char *) = encode_path(path);
+    }
 
 	svn_error_t *err = svn_client_log(paths, &start, &end, TRUE, TRUE, svn_log_rec, NULL, ctx, revpool);
 	if (err) {
@@ -441,16 +444,21 @@ list_t svn_list_changes(const char *path, int rev)
 list_t svn_list_props(const char *path, int rev)
 {
 	svn_opt_revision_t revision;
-	if (rev == HEAD_REVISION) {
-		revision.kind = svn_opt_revision_head;
-	} else {
-		revision.kind = svn_opt_revision_number;
-		revision.value.number = rev;
-	}
+    if (online) {
+        if (rev == HEAD_REVISION) {
+            revision.kind = svn_opt_revision_head;
+        } else {
+            revision.kind = svn_opt_revision_number;
+            revision.value.number = rev;
+        }
+    } else {
+        // Get props from working copy
+        revision.kind = svn_opt_revision_unspecified;
+    }
 
 	list_t list;
 	list_init(&list, sizeof(prop_t));
-	mlist = &list;
+//	mlist = &list;
 
 	apr_array_header_t *props;
 	svn_error_t *err = svn_client_proplist(&props, encode_path(path), &revision, FALSE, ctx, revpool);
@@ -490,12 +498,15 @@ nodekind_t svn_get_kind(const char *path, int rev)
 		// If working "offline", it is assumed that the requested revision
 		// has just been checked out
 		struct stat st;
-		stat(path, &st);
+		if (stat(path, &st)) {
+            return NK_NONE;
+        }
+
 		if (st.st_mode & S_IFDIR) {
 			return NK_DIRECTORY;
 		} else {
-			return NK_FILE;
-		}
+            return NK_FILE;
+        }
 	}
 
 	svn_opt_revision_t revision;
@@ -514,10 +525,10 @@ nodekind_t svn_get_kind(const char *path, int rev)
 		fprintf(stderr, "error: svn_get_kind(%s,%d)\n\n", path, rev);
 #endif
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
-		return -1;
+		return NK_NONE;
 	}
 
-	nodekind_t kind = NK_DIRECTORY;
+	nodekind_t kind = NK_NONE;
 	apr_hash_index_t *idx;
 	char *name = strrchr(path, '/')+1;
 	for (idx = apr_hash_first(revpool, dirents); idx; idx = apr_hash_next(idx)) {

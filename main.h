@@ -39,7 +39,7 @@
 
 // Enumerations
 typedef enum {
-	NK_DIRECTORY, NK_FILE
+	NK_NONE = -1, NK_DIRECTORY, NK_FILE
 } nodekind_t;
 
 typedef enum {
@@ -63,6 +63,7 @@ typedef struct {
 
 // Globals
 extern char *repo_url;
+extern char *repo_base;
 extern char *repo_dir;
 extern char *repo_uuid;
 extern char *repo_username;
