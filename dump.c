@@ -61,19 +61,19 @@ static char *get_real_path(char *nodename)
 {
 	char *realpath;
 	if (online) {
-		realpath = malloc(strlen(repo_url)+strlen(nodename+repo_prefix_len)+2);
+		realpath = malloc(strlen(repo_url)+strlen(nodename+strlen(repo_prefix))+2);
 		strcpy(realpath, repo_url);
-		if ((repo_url[strlen(repo_url)-1] != '/') && (nodename[repo_prefix_len] != '/')) {
+		if ((repo_url[strlen(repo_url)-1] != '/') && (nodename[strlen(repo_prefix)] != '/')) {
 			strcat(realpath, "/");
 		}
-		strcat(realpath, nodename+repo_prefix_len);
+		strcat(realpath, nodename+strlen(repo_prefix));
 	} else {
-		realpath = malloc(strlen(repo_dir)+strlen(nodename+repo_prefix_len)+2);
+		realpath = malloc(strlen(repo_dir)+strlen(nodename+strlen(repo_prefix))+2);
 		strcpy(realpath, repo_dir);
-		if ((repo_dir[strlen(repo_dir)-1] != '/') && (nodename[repo_prefix_len] != '/')) {
+		if ((repo_dir[strlen(repo_dir)-1] != '/') && (nodename[strlen(repo_prefix)] != '/')) {
 			strcat(realpath, "/");
 		}
-		strcat(realpath, nodename+repo_prefix_len);
+		strcat(realpath, nodename+strlen(repo_prefix));
 	}
 
 	return realpath;
@@ -133,15 +133,19 @@ static void free_node(change_entry_t *entry)
 // Dumps a node
 static void dump_node(change_entry_t *entry)
 {
-    char *tpath;
-	if (*(entry->path+repo_prefix_len) == '/') {
-		tpath = entry->path+repo_prefix_len+1;
+	char *tpath;
+	if (*(entry->path+strlen(repo_prefix)) == '/') {
+		tpath = entry->path+strlen(repo_prefix)+1;
 	} else {
-		tpath = entry->path+repo_prefix_len;
+		tpath = entry->path+strlen(repo_prefix);
 	}
-    if (entry->kind == NK_NONE || !entry->path || strlen(tpath) == 0) {
-        return;
-    }
+
+	if (entry->kind == NK_NONE || !entry->path || strlen(tpath) == 0) {
+#if DEBUG
+		fprintf(stderr, "\nThis should not happen..\n\n");
+#endif
+		return;
+	}
 
 	char *realpath = get_real_path(entry->path);
 
@@ -167,10 +171,10 @@ static void dump_node(change_entry_t *entry)
 	}
 
 	if (entry->copy_from_path) {
-		if (*(entry->copy_from_path+repo_prefix_len) == '/') {
-			fprintf(output, "Node-copyfrom-path: %s\n", entry->copy_from_path+repo_prefix_len+1);
+		if (*(entry->copy_from_path+strlen(repo_prefix)) == '/') {
+			fprintf(output, "Node-copyfrom-path: %s\n", entry->copy_from_path+strlen(repo_prefix)+1);
 		} else {
-			fprintf(output, "Node-copyfrom-path: %s\n", entry->copy_from_path+repo_prefix_len);
+			fprintf(output, "Node-copyfrom-path: %s\n", entry->copy_from_path+strlen(repo_prefix));
 		}
 		int r;
 		for (r = rev_number; r > 0; r--) {
@@ -352,12 +356,8 @@ char dump_repository()
 		fprintf(output, "\n");
 
 		// Write nodes
-        list_t changes;
-//        if (online) {
-		    changes = svn_list_changes(repo_base, repo_url+strlen(repo_base)+1, repo_rev_number);
-//        } else {
-//            changes = svn_list_changes(repo_dir, NULL, repo_rev_number);
-//        }
+		list_t changes;
+		changes = svn_list_changes(online ? repo_base : repo_dir, repo_rev_number);
 		for (i = 0; i < changes.size; i++) {
 			change_entry_t *entry = ((change_entry_t *)changes.elements + i);
 			char *realpath = get_real_path(entry->path);

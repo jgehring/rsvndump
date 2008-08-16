@@ -64,11 +64,11 @@ typedef struct {
 // Globals
 extern char *repo_url;
 extern char *repo_base;
+extern char *repo_prefix;
 extern char *repo_dir;
 extern char *repo_uuid;
 extern char *repo_username;
 extern char *repo_password;
-extern int repo_prefix_len;
 extern char quiet, online;
 extern FILE *input, *output;
 

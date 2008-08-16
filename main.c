@@ -31,11 +31,11 @@
 // Globals
 char *repo_url = NULL;
 char *repo_base = NULL;
+char *repo_prefix = NULL;
 char *repo_dir = NULL;
 char *repo_uuid = NULL;
 char *repo_username = NULL;
 char *repo_password = NULL;
-int repo_prefix_len;
 char quiet = 0, online = 0;
 FILE *input, *output;
 
@@ -71,6 +71,9 @@ static void free_globals()
 	}
 	if (repo_base != NULL) {
 		free(repo_base);
+	}
+	if (repo_prefix != NULL) {
+		free(repo_prefix);
 	}
 	if (repo_dir != NULL) {
 		free(repo_dir);
@@ -149,6 +152,12 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	// Remove trailing slashes
+	char *ptr = repo_url+strlen(repo_url);
+	while (*(--ptr) == '/') {
+		*ptr = '\0';
+	}
+
 	if (repo_dir == NULL && !online) {
 		repo_dir = strdup("/tmp/"APPNAME"XXXXXX");
 		repo_dir = mkdtemp(repo_dir);
@@ -161,15 +170,11 @@ int main(int argc, char **argv)
 
 	svn_init();
 
-	char *turl = NULL, *tpref = NULL;
-	svn_repo_info(repo_url, &turl, &tpref);
-	if (turl) {
-        repo_base = strdup(turl);
-		free(turl);
-	}
-	repo_prefix_len = strlen(tpref);
-	if (tpref) {
-		free(tpref);
+	svn_repo_info(repo_url, &repo_base, &repo_prefix);
+	if (repo_base == NULL) {
+		fprintf(stderr, "Error getting information from repository '%s'\n", repo_url);
+		free_globals();
+		return EXIT_FAILURE;
 	}
 
 	dump_repository();

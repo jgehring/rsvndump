@@ -151,15 +151,15 @@ static svn_error_t *auth_ssl_trust(svn_auth_cred_ssl_server_trust_t **cred, void
 	}
 
 	fprintf(stderr, "Certificate information:\n"
-		" - Hostname: %s\n"
-		" - Valid: from %s until %s\n"
-		" - Issuer: %s\n"
-		" - Fingerprint: %s\n",
-		cert_info->hostname,
-		cert_info->valid_from,
-		cert_info->valid_until,
-		cert_info->issuer_dname,
-		cert_info->fingerprint);
+			" - Hostname: %s\n"
+			" - Valid: from %s until %s\n"
+			" - Issuer: %s\n"
+			" - Fingerprint: %s\n",
+			cert_info->hostname,
+			cert_info->valid_from,
+			cert_info->valid_until,
+			cert_info->issuer_dname,
+			cert_info->fingerprint);
 
 	fprintf(stderr, ("(R)eject or accept (t)emporarily? "));
 	char choice[3];
@@ -292,7 +292,7 @@ svn_stream_t *svn_open(char *path, int rev, char **buffer, int *len)
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		return NULL;
 	}
-	
+
 	*len = buf->len;
 	*buffer = buf->data;
 
@@ -384,6 +384,10 @@ static svn_error_t *svn_log_rec(void *baton, apr_hash_t *changed_paths, svn_revn
 
 		apr_hash_this(idx, (void *) &entryname, NULL, (void *)&val);
 
+		if (strncmp(entryname, repo_prefix, strlen(repo_prefix))) {
+			continue;
+		}
+
 		entry.path = strdup(entryname);
 		if (val->copyfrom_path) {
 			entry.copy_from_path = strdup(val->copyfrom_path);
@@ -404,7 +408,7 @@ static svn_error_t *svn_log_rec(void *baton, apr_hash_t *changed_paths, svn_revn
 	return SVN_NO_ERROR;
 }
 
-list_t svn_list_changes(const char *repo, const char *path, int rev)
+list_t svn_list_changes(const char *path, int rev)
 {
 	svn_opt_revision_t start, end;
 	if (rev == HEAD_REVISION) {
@@ -423,10 +427,10 @@ list_t svn_list_changes(const char *repo, const char *path, int rev)
 
 	apr_array_header_t *paths
 		= apr_array_make (revpool, 1, sizeof (const char *));
-	APR_ARRAY_PUSH(paths, const char *) = encode_path(repo);
-    if (path && strlen(path)) {
-	    APR_ARRAY_PUSH(paths, const char *) = encode_path(path);
-    }
+	APR_ARRAY_PUSH(paths, const char *) = encode_path(path);
+//	if (path && strlen(path)) {
+//		APR_ARRAY_PUSH(paths, const char *) = encode_path(path);
+//	}
 
 	svn_error_t *err = svn_client_log(paths, &start, &end, TRUE, TRUE, svn_log_rec, NULL, ctx, revpool);
 	if (err) {
@@ -444,21 +448,21 @@ list_t svn_list_changes(const char *repo, const char *path, int rev)
 list_t svn_list_props(const char *path, int rev)
 {
 	svn_opt_revision_t revision;
-    if (online) {
-        if (rev == HEAD_REVISION) {
-            revision.kind = svn_opt_revision_head;
-        } else {
-            revision.kind = svn_opt_revision_number;
-            revision.value.number = rev;
-        }
-    } else {
-        // Get props from working copy
-        revision.kind = svn_opt_revision_unspecified;
-    }
+	if (online) {
+		if (rev == HEAD_REVISION) {
+			revision.kind = svn_opt_revision_head;
+		} else {
+			revision.kind = svn_opt_revision_number;
+			revision.value.number = rev;
+		}
+	} else {
+		// Get props from working copy
+		revision.kind = svn_opt_revision_unspecified;
+	}
 
 	list_t list;
 	list_init(&list, sizeof(prop_t));
-//	mlist = &list;
+	//	mlist = &list;
 
 	apr_array_header_t *props;
 	svn_error_t *err = svn_client_proplist(&props, encode_path(path), &revision, FALSE, ctx, revpool);
@@ -466,7 +470,7 @@ list_t svn_list_props(const char *path, int rev)
 #ifdef DEBUG
 		fprintf(stderr, "error: svn_list_props(%s,%d)\n\n", path, rev);
 #endif
-//		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		//		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		return list;
 	}
 
@@ -499,14 +503,14 @@ nodekind_t svn_get_kind(const char *path, int rev)
 		// has just been checked out
 		struct stat st;
 		if (stat(path, &st)) {
-            return NK_NONE;
-        }
+			return NK_NONE;
+		}
 
 		if (st.st_mode & S_IFDIR) {
 			return NK_DIRECTORY;
 		} else {
-            return NK_FILE;
-        }
+			return NK_FILE;
+		}
 	}
 
 	svn_opt_revision_t revision;
@@ -599,7 +603,7 @@ char svn_checkout(const char *repo, const char *path, int rev)
 		revision.value.number = rev;
 	}
 
-	svn_error_t *err = svn_client_checkout(NULL, repo, svn_path_uri_encode(path, revpool), &revision, TRUE, ctx, revpool);
+	svn_error_t *err = svn_client_checkout(NULL, repo, svn_path_uri_encode(svn_path_canonicalize(path, revpool), revpool), &revision, TRUE, ctx, revpool);
 	if (err) {
 #ifdef DEBUG
 		fprintf(stderr, "error: svn_checkout(%s,%s,%d)\n\n", repo, path, rev);
@@ -607,7 +611,7 @@ char svn_checkout(const char *repo, const char *path, int rev)
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -623,7 +627,7 @@ char svn_update_path(const char *path, int rev)
 		revision.value.number = rev;
 	}
 
-	svn_error_t *err = svn_client_update(NULL, svn_path_uri_encode(path, revpool), &revision, TRUE, ctx, revpool);
+	svn_error_t *err = svn_client_update(NULL, svn_path_uri_encode(svn_path_canonicalize(path, revpool), revpool), &revision, TRUE, ctx, revpool);
 	if (err) {
 #ifdef DEBUG
 		fprintf(stderr, "error: svn_update_path(%s,%d)\n\n", path, rev);

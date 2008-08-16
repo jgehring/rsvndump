@@ -63,7 +63,7 @@ echo "LDFLAGS          += ${MLDFLAGS}" >> Makefile
 echo "OBJECTS           = ${MOBJECTS}" >> Makefile
 echo "all: rsvndump" >> Makefile
 echo >> Makefile
-echo "%.o: %.c main.h %.h" >> Makefile
+echo "%.o: %.c *.h" >> Makefile
 echo "	\$(CC) -c -o \$@ \$(DEFINES) \$(CFLAGS) \$<" >> Makefile
 echo >> Makefile
 echo '
