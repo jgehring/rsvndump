@@ -71,12 +71,17 @@ rsvndump: $(OBJECTS)
 	$(CC) -o $(APPNAME) $(OBJECTS) $(LDFLAGS)
 
 install: all
-	cp -f $(APPNAME) /usr/local/bin/$(APPNAME)
+	install $(APPNAME) /usr/local/bin/$(APPNAME)
 	strip /usr/local/bin/$(APPNAME)
+	cp -f man/* /usr/share/man/man1/
+	gzip man/$(APPNAME).1
+	cp -f man/$(APPNAME).1.gz /usr/share/man/man1/
+	gunzip man/$(APPNAME).1.gz
 
 uninstall: 
 	rm -f $(APPNAME) /usr/local/bin/$(APPNAME)
 	rm -rf /etc/$(APPNAME)
+	rm -f /usr/share/man/man1/$(APPNAME).1.gz
     
 debug: DEFINES	+= -DDEBUG
 debug: CFLAGS	+= -g
