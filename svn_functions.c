@@ -242,6 +242,7 @@ char svn_init()
 // Free svn pool
 void svn_free()
 {
+	svn_pool_clear(pool);
 	svn_pool_destroy(pool);
 }
 
@@ -256,6 +257,7 @@ char svn_alloc_rev_pool()
 void svn_free_rev_pool()
 {
 	if (revpool) {
+		svn_pool_clear(revpool);
 		svn_pool_destroy(revpool);
 		revpool = NULL;
 	}
@@ -304,6 +306,7 @@ void svn_close(svn_stream_t *stream)
 	svn_stream_close(stream);
 
 	if (filepool != NULL) {
+		svn_pool_clear(filepool);
 		svn_pool_destroy(filepool);
 		filepool = NULL;
 	}
@@ -474,6 +477,7 @@ list_t svn_list_props(const char *path, int rev)
 		return list;
 	}
 
+	
 	int i;
 	for (i = 0; i < props->nelts; i++) {
 		svn_client_proplist_item_t *item = APR_ARRAY_IDX(props, i, svn_client_proplist_item_t *);

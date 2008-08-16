@@ -45,6 +45,7 @@ void list_add(list_t *l, void *element)
 		l->max *= 2;
 		l->elements = malloc(l->elsize * l->max);
 		memcpy(l->elements, t, l->elsize * (l->max >> 1)); 
+		free(t);
 	}
 	memcpy(l->elements + (l->elsize * l->size), element, l->elsize);
 	++l->size;

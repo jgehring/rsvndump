@@ -37,7 +37,7 @@
 
 // File globals
 static int rev_number = 0; 
-static int repo_rev_number;
+static int repo_rev_number = 0;
 static list_t rev_map;
 
 
@@ -83,6 +83,9 @@ static char *get_real_path(char *nodename)
 // Gets the string length of a property
 static int strlen_property(prop_t *prop)
 {
+	if (!prop->key || !prop->value) {
+		return 0;
+	}
 	int len = 0;
 	char buffer[2048];
 	sprintf(buffer, "K %d\n", strlen(prop->key));
@@ -111,6 +114,9 @@ static void free_property(prop_t *prop)
 // Dumps a property 
 static void dump_property(prop_t *prop)
 {
+	if (!prop->key || !prop->value) {
+		return 0;
+	}
 	fprintf(output, "K %d\n", strlen(prop->key));
 	fprintf(output, "%s\n", prop->key);
 	fprintf(output, "V %d\n", strlen(prop->value));
@@ -150,7 +156,7 @@ static void dump_node(change_entry_t *entry)
 	char *realpath = get_real_path(entry->path);
 
 	// Write node header
-    fprintf(output, "Node-path: %s\n", tpath);
+	fprintf(output, "Node-path: %s\n", tpath);
 	if (entry->action != NK_DELETE) {
 		fprintf(output, "Node-kind: %s\n", entry->kind == NK_FILE ? "file" : "dir");
 	}
@@ -229,16 +235,16 @@ static void dump_node(change_entry_t *entry)
 				svn_close(stream);
 			} else {
 				FILE *f = fopen(realpath, "r");
-                if (f != NULL) {
-                    int c;
-                    while ((c = fgetc(f)) != EOF) {
-                        fputc(c, output);
-                    }
-                    fclose(f);
-                } else {
-                    fprintf(stderr, "\nFatal: Unable to open '%s' for reading (%d)\n", realpath, errno); 
-                    exit(1);
-                }
+				if (f != NULL) {
+					int c;
+					while ((c = fgetc(f)) != EOF) {
+						fputc(c, output);
+					}
+					fclose(f);
+				} else {
+					fprintf(stderr, "\nFatal: Unable to open '%s' for reading (%d)\n", realpath, errno); 
+					exit(1);
+				}
 			}
 		}
 		list_free(&props);
@@ -309,7 +315,7 @@ char dump_repository()
 		}
 		
 		// Write revision properties
-		char *author, *logmsg, *date;
+		char *author = NULL, *logmsg = NULL, *date = NULL;
 		char t[10];
 		svn_log(repo_url, repo_rev_number, &author, &logmsg, &date);
 		if (logmsg && strlen(logmsg)) {
