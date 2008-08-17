@@ -115,7 +115,7 @@ static void free_property(prop_t *prop)
 static void dump_property(prop_t *prop)
 {
 	if (!prop->key || !prop->value) {
-		return 0;
+		return;
 	}
 	fprintf(output, "K %d\n", strlen(prop->key));
 	fprintf(output, "%s\n", prop->key);
