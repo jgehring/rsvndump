@@ -42,7 +42,7 @@ echo "ok"
 # Setup variables
 MAPPNAME="rsvndump"
 MDEFINES=""
-MCFLAGS="-Wall -O2"
+MYCFLAGS="-Wall"
 # Use -pipe option if the system has more than 128MB of memory
 if [ `head -n 1 /proc/meminfo |sed 's/[^0-9]*\([0-9]*\).*$/\1/'` -ge "131072" ]; then
 	MCFLAGS="$MCFLAGS -pipe"
@@ -55,20 +55,24 @@ MLDFLAGS="$MLDFLAGS `pkg-config --libs apr-1`"
 MOBJECTS=" main.o dump.o svn_functions.o list.o"
 
 
-# Write makefile
+# Write Makefile in src
+cd src
 echo "APPNAME           = ${MAPPNAME}" > Makefile
+echo "TARGET            = ../${MAPPNAME}" > Makefile
 echo "DEFINES          += ${MDEFINES}" >> Makefile
+echo "MYCFLAGS         += ${MYCFLAGS}" >> Makefile
 echo "CFLAGS           += ${MCFLAGS}" >> Makefile
 echo "LDFLAGS          += ${MLDFLAGS}" >> Makefile
 echo "OBJECTS           = ${MOBJECTS}" >> Makefile
-echo "all: rsvndump" >> Makefile
+echo "all: MYCFLAGS += -O2" >> Makefile
+echo "all: ${MAPPNAME}" >> Makefile
 echo >> Makefile
 echo "%.o: %.c *.h" >> Makefile
-echo "	\$(CC) -c -o \$@ \$(DEFINES) \$(CFLAGS) \$<" >> Makefile
+echo "	\$(CC) -c -o \$@ \$(MYCFLAGS) \$(DEFINES) \$(CFLAGS) \$<" >> Makefile
 echo >> Makefile
 echo '
 rsvndump: $(OBJECTS)
-	$(CC) -o $(APPNAME) $(OBJECTS) $(LDFLAGS)
+	$(CC) -o $(TARGET) $(OBJECTS) $(LDFLAGS)
 
 install: all
 	install $(APPNAME) /usr/local/bin/$(APPNAME)
@@ -84,16 +88,45 @@ uninstall:
 	rm -f /usr/share/man/man1/$(APPNAME).1.gz
     
 debug: DEFINES	+= -DDEBUG
-debug: CFLAGS	+= -g
-debug: rsvndump 
-
+debug: MYCFLAGS	+= -g' >> Makefile
+echo "debug: ${MAPPNAME}" >> Makefile
+echo '
 clean:
 	rm -f *~
 	rm -f *.o
+' >> Makefile
+
+# Write Makefile in top-level
+cd ..
+echo "APPNAME           = ${MAPPNAME}" > Makefile
+echo "all: ${MAPPNAME}" >> Makefile
+echo >> Makefile
+echo "${MAPPNAME}: FORCE" >> Makefile
+echo '	$(MAKE) -C src
+
+debug: FORCE
+	$(MAKE) debug -C src
+
+install: all
+	install $(APPNAME) /usr/local/bin/$(APPNAME)
+	strip /usr/local/bin/$(APPNAME)
+	cp -f man/* /usr/share/man/man1/
+	gzip man/$(APPNAME).1
+	cp -f man/$(APPNAME).1.gz /usr/share/man/man1/
+	gunzip man/$(APPNAME).1.gz
+
+uninstall: 
+	rm -f $(APPNAME) /usr/local/bin/$(APPNAME)
+	rm -rf /etc/$(APPNAME)
+	rm -f /usr/share/man/man1/$(APPNAME).1.gz
+
+clean: FORCE
+	$(MAKE) clean -C src
 
 distclean: clean
 	rm -f $(APPNAME) 
 	rm -f Makefile
+	rm -f src/Makefile
 
 help:
 	@echo "Targets ( * marks the default target )":
@@ -103,6 +136,8 @@ help:
 	@echo "       install "
 	@echo "       uinstall "
 	@echo "       distclean "
+
+FORCE:
 ' >> Makefile
 
 echo
