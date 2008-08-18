@@ -500,6 +500,28 @@ list_t svn_list_props(const char *path, int rev)
 
 
 // Lists a repository using a given function for "printing"
+nodekind_t mnodekind;
+const char *mnodepath;
+static svn_error_t *svn_list_handler(void *baton, const char *path, const svn_dirent_t *dirent, const svn_lock_t *lock, const char *abs_path, apr_pool_t *pool)
+{
+    char *full_path = malloc(strlen(path)+strlen(abs_path)+2);
+    sprintf(full_path, "%s/%s", abs_path, path);
+    if (full_path[strlen(full_path)-1] == '/' && mnodepath[strlen(mnodepath)-1] != '/') {
+        full_path[strlen(full_path)-1] = '\0';
+    }
+    if (!strcmp(mnodepath+strlen(repo_base), full_path)) {
+        switch (dirent->kind) {
+            case svn_node_file:
+                mnodekind = NK_FILE; break;
+            case svn_node_dir:
+                mnodekind = NK_DIRECTORY; break;
+            default: break;
+        }
+    }
+    free(full_path);
+    return SVN_NO_ERROR;
+}
+
 nodekind_t svn_get_kind(const char *path, int rev)
 {
 	if (!online) {
@@ -518,7 +540,6 @@ nodekind_t svn_get_kind(const char *path, int rev)
 	}
 
 	svn_opt_revision_t revision;
-	apr_hash_t *dirents;
 
 	if (rev == HEAD_REVISION) {
 		revision.kind = svn_opt_revision_head;
@@ -527,7 +548,10 @@ nodekind_t svn_get_kind(const char *path, int rev)
 		revision.value.number = rev;
 	}
 
-	svn_error_t *err = svn_client_ls(&dirents, encode_path(path), &revision, FALSE, ctx, revpool);
+    mnodekind = NK_NONE;
+    mnodepath = path;
+
+	svn_error_t *err = svn_client_list(encode_path(path), &revision, &revision, FALSE, SVN_DIRENT_KIND, FALSE, svn_list_handler, NULL, ctx, revpool);
 	if (err) {
 #ifdef DEBUG
 		fprintf(stderr, "error: svn_get_kind(%s,%d)\n\n", path, rev);
@@ -536,27 +560,7 @@ nodekind_t svn_get_kind(const char *path, int rev)
 		return NK_NONE;
 	}
 
-	nodekind_t kind = NK_NONE;
-	apr_hash_index_t *idx;
-	char *name = strrchr(path, '/')+1;
-	for (idx = apr_hash_first(revpool, dirents); idx; idx = apr_hash_next(idx)) {
-		const char *entryname;
-		svn_dirent_t *val;
-
-		apr_hash_this(idx, (void *) &entryname, NULL, (void *)&val);
-
-		if (!strcmp(name, entryname)) {
-			switch (val->kind) {
-				case svn_node_file:
-					kind = NK_FILE; break;
-				case svn_node_dir:
-					kind = NK_DIRECTORY; break;
-				default: break;
-			}
-			break;
-		}
-	}
-	return kind;
+	return mnodekind;
 }
 
 
