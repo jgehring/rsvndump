@@ -108,7 +108,9 @@ static svn_error_t *auth_prompt(svn_auth_cred_simple_t **cred, void *baton, cons
 	svn_auth_cred_simple_t *ret = apr_pcalloc(poola, sizeof(*ret));
 	char answerbuf[100];
 
-	if (username) {
+	if (repo_username) {
+		ret->username = apr_pstrdup(poola, repo_username);
+	} else if (username) {
 		ret->username = apr_pstrdup(poola, username);
 	} else {
 		SVN_ERR(prompt_and_read_line("Username: ", answerbuf, sizeof(answerbuf), 0));
