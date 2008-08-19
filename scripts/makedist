@@ -1,0 +1,52 @@
+#!/bin/sh
+#
+#	Distribution script for rsvndump
+#	written by Jonas Gehring <jonas.gehring@boolsoft.org>
+#
+#	The version number has to be passed via the first argument.
+#	It is assumed that there is already a tag for this version.
+#	
+
+
+# Some constants
+PROG="rsvndump"
+REPO="svn://slug/rsvndump"
+
+# Validate arguments
+if [ -z "$1" ]; then 
+	echo 
+	echo "USAGE: $0 <version> [previous version]"
+	echo 
+	exit 1
+fi
+
+
+VERSION="$1"
+PREV_VERSION="$2"
+
+# Export the source
+echo ">> Exporting tag for version ${VERSION}..."
+svn export "${REPO}/tags/${PROG}-${VERSION}" > /dev/null
+
+# Remove unneccessary stuff
+echo ">> Removing unneccessary stuff..."
+
+# Prepare (e.g. aclocal && autoconf && automake)
+echo ">> Preparing..."
+
+# Generate various packages
+echo ">> Generating gzipped package..."
+tar -czf "${PROG}-${VERSION}".tar.gz "${PROG}-${VERSION}"
+echo ">> Generating bzip2 package..."
+tar -cjf "${PROG}-${VERSION}".tar.bz2 "${PROG}-${VERSION}"
+if [ -n "${PREV_VERSION}" ]; then
+	echo ">> Generating patch to previous version..."
+	svn diff "${REPO}/tags/${PROG}-${PREV_VERSION}" "${REPO}/tags/${PROG}-${VERSION}" > "${PROG}-${VERSION}.patch"
+	gzip "${PROG}-${VERSION}.patch"
+fi
+
+# Remove temporary stuff
+echo ">> Cleaning up..."
+rm -rf "${PROG}-${VERSION}"
+
+exit 0
