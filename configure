@@ -65,14 +65,13 @@ echo "CFLAGS           += ${MCFLAGS}" >> Makefile
 echo "LDFLAGS          += ${MLDFLAGS}" >> Makefile
 echo "OBJECTS           = ${MOBJECTS}" >> Makefile
 echo "all: MYCFLAGS += -O2" >> Makefile
-echo "all: ${MAPPNAME}" >> Makefile
+echo "all: ../${MAPPNAME}" >> Makefile
 echo >> Makefile
 echo "%.o: %.c *.h" >> Makefile
 echo "	\$(CC) -c -o \$@ \$(MYCFLAGS) \$(DEFINES) \$(CFLAGS) \$<" >> Makefile
 echo >> Makefile
-echo '
-rsvndump: $(OBJECTS)
-	$(CC) -o $(TARGET) $(OBJECTS) $(LDFLAGS)
+echo "../${MAPPNAME}: \$(OBJECTS)" >> Makefile
+echo '	$(CC) -o $(TARGET) $(OBJECTS) $(LDFLAGS)
 
 install: all
 	install $(APPNAME) /usr/local/bin/$(APPNAME)
@@ -89,7 +88,7 @@ uninstall:
     
 debug: DEFINES	+= -DDEBUG
 debug: MYCFLAGS	+= -g' >> Makefile
-echo "debug: ${MAPPNAME}" >> Makefile
+echo "debug: ../${MAPPNAME}" >> Makefile
 echo '
 clean:
 	rm -f *~
@@ -102,10 +101,10 @@ echo "APPNAME           = ${MAPPNAME}" > Makefile
 echo "all: ${MAPPNAME}" >> Makefile
 echo >> Makefile
 echo "${MAPPNAME}: FORCE" >> Makefile
-echo '	$(MAKE) -C src
+echo '	@$(MAKE) -C src
 
 debug: FORCE
-	$(MAKE) debug -C src
+	@$(MAKE) debug -C src
 
 install: all
 	install $(APPNAME) /usr/local/bin/$(APPNAME)
@@ -121,7 +120,7 @@ uninstall:
 	rm -f /usr/share/man/man1/$(APPNAME).1.gz
 
 clean: FORCE
-	$(MAKE) clean -C src
+	@$(MAKE) clean -C src
 
 distclean: clean
 	rm -f $(APPNAME) 
