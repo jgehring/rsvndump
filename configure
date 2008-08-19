@@ -11,10 +11,10 @@ fi
 
 SVNINCLUDEDIR="/usr/include/subversion-1"
 echo -n "Checking for subversion-1 include dir... " 
-RES=`find /usr/include/ -type d|grep subversion-1`
+RES=`find /usr/include/* -type d -prune -name subversion-1`
 if [ -z "${RES}" ]; then
 	SVNINCLUDEDIR="/usr/local/include/subversion-1"
-	RES=`find /usr/local/include/ -type d|grep subversion-1`
+	RES=`find /usr/local/include/* -type d -prune -name subversion-1`
 fi
 if [ -z "${RES}" ]; then
 	echo "not found!"
