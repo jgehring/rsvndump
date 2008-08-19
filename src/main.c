@@ -51,7 +51,7 @@ static void print_usage()
 	printf("    -q [--quiet]              be quiet\n");
 	printf("    -u [--username] arg       username\n");
 	printf("    -p [--password] arg       password\n");
-	printf("    -l [--logfile] arg        output of 'svn -q log|tac'\n");
+	printf("    -l [--logfile] arg        output of 'svn -q -r 0:HEAD log'\n");
        	printf("                              if not specified, read from stdin\n");
 	printf("    -o [--outfile] arg        write data to file\n");
        	printf("                              if not specified, print to stdout\n");
