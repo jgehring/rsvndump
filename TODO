@@ -1,3 +1,4 @@
+> Correct -u and -p handling
 > Use deltas in diffs
 > MD-5 sums?
 > Incremental (is hard because revision map is missing)
