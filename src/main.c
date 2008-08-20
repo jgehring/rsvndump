@@ -22,8 +22,10 @@
 #include "dump.h"
 #include "svn_functions.h"
 
+#include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -38,6 +40,9 @@ char *repo_username = NULL;
 char *repo_password = NULL;
 char quiet = 0, online = 0;
 FILE *input, *output;
+
+// File globals
+static char dir_created = 0;
 
 
 // Prints usage information
@@ -60,6 +65,36 @@ static void print_usage()
 	printf("    --online                  do not store anything on the disk\n");
        	printf("                              (the download dir is ignored then)\n");
 	printf("\n");
+}
+
+
+// Cleans up temporary directory
+static void rm_temp_dir(const char *path, char remdir)
+{
+	DIR *dir;
+	struct dirent *entry;
+
+	if ((dir = opendir(path)) != NULL) {
+		while ((entry = readdir(dir)) != NULL) {
+			if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+				char *filename = malloc(strlen(path)+strlen(entry->d_name)+2);
+				sprintf(filename, "%s/%s", path, entry->d_name);
+				struct stat st;
+				stat(filename, &st);
+				if (st.st_mode & S_IFDIR) {
+					rm_temp_dir(filename, 1);
+				} else {
+					unlink(filename);
+				}
+				free(filename);
+			}
+		}
+
+		closedir(dir);
+		if (remdir) {
+			rmdir(path);
+		}
+	}
 }
 
 
@@ -166,10 +201,12 @@ int main(int argc, char **argv)
 			free_globals();
 			return EXIT_FAILURE;
 		}
+		dir_created = 1;
 	}
 
 	svn_init();
 
+	// Get the base url of the repository
 	svn_repo_info(repo_url, &repo_base, &repo_prefix);
 	if (repo_base == NULL) {
 		fprintf(stderr, "Error getting information from repository '%s'\n", repo_url);
@@ -187,6 +224,11 @@ int main(int argc, char **argv)
 	if (output != stdout) {
 		fclose(output);
 	}
+
+	if (!online) {
+		rm_temp_dir(repo_dir, dir_created);
+	}
+
 	free_globals();
 	return EXIT_SUCCESS;
 }
