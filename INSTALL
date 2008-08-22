@@ -10,10 +10,11 @@ the apr development files must be present on your system
 
 BUILD
 =====
-To configure and build rsvndump, cd to src and run
+To configure and build rsvndump, simply run
 
     ./configure
+
+followed by 
+
     make
 
-The configuration script will look for subversion headers and
-will check pkg-config for existence of apr. 

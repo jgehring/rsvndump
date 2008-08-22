@@ -41,4 +41,3 @@ ebuild "${PROG}-${VERSION}.ebuild" digest
 cd "$OLDWD"
 
 exit 0
-
