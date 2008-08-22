@@ -3,3 +3,4 @@
 > Incremental (is hard because revision map is missing)
 > Continue with the autotools branch so that the ebuild
   will work
+> Use binary search for copy-revision search 

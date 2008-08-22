@@ -17,7 +17,7 @@ CATEGORY="dev-util"
 # Validate arguments
 if [ -z "$1" ]; then 
 	echo 
-	echo "USAGE: $0 <version> [previous version]"
+	echo "USAGE: $0 <version>"
 	echo 
 	exit 1
 fi
