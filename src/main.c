@@ -29,6 +29,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <svn_path.h>
+
 
 // Globals
 char *repo_url = NULL;
@@ -38,7 +40,8 @@ char *repo_dir = NULL;
 char *repo_uuid = NULL;
 char *repo_username = NULL;
 char *repo_password = NULL;
-char quiet = 0, online = 0;
+char online = 0;
+char verbosity = 0; // < 0: quiet, > 0: verbose 
 FILE *input, *output;
 
 // File globals
@@ -53,7 +56,9 @@ static void print_usage()
 	printf("\n");
 	printf("USAGE: "APPNAME" [options] <url>\n\n");
 	printf("Valid options:\n");
+	printf("    -h [--help]               print a nice help screen\n");
 	printf("    -q [--quiet]              be quiet\n");
+	printf("    -v [--verbose]            print extra progress\n");
 	printf("    -u [--username] arg       username\n");
 	printf("    -p [--password] arg       password\n");
 	printf("    -l [--logfile] arg        output of 'svn -q -r 0:HEAD log'\n");
@@ -137,34 +142,31 @@ int main(int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
 			print_usage();
+			free_globals();
 			return EXIT_SUCCESS;
-		}
-		else if (!strcmp(argv[i], "-q") || !strcmp(argv[i], "--quiet")) {
-			quiet = 1;
-		}
-		else if (i+1 < argc && (!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username"))) {
+		} else if (!strcmp(argv[i], "-q") || !strcmp(argv[i], "--quiet")) {
+			verbosity = -1;
+		} else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")) {
+			verbosity = 1;
+		} else if (i+1 < argc && (!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username"))) {
 			repo_username = strdup(argv[++i]);
-		}
-		else if (i+1 < argc && (!strcmp(argv[i], "-p") || !strcmp(argv[i], "--password"))) {
+		} else if (i+1 < argc && (!strcmp(argv[i], "-p") || !strcmp(argv[i], "--password"))) {
 			repo_password = strdup(argv[++i]);
-		}
-		else if (i+1 < argc && (!strcmp(argv[i], "-l") || !strcmp(argv[i], "--logfile"))) {
+		} else if (i+1 < argc && (!strcmp(argv[i], "-l") || !strcmp(argv[i], "--logfile"))) {
 			input = fopen(argv[++i], "r");
 			if (input == NULL) {
 				fprintf(stderr, "Error opening logfile\n");
 				free_globals();
 				return EXIT_FAILURE;
 			}
-		}
-		else if (i+1 < argc && (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--outfile"))) {
+		} else if (i+1 < argc && (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--outfile"))) {
 			output = fopen64(argv[++i], "w");
 			if (output == NULL) {
 				fprintf(stderr, "Error opening outfile\n");
 				free_globals();
 				return EXIT_FAILURE;
 			}
-		}
-		else if (i+1 < argc && (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--download-dir"))) {
+		} else if (i+1 < argc && (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--download-dir"))) {
 			struct stat st;
 			stat(argv[++i], &st);
 			if (!(st.st_mode & S_IFDIR)) {
@@ -173,12 +175,14 @@ int main(int argc, char **argv)
 				return EXIT_FAILURE;
 			}
 			repo_dir = strdup(argv[i]);
-		}
-		else if (!strcmp(argv[i], "--online")) {
+		} else if (!strcmp(argv[i], "--online")) {
 			online = 1;
-		}
-		else {
+		} else if (repo_url == NULL && svn_path_is_url(argv[i])) {
 			repo_url = strdup(argv[i]);
+		} else {
+			fprintf(stderr, "Argument error: Unkown argument or malformed url '%s'\n", argv[i]);
+			fprintf(stderr, "Type %s --help for usage information\n", argv[0]);
+			return EXIT_FAILURE;
 		}
 	}
 

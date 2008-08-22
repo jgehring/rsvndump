@@ -21,7 +21,9 @@
 #include "main.h"
 #include "dump.h"
 #include "svn_functions.h"
+#include "util.h"
 
+#include <search.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -39,6 +41,9 @@
 static int rev_number = 0; 
 static int repo_rev_number = 0;
 static list_t rev_map;
+
+// Prototypes
+static void dump_copy(change_entry_t *entry);
 
 
 // Compares two changes
@@ -146,42 +151,18 @@ static void dump_node(change_entry_t *entry)
 		tpath = entry->path+strlen(repo_prefix);
 	}
 
-	if (entry->kind == NK_NONE || !entry->path || strlen(tpath) == 0) {
+	if (entry->kind == NK_NONE || !entry->path || (entry->copy_from_path == NULL && strlen(tpath) == 0)) {
 #if DEBUG
-		fprintf(stderr, "\nThis should not happen..\n\n");
+		fprintf(stderr, "\nThis should not happen.. \n\n");
 #endif
 		return;
 	}
 
-	char *realpath = get_real_path(entry->path);
-
-	// Write node header
-	fprintf(output, "Node-path: %s\n", tpath);
-	if (entry->action != NK_DELETE) {
-		fprintf(output, "Node-kind: %s\n", entry->kind == NK_FILE ? "file" : "dir");
-	}
-	fprintf(output, "Node-action: "); 
-	switch (entry->action) {
-		case NK_CHANGE:
-			fprintf(output, "change\n"); 
-			break;
-		case NK_ADD:
-			fprintf(output, "add\n"); 
-			break;
-		case NK_DELETE:
-			fprintf(output, "delete\n"); 
-			break;
-		case NK_REPLACE:
-			fprintf(output, "replace\n"); 
-			break;
-	}
+	char *realpath = get_real_path((char *)entry->path);
 
 	if (entry->copy_from_path) {
-		if (*(entry->copy_from_path+strlen(repo_prefix)) == '/') {
-			fprintf(output, "Node-copyfrom-path: %s\n", entry->copy_from_path+strlen(repo_prefix)+1);
-		} else {
-			fprintf(output, "Node-copyfrom-path: %s\n", entry->copy_from_path+strlen(repo_prefix));
-		}
+		// The node is a copy, but there is always the possibility that the source revision has not been dumped
+		// because it resides on a top-level path. 
 		int r;
 		for (r = rev_number; r > 0; r--) {
 			if (((int *)rev_map.elements)[r] == entry->copy_from_rev) {
@@ -189,71 +170,183 @@ static void dump_node(change_entry_t *entry)
 			}
 		}
 		if (r == 0) {
-			fprintf(stderr, "Error: Revision %d has not been dumped yet, unable to get local revision number\n", entry->copy_from_rev);
-			exit(1);
+			// Here we are. This is really painful, because we need to dump the source of the copy now.
+			// If the entry is a directory, it needs to be dumped recursivly (handled by dump_tree later)
+			entry->action = NK_ADD;
+			entry->use_copy = 0;
+		} else {
+			entry->copy_from_rev = r;
+			entry->use_copy = 1;
 		}
-		fprintf(output, "Node-copyfrom-rev: %d\n", r);
 	}
 
-	if (entry->action != NK_DELETE) {
-		int prop_length = PROPS_END_LEN;
-		svn_stream_t *stream = NULL; 
-		char *textbuffer = NULL;
-		int textlen = 0;
-
-		int i;
-		list_t props = svn_list_props(realpath, repo_rev_number);
-		for (i = 0; i < props.size; i++) {
-			prop_length += strlen_property((prop_t *)props.elements + i);
+	// Write node header
+	if (strlen(tpath)) {
+		fprintf(output, "Node-path: %s\n", tpath);
+		if (entry->action != NK_DELETE) {
+			fprintf(output, "Node-kind: %s\n", entry->kind == NK_FILE ? "file" : "dir");
+		}
+		fprintf(output, "Node-action: "); 
+		switch (entry->action) {
+			case NK_CHANGE:
+				fprintf(output, "change\n"); 
+				break;
+			case NK_ADD:
+				fprintf(output, "add\n"); 
+				break;
+			case NK_DELETE:
+				fprintf(output, "delete\n"); 
+				break;
+			case NK_REPLACE:
+				fprintf(output, "replace\n"); 
+				break;
 		}
 
-		fprintf(output, "Prop-content-length: %d\n", prop_length);
-		if (entry->kind == NK_FILE && entry->action != NK_DELETE) {
-			if (online) {
-				stream = svn_open(realpath, repo_rev_number, &textbuffer, &textlen); 
+		if (entry->copy_from_path && entry->use_copy == 1) {
+			if (*(entry->copy_from_path+strlen(repo_prefix)) == '/') {
+				fprintf(output, "Node-copyfrom-path: %s\n", entry->copy_from_path+strlen(repo_prefix)+1);
 			} else {
-				struct stat st;
-				stat(realpath, &st);
-				textlen = (int)st.st_size;
+				fprintf(output, "Node-copyfrom-path: %s\n", entry->copy_from_path+strlen(repo_prefix));
 			}
-			fprintf(output, "Text-content-length: %d\n", textlen);
+			fprintf(output, "Node-copyfrom-rev: %d\n", entry->copy_from_rev);
 		}
-		fprintf(output, "Content-length: %d\n", prop_length+textlen);
-		fprintf(output, "\n");
 
-		for (i = 0; i < props.size; i++) {
-			dump_property((prop_t *)props.elements + i);
-			free_property((prop_t *)props.elements + i);
-		}
-		fprintf(output, PROPS_END);
+		if (entry->action != NK_DELETE) {
+			int prop_length = PROPS_END_LEN;
+			svn_stream_t *stream = NULL; 
+			char *textbuffer = NULL;
+			int textlen = 0;
 
-		if (entry->kind == NK_FILE && entry->action != NK_DELETE) {
-			if (online) {
-				for (i = 0; i < textlen; i++) {
-					fputc(textbuffer[i], output);
-				}
-				svn_close(stream);
+			int i;
+			list_t props;
+			if (entry->use_copy) {
+				props = svn_list_props(realpath, entry->copy_from_rev);
 			} else {
-				FILE *f = fopen(realpath, "r");
-				if (f != NULL) {
-					int c;
-					while ((c = fgetc(f)) != EOF) {
-						fputc(c, output);
-					}
-					fclose(f);
+				props = svn_list_props(realpath, repo_rev_number);
+			}
+			for (i = 0; i < props.size; i++) {
+				prop_length += strlen_property((prop_t *)props.elements + i);
+			}
+
+			fprintf(output, "Prop-content-length: %d\n", prop_length);
+			if (entry->kind == NK_FILE && entry->action != NK_DELETE) {
+				if (online) {
+					stream = svn_open(realpath, repo_rev_number, &textbuffer, &textlen); 
 				} else {
-					fprintf(stderr, "\nFatal: Unable to open '%s' for reading (%d)\n", realpath, errno); 
-					exit(1);
+					struct stat st;
+					stat(realpath, &st);
+					textlen = (int)st.st_size;
+				}
+				fprintf(output, "Text-content-length: %d\n", textlen);
+			}
+			fprintf(output, "Content-length: %d\n", prop_length+textlen);
+			fprintf(output, "\n");
+
+			for (i = 0; i < props.size; i++) {
+				dump_property((prop_t *)props.elements + i);
+				free_property((prop_t *)props.elements + i);
+			}
+			fprintf(output, PROPS_END);
+
+			if (entry->kind == NK_FILE && entry->action != NK_DELETE) {
+				if (online) {
+					for (i = 0; i < textlen; i++) {
+						fputc(textbuffer[i], output);
+					}
+					svn_close(stream);
+				} else {
+					FILE *f = fopen(realpath, "r");
+					if (f != NULL) {
+						int c;
+						while ((c = fgetc(f)) != EOF) {
+							fputc(c, output);
+						}
+						fclose(f);
+					} else {
+						fprintf(stderr, "\nFatal: Unable to open '%s' for reading (%d)\n", realpath, errno); 
+						exit(1);
+					}
 				}
 			}
+			list_free(&props);
 		}
-		list_free(&props);
+
+		fprintf(output, "\n");
+		fprintf(output, "\n");
 	}
 
-	fprintf(output, "\n");
-	fprintf(output, "\n");
+	if (entry->use_copy == 0 && entry->kind == NK_DIRECTORY) {
+		dump_copy(entry);
+	}
 
 	free(realpath);
+}
+
+
+// Recursively dumps a given entry 
+static void dump_copy(change_entry_t *entry)
+{
+	int i;
+
+	// Copy resolving has to be done online atm, sorry
+	char ton = online;
+	online = 1;
+
+	char *rcopypath = malloc(strlen(repo_base)+strlen(entry->copy_from_path)+2);
+	strcpy(rcopypath, repo_base);
+	if ((repo_base[strlen(repo_base)-1] != '/') && (*entry->copy_from_path != '/')) {
+		strcat(rcopypath, "/");
+	}
+	strcat(rcopypath, entry->copy_from_path); 
+	char *realpath = malloc(strlen(repo_base)+strlen(entry->path)+2);
+	strcpy(realpath, repo_base);
+	if ((repo_base[strlen(repo_base)-1] != '/') && (*entry->path != '/')) {
+		strcat(realpath, "/");
+	}
+	strcat(realpath, entry->path); 
+
+	list_t list = svn_list_path(rcopypath, entry->copy_from_rev);
+
+	for (i = list.size-1; i >= 0; i--) {
+		change_entry_t *te = ((change_entry_t *)list.elements + i);
+		char *mrealpath = malloc(strlen(repo_base)+strlen(te->path)+2);
+		strcpy(mrealpath, repo_base);
+		if ((repo_base[strlen(repo_base)-1] != '/') && (*te->path != '/')) {
+			strcat(mrealpath, "/");
+		}
+		strcat(mrealpath, te->path); 
+
+		if (te->action != NK_DELETE) {
+			te->kind = svn_get_kind(mrealpath, te->copy_from_rev);
+		} else {
+			te->kind = NK_FILE;
+		}
+
+		// We need to replace the old path (copy-from) with the new one
+		char *newpath = malloc(strlen(te->path)-strlen(entry->copy_from_path)+strlen(entry->path)+3);
+		strcpy(newpath, entry->path);
+		strcat(newpath, te->path+strlen(entry->copy_from_path)); 
+
+		free(te->path);
+		te->path = newpath;
+		free(mrealpath);
+
+		if (hsearch((ENTRY){te->path, NULL}, FIND) != NULL) {
+			// Duplicate item -> remove
+			list_remove(&list, i);
+		}
+	}
+	qsort(list.elements, list.size, list.elsize, compare_changes);
+	for (i = 0; i < list.size; i++) {
+		dump_node((change_entry_t *)list.elements + i);
+		free_node((change_entry_t *)list.elements + i);
+	}
+
+	list_free(&list);
+	free(rcopypath);
+	free(realpath);
+
+	online = ton;
 }
 
 
@@ -298,7 +391,7 @@ char dump_repository()
 		// Parse log entry 
 		repo_rev_number = atoi(linebuffer+1);
 
-		if (!quiet) {
+		if (verbosity > 0) {
 			fprintf(stderr, "* Dumping revision %d (local: %d)...\n", repo_rev_number, rev_number);
 		}
 		list_add(&rev_map, &repo_rev_number);
@@ -361,9 +454,12 @@ char dump_repository()
 		fprintf(output, PROPS_END);
 		fprintf(output, "\n");
 
-		// Write nodes
 		list_t changes;
 		changes = svn_list_changes(online ? repo_base : repo_dir, repo_rev_number);
+
+		// Get node type info and insert into hash to prevent duplicates (this can happen
+		// when nodes are copied)
+		hcreate((int)((float)changes.size/0.8f));
 		for (i = 0; i < changes.size; i++) {
 			change_entry_t *entry = ((change_entry_t *)changes.elements + i);
 			char *realpath = get_real_path(entry->path);
@@ -374,17 +470,23 @@ char dump_repository()
 				entry->kind = NK_FILE;
 			}
 
-			free(realpath);
-			if (!quiet && online) {
+			if (verbosity > 0 && online) {
 				fprintf(stderr, "\033[1A");
 				fprintf(stderr, "* Dumping revision %d (local: %d)... %d%%\n", repo_rev_number, rev_number, (i*50)/changes.size);
 			}
+
+			hsearch((ENTRY){entry->path, NULL}, ENTER);
+			free(realpath);
 		}
+
+		// Determine insertion oder
 		qsort(changes.elements, changes.size, changes.elsize, compare_changes);
+
+		// Write nodes
 		for (i = 0; i < changes.size; i++) {
 			dump_node((change_entry_t *)changes.elements + i);
 			free_node((change_entry_t *)changes.elements + i);
-			if (!quiet) {
+			if (verbosity > 0) {
 				fprintf(stderr, "\033[1A");
 				if (online) {
 					fprintf(stderr, "* Dumping revision %d (local: %d)... %d%%\n", repo_rev_number, rev_number, 50+(i*50)/changes.size);
@@ -393,6 +495,8 @@ char dump_repository()
 				}
 			}
 		}
+
+		hdestroy();
 		list_free(&changes);
 
 		if (author) {
@@ -408,9 +512,11 @@ char dump_repository()
 
 		svn_free_rev_pool();
 
-		if (!quiet) {
+		if (verbosity > 0) { 
 			fprintf(stderr, "\033[1A");
 			fprintf(stderr, "* Dumping revision %d (local: %d)... done\n", repo_rev_number, rev_number);
+		} else if (verbosity == 0) {
+			fprintf(stderr, "* Dumped revision %d (local: %d)\n", repo_rev_number, rev_number);
 		}
 
 		++rev_number;

@@ -21,6 +21,7 @@
 #include "main.h"
 #include "svn_functions.h"
 #include "list.h"
+#include "util.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -305,7 +306,9 @@ svn_stream_t *svn_open(char *path, int rev, char **buffer, int *len)
 
 void svn_close(svn_stream_t *stream)
 {
-	svn_stream_close(stream);
+	if (stream != NULL) {
+		svn_stream_close(stream);
+	}
 
 	if (filepool != NULL) {
 		svn_pool_clear(filepool);
@@ -378,7 +381,7 @@ char svn_log(const char *path, int rev, char **author, char **logmsg, char **dat
 static list_t *mlist;
 static svn_error_t *svn_log_rec(void *baton, apr_hash_t *changed_paths, svn_revnum_t revision, const char *author, const char *date, const char *message, apr_pool_t *pool)
 {
-	change_entry_t entry;
+	change_entry_t entry = default_entry();;
 	apr_hash_index_t *idx;
 	if (changed_paths == NULL) {
 		return SVN_NO_ERROR;
@@ -506,22 +509,22 @@ nodekind_t mnodekind;
 const char *mnodepath;
 static svn_error_t *svn_list_handler(void *baton, const char *path, const svn_dirent_t *dirent, const svn_lock_t *lock, const char *abs_path, apr_pool_t *pool)
 {
-    char *full_path = malloc(strlen(path)+strlen(abs_path)+2);
-    sprintf(full_path, "%s/%s", abs_path, path);
-    if (full_path[strlen(full_path)-1] == '/' && mnodepath[strlen(mnodepath)-1] != '/') {
-        full_path[strlen(full_path)-1] = '\0';
-    }
-    if (!strcmp(mnodepath+strlen(repo_base), full_path)) {
-        switch (dirent->kind) {
-            case svn_node_file:
-                mnodekind = NK_FILE; break;
-            case svn_node_dir:
-                mnodekind = NK_DIRECTORY; break;
-            default: break;
-        }
-    }
-    free(full_path);
-    return SVN_NO_ERROR;
+	char *full_path = malloc(strlen(path)+strlen(abs_path)+2);
+	sprintf(full_path, "%s/%s", abs_path, path);
+	if (full_path[strlen(full_path)-1] == '/' && mnodepath[strlen(mnodepath)-1] != '/') {
+		full_path[strlen(full_path)-1] = '\0';
+	}
+	if (!strcmp(mnodepath+strlen(repo_base), full_path)) {
+		switch (dirent->kind) {
+			case svn_node_file:
+				mnodekind = NK_FILE; break;
+			case svn_node_dir:
+				mnodekind = NK_DIRECTORY; break;
+			default: break;
+		}
+	}
+	free(full_path);
+	return SVN_NO_ERROR;
 }
 
 nodekind_t svn_get_kind(const char *path, int rev)
@@ -550,8 +553,8 @@ nodekind_t svn_get_kind(const char *path, int rev)
 		revision.value.number = rev;
 	}
 
-    mnodekind = NK_NONE;
-    mnodepath = path;
+	mnodekind = NK_NONE;
+	mnodepath = path;
 
 	svn_error_t *err = svn_client_list(encode_path(path), &revision, &revision, FALSE, SVN_DIRENT_KIND, FALSE, svn_list_handler, NULL, ctx, revpool);
 	if (err) {
@@ -647,5 +650,52 @@ char svn_update_path(const char *path, int rev)
 	}
 
 	return 0;
+}
+
+
+// Lists all nodes of a given path
+static list_t *mlslist;
+static const char *mlsnodepath;
+static svn_error_t *svn_ls_handler(void *baton, const char *path, const svn_dirent_t *dirent, const svn_lock_t *lock, const char *abs_path, apr_pool_t *pool)
+{
+	char *full_path = malloc(strlen(path)+strlen(abs_path)+2);
+	sprintf(full_path, "%s/%s", abs_path, path);
+	if (full_path[strlen(full_path)-1] == '/' && mlsnodepath[strlen(mlsnodepath)-1] != '/') {
+		full_path[strlen(full_path)-1] = '\0';
+	}
+
+	change_entry_t e = default_entry();
+	e.path = full_path;
+	e.action = NK_ADD;
+	e.kind = (dirent->kind == svn_node_file) ? NK_FILE : NK_DIRECTORY;
+	list_add(mlslist, &e);
+
+	return SVN_NO_ERROR;
+}
+list_t svn_list_path(const char *path, int rev)
+{
+	svn_opt_revision_t revision;
+	if (rev == HEAD_REVISION) {
+		revision.kind = svn_opt_revision_head;
+	} else {
+		revision.kind = svn_opt_revision_number;
+		revision.value.number = rev;
+	}
+
+	list_t list;
+	list_init(&list, sizeof(change_entry_t));
+	mlslist = &list;
+	mlsnodepath = path;
+	
+	svn_error_t *err = svn_client_list(svn_path_uri_encode(svn_path_canonicalize(path, revpool), revpool), &revision, &revision, TRUE, SVN_DIRENT_ALL, FALSE, svn_ls_handler, NULL, ctx, revpool);
+	if (err) {
+#ifdef DEBUG
+		fprintf(stderr, "error: svn_list_path(%s,%d)\n\n", path, rev);
+#endif
+		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		return list;
+	}
+
+	return list;
 }
 

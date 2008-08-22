@@ -58,6 +58,8 @@ typedef struct {
 	nodeaction_t action;
 	char *copy_from_path;
 	int copy_from_rev;
+	char *localpath;
+	char use_copy;	// -1: no copy, 0: explicit dump copy, 1: use copy_from_path and copy_from_rev 
 } change_entry_t;
 
 
@@ -69,7 +71,7 @@ extern char *repo_dir;
 extern char *repo_uuid;
 extern char *repo_username;
 extern char *repo_password;
-extern char quiet, online;
+extern char verbosity, online;
 extern FILE *input, *output;
 
 

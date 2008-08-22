@@ -33,7 +33,7 @@ function set_auth {
 
 
 # Some constants 
-REPO="svn://slug/sTune"
+REPO="svn://slug/rsvndump"
 DUMPFILE="dump"
 LOCALDIR="testrepo"
 LOCALREPO="svn://localhost/testrepo"
@@ -73,12 +73,12 @@ if [ -n "`pidof -s svnserve`" ]; then
 fi
 
 # Build executable and copy it to this directory
-cd .. && make clean && make debug
+cd .. && make clean && make
 if [ "$?" != "0" ]; then
 	echo "ERROR: making project failed... aborting"
 	exit 1
 fi
-cp rsvndump tests
+cp src/rsvndump tests
 cd tests
 
 # Start local svnserve
