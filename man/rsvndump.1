@@ -1,4 +1,4 @@
-.TH RSVNDUMP "1" "August 14th, 2008" "rsvndump 0.3" "User Commands"
+.TH rsvndump "1" "August 23rd, 2008" "rsvndump 0.3" "User Commands"
 .SH NAME
 rsvndump \- remote dump of a subversion repository
 .SH SYNOPSIS
@@ -31,11 +31,14 @@ allows you to dump only there are quite a few differences to a normal dump:
 provides an offline and an online mode and defaults to offline mode. See below for a detailed description and comparison of the modes.
 .SH OPTIONS
 .TP
+.B \-h --help
+print a nice help screen
+.TP
 .B \-q --quiet
 be quiet
 .TP
-.B \-h --help
-print available options to stdout
+.B \-v --verbose
+print extra progress. This is not very expressive in offline mode.
 .TP
 .B \-u --username 
 username for svn authentication.
@@ -71,7 +74,8 @@ only be used when dumping in offline mode (see below for details)
 If not specified,
 .I rsvndump
 will create a temporary directory in
-.BR /tmp .
+.BR /tmp . 
+This directory will be cleared if the program exits.
 .TP
 .B \--online
 run in online mode as described below.
@@ -91,7 +95,9 @@ repository and no additional data is stored on the local hard disk.
 .SH NOTES
 Unlike svn(1),
 .I rsvndump
-does not save usernames, passwords or SSL certifactes on disk for later authentication. Thus, usernames and passwords must be entered or specified everytime the program is run. The same is true for accepting SSL certificates.
+does not save passwords or SSL certifactes on disk for later authentication. Thus, passwords must be entered or specified everytime the program is run. The same is true for accepting SSL certificates.
+.SH BUGS 
+Currently, it seems like there is a memory leak when dumping a repository with SSL authentication. All other dumps run fine, so maybe there is a bug inside one of the underlying repositories. 
 .SH AUTHOR
 .I rsvndump
 0.3, Copyright (C) 2008 Jonas Gehring <jonas.gehring@boolsoft.org>

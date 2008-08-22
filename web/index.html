@@ -1,0 +1,30 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+	<head>
+		<meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+		<title>rsvndump - remote svn repository dump</title>
+	</head>
+	<body>
+		<h2><p align="center">Welcome to the rsvndump web page!</p></h2>
+		<hr />
+		<p>rsvndump is a command line tool to dump a subversion repository that resides on a remote server. All data is dumped in the format that can be read an written by <i>svnadmin dump</i>, so the data which is produced can easily be importerd into a new subversion repository.</p>
+		<p>Actually, rsvndump can basically be simulated with <i>svnsync</i> and a <i>svnadmin dump</i> afterwards. However, <i>svnsync</i> can not be used to "copy" single subdirectories of a repository. Since <i>svndumpfilter</i> can do this job on a dump, this is not an insuperable issue. But if you do not have access to the repository root or do not want to send the whole repository to your backup PC, rsvndump is the right tool for you.</p>
+		<p>rsvndump is written in C and built on top of the subversion API, so it can offer all functionality needed to access a subversion repository, including SSL authentication. At the moment, there is still need for the <i>svn</i> program to produce a log of the revisions that should be dumped (this will change soon). And it's GPLed.</p>
+		<hr />
+		Contents of this web page:
+		<ul>
+			<li><b><a href="README">README</a></b> - Requirements and information</li>
+			<li><b><a href="manpage.html">man page</a></b> - Online version of the man page</li>
+			<li><b>Downloads:</b>
+			<ul>
+				<li><a href="rsvndump-0.3-src.tar.gz">rsvndump-0.3-src.tar.gz</a> - Source code distribution</li>
+				<li><a href="rsvndump-0.3-src.tar.bz2">rsvndump-0.3-src.tar.bz2</a> - Source code distribution</li>
+			</ul></li>
+			<li><b><a href="ChangeLog">ChangeLog</a></b> - The rsvndump change log</li>
+			<li><b><a href="http://www.gnu.org/licenses/gpl-2.0.txt">COPYING</a></b> - The GPL v2, under which rsvndump is released</li>
+		</ul>
+		<hr />
+		<p align="right"><i>Last update: August 23rd, 2008</i></p>
+	</body>
+</html>
+

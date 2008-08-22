@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+#	Web page distribution script for rsvndump
+#	written by Jonas Gehring <jonas.gehring@boolsoft.org>
+#
+#	Usage: ./makeweb <root>
+#	root is the root directory of the rsvndump source 
+#	distribution (trunk)
+#
+
+# Some constants
+PROG="rsvndump"
+
+# Validate arguments
+if [ -z "$1" ]; then 
+	echo 
+	echo "USAGE: $0 <root>"
+	echo 
+	exit 1
+fi
+
+ROOT="$1"
+
+
+# Create web page folder and copy static content
+mkdir web
+cp "${ROOT}/web/index.html" web
+cp "${ROOT}/README" web/README
+cp "${ROOT}/ChangeLog" web/ChangeLog
+
+# Create dynamic content
+man2html "${ROOT}/man/${PROG}.1" > web/manpage.html
+
+exit 0
