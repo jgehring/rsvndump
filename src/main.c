@@ -198,7 +198,13 @@ int main(int argc, char **argv)
 	}
 
 	if (repo_dir == NULL && !online) {
-		repo_dir = strdup("/tmp/"APPNAME"XXXXXX");
+		if (getenv("TMPDIR") != NULL) {
+			repo_dir = malloc(strlen(getenv("TMPDIR"))+strlen(APPNAME)+8);
+			strcpy(repo_dir, getenv("TMPDIR"));
+			strcat(repo_dir, APPNAME"XXXXXX");
+		} else {
+			repo_dir = strdup("/tmp/"APPNAME"XXXXXX");
+		}
 		repo_dir = mkdtemp(repo_dir);
 		if (repo_dir == NULL) {
 			fprintf(stderr, "Error creating download directory\n");
