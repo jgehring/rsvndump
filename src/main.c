@@ -48,15 +48,23 @@ FILE *input, *output;
 static char dir_created = 0;
 
 
+// Prints the program version
+static void print_version()
+{
+	printf(APPNAME" "APPVERSION"\n");
+	printf("Copyright (C) 2008 by "APPAUTHOR"\n");
+}
+
+
 // Prints usage information
 static void print_usage()
 {
-	printf(APPNAME" "APPVERSION"\n");
-	printf("CopyLeft 2008 by "APPAUTHOR"\n");
+	print_version();
 	printf("\n");
 	printf("USAGE: "APPNAME" [options] <url>\n\n");
 	printf("Valid options:\n");
 	printf("    -h [--help]               print a nice help screen\n");
+	printf("    --version                 print the program name and version\n");
 	printf("    -q [--quiet]              be quiet\n");
 	printf("    -v [--verbose]            print extra progress\n");
 	printf("    -u [--username] arg       username\n");
@@ -142,6 +150,10 @@ int main(int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
 			print_usage();
+			free_globals();
+			return EXIT_SUCCESS;
+		} else if (!strcmp(argv[i], "--version")) {
+			print_version();
 			free_globals();
 			return EXIT_SUCCESS;
 		} else if (!strcmp(argv[i], "-q") || !strcmp(argv[i], "--quiet")) {
