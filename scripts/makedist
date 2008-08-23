@@ -30,19 +30,29 @@ svn export "${REPO}/tags/${PROG}-${VERSION}" > /dev/null
 # Remove unneccessary stuff
 echo ">> Removing unneccessary stuff..."
 
-# Prepare (e.g. aclocal && autoconf && automake)
+# Prepare
 echo ">> Preparing..."
+cd "${PROG}-${VERSION}"
+autoheader
+aclocal
+autoconf
+automake -a
+./configure
 
 # Generate various packages
 echo ">> Generating gzipped package..."
-tar -czf "${PROG}-${VERSION}.tar.gz" "${PROG}-${VERSION}"
+make dist-gzip
+mv "${PROG}-${VERSION}.tar.gz" ..
 echo ">> Generating bzip2 package..."
-tar -cjf "${PROG}-${VERSION}.tar.bz2" "${PROG}-${VERSION}"
+make dist-bzip2
+mv "${PROG}-${VERSION}.tar.bz2" ..
 if [ -n "${PREV_VERSION}" ]; then
 	echo ">> Generating patch to previous version..."
 	svn diff "${REPO}/tags/${PROG}-${PREV_VERSION}" "${REPO}/tags/${PROG}-${VERSION}" > "${PROG}-${VERSION}.patch"
 	gzip "${PROG}-${VERSION}.patch"
+	mv "${PROG}-${VERSION}.patch.gz" ..
 fi
+cd ..
 
 #echo ">> Generating ebuild"
 #sudo ./makeebuild "${VERSION}"
