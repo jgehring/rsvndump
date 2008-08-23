@@ -1,6 +1,12 @@
-0.3	20080812	Speeded up dumping process by checking out every revision
-			  and check file kind & properties locally
-			Added --online flag to restore old behaviour
+0.3	20080824	Added new offline mode which provides a big speedup
+			  for repositories outside the local network
+			Copies from a source out of reach (i.e. a source that
+			  has not been dumped yet) will be resolved and marked
+			  as "added"
+			Added another verbosity mode and some additional flags
+			  for convenience
+			Added man page
+			Switched to GNU autotools
 
 0.2	20080811	Fixed horrible memory leak(s)
 			Added dumping of rename copyfrom information
