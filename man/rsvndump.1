@@ -15,73 +15,85 @@ svn -q -r 0:HEAD log
 .RB [options]
 .I url
 .SH DESCRIPTION
-.I rsvndump
+.B rsvndump
 is a command line tool to dump a subversion repository that resides on a remote server. All data is dumped in the format that can be read and written by the svnadmin(1) command, so the data produced by
-.I rsvndump
+.B rsvndump
 can easily be imported into a new subversion repository.
 .PP
 However, since
-.I rsvndump
+.B rsvndump
 allows you to dump only there are quite a few differences to a normal dump:
 
-   - Revision numbers are not synced with the remote repository but are simply counted, starting from 0. 
+   - Revision numbers are not synced with the remote repository but are simply counted, starting from 1. 
    - The url that has been specified serves as the new repository url. This means that it will be stripped from every directory and file. 
 
-.I rsvndump
+.B rsvndump
 provides an offline and an online mode and defaults to offline mode. See below for a detailed description and comparison of the modes.
 .SH OPTIONS
+Options in brackets are provided as synonyms:
 .TP
-.B \-h --help
+.B "-h [--help]"
 print a nice help screen
 .TP
-.B \-q --quiet
+.B "-q [--quiet]"
 be quiet
 .TP
-.B \-v --verbose
+.B "-v [--verbose]"
 print extra progress. This is not very expressive in offline mode.
-.TP
-.B \-u --username 
-username for svn authentication.
-.br If not specified and the given url is not a public repository,
-.I rsvndump
-will ask for the username on stdin.
-.TP
-.B \-p --password
-password for svn authentication.
+.TP 
+.BI "-u [--username]"\ username
+username for repository authentication.
 .br
+If not specified and the repository does not provide anonymous access, the name of the user that has run
+.B rsvndump
+if used. If repository access is still blocked, 
+.B rsvndump
+will ask for the username
 If not specified and the given url is not a public repository,
-.I rsvndump
-will ask for the password on stdin.
+.B rsvndump
+will ask for the username on 
+.I stdin.   
+.br
+Be sure to provide a valid username when providing the log data via
+.I stdin
+, because the username might be taken from the log data.
 .TP
-.B \-l --logfile
+.BI "-p {--password]"\ password
+password for repository authentication.
+.br
+If not specified and the given url does not provide anonymous read access,
+.B rsvndump
+will ask for the password.
+.TP
+.BI "-l [--logfile]"\ logfile
 subversion log file to be used. This file should contain the output of
 .B svn -q -r 0:HEAD log 
 .I url
 .br
 If not specified, the subversion log data is read from stdin.
 .TP
-.B \-o --outfile
+.BI "-o [--outfile]"\ outfile
 output file for the dumped data.
 .br
 If not specified,
-.I rsvndump
-will write all dumped data to stdout.
+.B rsvndump
+will write all dumped data to
+.I stdout.
 .TP
-.B \-d --download-dir
-directory where the working svn copy will be stored. A working copy will
-only be used when dumping in offline mode (see below for details)
+.B "-d [--download-dir]"\ dir
+directory where the working svn copy will be stored. 
 .br
+A working copy will only be used when dumping in offline mode (see below for details).
 If not specified,
-.I rsvndump
-will create a temporary directory in
-.BR /tmp . 
+.B rsvndump
+will create a temporary directory inside the system-wide temporary directory.
 This directory will be cleared if the program exits.
 .TP
-.B \--online
+.B --online
 run in online mode as described below.
 .SH ONLINE/OFFLINE MODE
 By default,
-.I rsvndump
+.B rsvndump
 uses the offline mode, which means that a working
 copy of the repository is kept at the local disk. The copy is then updated
 to every revision specified in the logfile, and all information is fetched
@@ -89,17 +101,16 @@ using the copy. This provides a fast dump for really remote repositories,
 because all data can be transfered at once. 
 .PP
 However, if you want to dump a repository in your local network that does
-not consist of very much files, online mode will propably be faster than
+not consist of very much files per change, online mode will propably be faster than
 offline mode. In online mode, all information is fetched directly from the
 repository and no additional data is stored on the local hard disk.
 .SH NOTES
 Unlike svn(1),
-.I rsvndump
+.B rsvndump
 does not save passwords or SSL certifactes on disk for later authentication. Thus, passwords must be entered or specified everytime the program is run. The same is true for accepting SSL certificates.
 .SH BUGS 
-Currently, it seems like there is a memory leak when dumping a repository with SSL authentication. All other dumps run fine, so maybe there is a bug inside one of the underlying repositories. 
+Currently, it seems like there is a memory leak when dumping a repository from an apache server. All other dumps run fine without any leaks, so maybe there is a bug inside one of the underlying libraries.
 .SH AUTHOR
-.I rsvndump
-0.3, Copyright (C) 2008 Jonas Gehring <jonas.gehring@boolsoft.org>
+Jonas Gehring <jonas.gehring@boolsoft.org>
 .SH SEE ALSO
 svn(1), svnadmin(1)
