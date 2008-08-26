@@ -454,10 +454,11 @@ list_t svn_list_props(const char *path, int rev)
 	apr_array_header_t *props;
 	svn_error_t *err = svn_client_proplist(&props, encode_path(path), &revision, FALSE, ctx, revpool);
 	if (err) {
+		// This function may fail very often because of the lack of properties for a given node
 #ifdef DEBUG
-		fprintf(stderr, "error: svn_list_props(%s,%d)\n\n", path, rev);
+//		fprintf(stderr, "error: svn_list_props(%s,%d)\n\n", path, rev);
 #endif
-		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+//		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		return list;
 	}
 
