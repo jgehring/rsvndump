@@ -73,12 +73,14 @@ static char *get_real_path(char *nodename)
 		}
 		strcat(realpath, nodename+strlen(repo_prefix));
 	} else {
+		fprintf(stderr, "get_real_path(%s): repo_dir=%s, repo_prefix=%s ", nodename, repo_dir, repo_prefix);
 		realpath = malloc(strlen(repo_dir)+strlen(nodename+strlen(repo_prefix))+2);
 		strcpy(realpath, repo_dir);
 		if ((repo_dir[strlen(repo_dir)-1] != '/') && (nodename[strlen(repo_prefix)] != '/')) {
 			strcat(realpath, "/");
 		}
 		strcat(realpath, nodename+strlen(repo_prefix));
+		fprintf(stderr, "-> realpath=%s\n", realpath);
 	}
 
 	return realpath;
@@ -455,7 +457,7 @@ char dump_repository()
 		fprintf(output, "\n");
 
 		list_t changes;
-		changes = svn_list_changes(online ? repo_base : repo_dir, repo_rev_number);
+		changes = svn_list_changes(online ? repo_url : repo_dir, repo_rev_number);
 
 		// Get node type info and insert into hash to prevent duplicates (this can happen
 		// when nodes are copied)

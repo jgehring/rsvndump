@@ -34,7 +34,6 @@
 
 // Other constants
 #define DUMPFORMAT_VERSION "2"
-#define HEAD_REVISION -1
 
 
 // Enumerations

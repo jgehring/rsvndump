@@ -282,12 +282,8 @@ svn_stream_t *svn_open(char *path, int rev, char **buffer, int *len)
 	svn_stringbuf_t *buf = svn_stringbuf_create("", filepool);
 	svn_stream_t *stream = svn_stream_from_stringbuf(buf, filepool);
 
-	if (rev == HEAD_REVISION) {
-		revision.kind = svn_opt_revision_head;
-	} else {
-		revision.kind = svn_opt_revision_number;
-		revision.value.number = rev;
-	}
+	revision.kind = svn_opt_revision_number;
+	revision.value.number = rev;
 
 	svn_error_t *err = svn_client_cat2(stream, encode_path(path), &revision, &revision, ctx, filepool);
 	if (err) {
@@ -346,15 +342,10 @@ static svn_error_t *svn_log_rec_info(void *baton, apr_hash_t *changed_paths, svn
 char svn_log(const char *path, int rev, char **author, char **logmsg, char **date)
 {
 	svn_opt_revision_t start, end;
-	if (rev == HEAD_REVISION) {
-		start.kind = svn_opt_revision_head;
-		end.kind = svn_opt_revision_head;
-	} else {
-		start.kind = svn_opt_revision_number;
-		start.value.number = rev;
-		end.kind = svn_opt_revision_number;
-		end.value.number = rev;
-	}
+	start.kind = svn_opt_revision_number;
+	start.value.number = rev;
+	end.kind = svn_opt_revision_number;
+	end.value.number = rev;
 
 	apr_array_header_t *paths
 		= apr_array_make (revpool, 1, sizeof (const char *));
@@ -419,15 +410,10 @@ static svn_error_t *svn_log_rec(void *baton, apr_hash_t *changed_paths, svn_revn
 list_t svn_list_changes(const char *path, int rev)
 {
 	svn_opt_revision_t start, end;
-	if (rev == HEAD_REVISION) {
-		start.kind = svn_opt_revision_head;
-		end.kind = svn_opt_revision_head;
-	} else {
-		start.kind = svn_opt_revision_number;
-		start.value.number = rev;
-		end.kind = svn_opt_revision_number;
-		end.value.number = rev;
-	}
+	start.kind = svn_opt_revision_number;
+	start.value.number = rev;
+	end.kind = svn_opt_revision_number;
+	end.value.number = rev;
 
 	list_t list;
 	list_init(&list, sizeof(change_entry_t));
@@ -436,9 +422,6 @@ list_t svn_list_changes(const char *path, int rev)
 	apr_array_header_t *paths
 		= apr_array_make (revpool, 1, sizeof (const char *));
 	APR_ARRAY_PUSH(paths, const char *) = encode_path(path);
-//	if (path && strlen(path)) {
-//		APR_ARRAY_PUSH(paths, const char *) = encode_path(path);
-//	}
 
 	svn_error_t *err = svn_client_log(paths, &start, &end, TRUE, TRUE, svn_log_rec, NULL, ctx, revpool);
 	if (err) {
@@ -457,12 +440,8 @@ list_t svn_list_props(const char *path, int rev)
 {
 	svn_opt_revision_t revision;
 	if (online) {
-		if (rev == HEAD_REVISION) {
-			revision.kind = svn_opt_revision_head;
-		} else {
-			revision.kind = svn_opt_revision_number;
-			revision.value.number = rev;
-		}
+		revision.kind = svn_opt_revision_number;
+		revision.value.number = rev;
 	} else {
 		// Get props from working copy
 		revision.kind = svn_opt_revision_unspecified;
@@ -478,7 +457,7 @@ list_t svn_list_props(const char *path, int rev)
 #ifdef DEBUG
 		fprintf(stderr, "error: svn_list_props(%s,%d)\n\n", path, rev);
 #endif
-		//		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		return list;
 	}
 
@@ -546,12 +525,8 @@ nodekind_t svn_get_kind(const char *path, int rev)
 
 	svn_opt_revision_t revision;
 
-	if (rev == HEAD_REVISION) {
-		revision.kind = svn_opt_revision_head;
-	} else {
-		revision.kind = svn_opt_revision_number;
-		revision.value.number = rev;
-	}
+	revision.kind = svn_opt_revision_number;
+	revision.value.number = rev;
 
 	mnodekind = NK_NONE;
 	mnodepath = path;
@@ -609,12 +584,8 @@ char svn_repo_info(const char *path, char **url, char **prefix)
 char svn_checkout(const char *repo, const char *path, int rev)
 {
 	svn_opt_revision_t revision;
-	if (rev == HEAD_REVISION) {
-		revision.kind = svn_opt_revision_head;
-	} else {
-		revision.kind = svn_opt_revision_number;
-		revision.value.number = rev;
-	}
+	revision.kind = svn_opt_revision_number;
+	revision.value.number = rev;
 
 	svn_error_t *err = svn_client_checkout(NULL, repo, svn_path_uri_encode(svn_path_canonicalize(path, revpool), revpool), &revision, TRUE, ctx, revpool);
 	if (err) {
@@ -633,12 +604,8 @@ char svn_checkout(const char *repo, const char *path, int rev)
 char svn_update_path(const char *path, int rev)
 {
 	svn_opt_revision_t revision;
-	if (rev == HEAD_REVISION) {
-		revision.kind = svn_opt_revision_head;
-	} else {
-		revision.kind = svn_opt_revision_number;
-		revision.value.number = rev;
-	}
+	revision.kind = svn_opt_revision_number;
+	revision.value.number = rev;
 
 	svn_error_t *err = svn_client_update(NULL, svn_path_uri_encode(svn_path_canonicalize(path, revpool), revpool), &revision, TRUE, ctx, revpool);
 	if (err) {
@@ -675,12 +642,8 @@ static svn_error_t *svn_ls_handler(void *baton, const char *path, const svn_dire
 list_t svn_list_path(const char *path, int rev)
 {
 	svn_opt_revision_t revision;
-	if (rev == HEAD_REVISION) {
-		revision.kind = svn_opt_revision_head;
-	} else {
-		revision.kind = svn_opt_revision_number;
-		revision.value.number = rev;
-	}
+	revision.kind = svn_opt_revision_number;
+	revision.value.number = rev;
 
 	list_t list;
 	list_init(&list, sizeof(change_entry_t));
