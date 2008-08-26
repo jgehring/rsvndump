@@ -198,26 +198,31 @@ char svn_init()
 	svn_error_t *err = svn_fs_initialize(pool);
 	if (err) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 		return 1;
 	}
 
 	err = svn_config_ensure(NULL, pool);
 	if (err) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 		return 1;
 	}
 
 	// Init the context object
 	if ((err = svn_client_create_context(&ctx, pool))) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 		return 1;
 	}
 	if ((err = svn_config_get_config(&(ctx->config), NULL, pool))) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 		return 1;
 	}
 	if ((err = svn_config_get_config(&(ctx->config), NULL, pool))) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 		return 1;
 	}
 
@@ -291,6 +296,7 @@ svn_stream_t *svn_open(char *path, int rev, char **buffer, int *len)
 		fprintf(stderr, "error: svn_open(%s,%d,%p,%p)\n\n", path, rev, buffer, len);
 #endif
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 		return NULL;
 	}
 
@@ -357,6 +363,7 @@ char svn_log(const char *path, int rev, char **author, char **logmsg, char **dat
 		fprintf(stderr, "error: svn_log(%s,%d,%p,%p)\n\n", path, rev, logmsg, date);
 #endif
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 		return 1;
 	}
 
@@ -429,6 +436,7 @@ list_t svn_list_changes(const char *path, int rev)
 		fprintf(stderr, "error: svn_list_changes(%s,%d)\n\n\n", path, rev);
 #endif
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 	}
 
 	return list;
@@ -459,6 +467,7 @@ list_t svn_list_props(const char *path, int rev)
 //		fprintf(stderr, "error: svn_list_props(%s,%d)\n\n", path, rev);
 #endif
 //		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 		return list;
 	}
 
@@ -538,6 +547,7 @@ nodekind_t svn_get_kind(const char *path, int rev)
 		fprintf(stderr, "error: svn_get_kind(%s,%d)\n\n", path, rev);
 #endif
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 		return NK_NONE;
 	}
 
@@ -565,6 +575,7 @@ char svn_repo_info(const char *path, char **url, char **prefix)
 		fprintf(stderr, "error: svn_repo_info(%s,%p,%p)\n\n", path, url, prefix);
 #endif
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 		return 1;
 	}
 
@@ -594,6 +605,7 @@ char svn_checkout(const char *repo, const char *path, int rev)
 		fprintf(stderr, "error: svn_checkout(%s,%s,%d)\n\n", repo, path, rev);
 #endif
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 		return 1;
 	}
 
@@ -614,6 +626,7 @@ char svn_update_path(const char *path, int rev)
 		fprintf(stderr, "error: svn_update_path(%s,%d)\n\n", path, rev);
 #endif
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 		return 1;
 	}
 
@@ -657,6 +670,7 @@ list_t svn_list_path(const char *path, int rev)
 		fprintf(stderr, "error: svn_list_path(%s,%d)\n\n", path, rev);
 #endif
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
 		return list;
 	}
 
