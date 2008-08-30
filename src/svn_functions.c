@@ -323,7 +323,7 @@ void svn_close(svn_stream_t *stream)
 // Output log for a specified path
 static char *mauthor, *mlogmsg, *mdate;
 
-static svn_error_t *svn_log_rec_info(void *baton, apr_hash_t *changed_paths, svn_revnum_t revision, const char *author, const char *date, const char *message, apr_pool_t *pool)
+static svn_error_t *svn_log_handler(void *baton, apr_hash_t *changed_paths, svn_revnum_t revision, const char *author, const char *date, const char *message, apr_pool_t *pool)
 {
 	if (author) {
 		mauthor = strdup(author);
@@ -357,7 +357,7 @@ char svn_log(const char *path, int rev, char **author, char **logmsg, char **dat
 		= apr_array_make (revpool, 1, sizeof (const char *));
 	APR_ARRAY_PUSH(paths, const char *) = svn_path_uri_encode(path, revpool);
 
-	svn_error_t *err = svn_client_log(paths, &start, &end, FALSE, FALSE, svn_log_rec_info, NULL, ctx, revpool);
+	svn_error_t *err = svn_client_log(paths, &start, &end, FALSE, FALSE, svn_log_handler, NULL, ctx, revpool);
 	if (err) {
 #ifdef DEBUG
 		fprintf(stderr, "error: svn_log(%s,%d,%p,%p)\n\n", path, rev, logmsg, date);
@@ -377,9 +377,9 @@ char svn_log(const char *path, int rev, char **author, char **logmsg, char **dat
 
 // List changes of path for previous revision to rev 
 static list_t *mlist;
-static svn_error_t *svn_log_rec(void *baton, apr_hash_t *changed_paths, svn_revnum_t revision, const char *author, const char *date, const char *message, apr_pool_t *pool)
+static svn_error_t *svn_list_changes_handler(void *baton, apr_hash_t *changed_paths, svn_revnum_t revision, const char *author, const char *date, const char *message, apr_pool_t *pool)
 {
-	change_entry_t entry = default_entry();;
+	change_entry_t entry = default_entry();
 	apr_hash_index_t *idx;
 	if (changed_paths == NULL) {
 		return SVN_NO_ERROR;
@@ -430,7 +430,7 @@ list_t svn_list_changes(const char *path, int rev)
 		= apr_array_make (revpool, 1, sizeof (const char *));
 	APR_ARRAY_PUSH(paths, const char *) = encode_path(path);
 
-	svn_error_t *err = svn_client_log(paths, &start, &end, TRUE, TRUE, svn_log_rec, NULL, ctx, revpool);
+	svn_error_t *err = svn_client_log(paths, &start, &end, TRUE, TRUE, svn_list_changes_handler, NULL, ctx, revpool);
 	if (err) {
 #ifdef DEBUG
 		fprintf(stderr, "error: svn_list_changes(%s,%d)\n\n\n", path, rev);
@@ -496,7 +496,7 @@ list_t svn_list_props(const char *path, int rev)
 // Lists a repository using a given function for "printing"
 nodekind_t mnodekind;
 const char *mnodepath;
-static svn_error_t *svn_list_handler(void *baton, const char *path, const svn_dirent_t *dirent, const svn_lock_t *lock, const char *abs_path, apr_pool_t *pool)
+static svn_error_t *svn_get_kind_handler(void *baton, const char *path, const svn_dirent_t *dirent, const svn_lock_t *lock, const char *abs_path, apr_pool_t *pool)
 {
 	char *full_path = malloc(strlen(path)+strlen(abs_path)+2);
 	sprintf(full_path, "%s/%s", abs_path, path);
@@ -541,7 +541,7 @@ nodekind_t svn_get_kind(const char *path, int rev)
 	mnodekind = NK_NONE;
 	mnodepath = path;
 
-	svn_error_t *err = svn_client_list(encode_path(path), &revision, &revision, FALSE, SVN_DIRENT_KIND, FALSE, svn_list_handler, NULL, ctx, revpool);
+	svn_error_t *err = svn_client_list(encode_path(path), &revision, &revision, FALSE, SVN_DIRENT_KIND, FALSE, svn_get_kind_handler, NULL, ctx, revpool);
 	if (err) {
 #ifdef DEBUG
 		fprintf(stderr, "error: svn_get_kind(%s,%d)\n\n", path, rev);
@@ -556,8 +556,8 @@ nodekind_t svn_get_kind(const char *path, int rev)
 
 
 // Gets repository information
-char *murl;
-svn_error_t *svn_info_rec(void *baton, const char *path, const svn_info_t *info, apr_pool_t *poola)
+static char *murl;
+static svn_error_t *svn_repo_info_handler(void *baton, const char *path, const svn_info_t *info, apr_pool_t *poola)
 {
 	// TODO: The uuid may also be read here
 	murl = strdup(info->repos_root_URL);
@@ -569,7 +569,7 @@ char svn_repo_info(const char *path, char **url, char **prefix)
 	svn_opt_revision_t revision;
 	revision.kind = svn_opt_revision_head;
 
-	svn_error_t *err = svn_client_info(svn_path_uri_encode(path, pool), &revision, &revision, svn_info_rec, NULL, FALSE, ctx, pool);
+	svn_error_t *err = svn_client_info(svn_path_uri_encode(path, pool), &revision, &revision, svn_repo_info_handler, NULL, FALSE, ctx, pool);
 	if (err) {
 #ifdef DEBUG
 		fprintf(stderr, "error: svn_repo_info(%s,%p,%p)\n\n", path, url, prefix);
