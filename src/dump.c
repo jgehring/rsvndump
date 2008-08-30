@@ -29,6 +29,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <svn_repos.h>
+
 
 #define MAX_LINE_SIZE 4096 
 #define SEPERATOR "------------------------------------------------------------------------\n"
@@ -63,6 +65,9 @@ static int compare_changes(const void *a, const void *b)
 // Allocates and returns the real path for a node
 static char *get_real_path(char *nodename)
 {
+#if DEBUG
+	fprintf(stderr, "get_real_path(%s)\n", nodename);
+#endif
 	char *realpath;
 	if (online) {
 		realpath = malloc(strlen(repo_url)+strlen(nodename+strlen(repo_prefix))+2);
@@ -161,16 +166,16 @@ static void dump_node(change_entry_t *entry)
 
 	if (entry->copy_from_path) {
 		// The node is a copy, but there is always the possibility that the source revision has not been dumped
-		// because it resides on a top-level path. 
+		// because it resides on a top-level path. Or, the source path will not be dumped at all
 		int r;
 		for (r = rev_number; r > 0; r--) {
 			if (((int *)rev_map.elements)[r] == entry->copy_from_rev) {
 				break;
 			}
 		}
-		if (r == 0) {
+		if (r == 0 || strncmp(entry->path, entry->copy_from_path, strlen(repo_prefix))) {
 			// Here we are. This is really painful, because we need to dump the source of the copy now.
-			// If the entry is a directory, it needs to be dumped recursivly (handled by dump_tree later)
+			// If the entry is a directory, it needs to be dumped recursivly (handled by dump_copy later)
 			entry->action = NK_ADD;
 			entry->use_copy = 0;
 		} else {
@@ -181,11 +186,11 @@ static void dump_node(change_entry_t *entry)
 
 	// Write node header
 	if (strlen(tpath)) {
-		fprintf(output, "Node-path: %s\n", tpath);
+		fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_PATH, tpath);
 		if (entry->action != NK_DELETE) {
-			fprintf(output, "Node-kind: %s\n", entry->kind == NK_FILE ? "file" : "dir");
+			fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_KIND, entry->kind == NK_FILE ? "file" : "dir");
 		}
-		fprintf(output, "Node-action: "); 
+		fprintf(output, "%s: ", SVN_REPOS_DUMPFILE_NODE_ACTION ); 
 		switch (entry->action) {
 			case NK_CHANGE:
 				fprintf(output, "change\n"); 
@@ -203,11 +208,11 @@ static void dump_node(change_entry_t *entry)
 
 		if (entry->copy_from_path && entry->use_copy == 1) {
 			if (*(entry->copy_from_path+strlen(repo_prefix)) == '/') {
-				fprintf(output, "Node-copyfrom-path: %s\n", entry->copy_from_path+strlen(repo_prefix)+1);
+				fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, entry->copy_from_path+strlen(repo_prefix)+1);
 			} else {
-				fprintf(output, "Node-copyfrom-path: %s\n", entry->copy_from_path+strlen(repo_prefix));
+				fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, entry->copy_from_path+strlen(repo_prefix));
 			}
-			fprintf(output, "Node-copyfrom-rev: %d\n", entry->copy_from_rev);
+			fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_REV, entry->copy_from_rev);
 		}
 
 		if (entry->action != NK_DELETE) {
@@ -227,7 +232,7 @@ static void dump_node(change_entry_t *entry)
 				prop_length += strlen_property((prop_t *)props.elements + i);
 			}
 
-			fprintf(output, "Prop-content-length: %d\n", prop_length);
+			fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, prop_length);
 			if (entry->kind == NK_FILE && entry->action != NK_DELETE) {
 				if (online) {
 					stream = svn_open(realpath, repo_rev_number, &textbuffer, &textlen); 
@@ -236,9 +241,9 @@ static void dump_node(change_entry_t *entry)
 					stat(realpath, &st);
 					textlen = (int)st.st_size;
 				}
-				fprintf(output, "Text-content-length: %d\n", textlen);
+				fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_TEXT_CONTENT_LENGTH, textlen);
 			}
-			fprintf(output, "Content-length: %d\n", prop_length+textlen);
+			fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, prop_length+textlen);
 			fprintf(output, "\n");
 
 			for (i = 0; i < props.size; i++) {
@@ -316,7 +321,7 @@ static void dump_copy(change_entry_t *entry)
 		strcat(mrealpath, te->path); 
 
 		if (te->action != NK_DELETE) {
-			te->kind = svn_get_kind(mrealpath, te->copy_from_rev);
+			te->kind = svn_get_kind(mrealpath, entry->copy_from_rev);
 		} else {
 			te->kind = NK_FILE;
 		}
@@ -357,7 +362,7 @@ char dump_repository()
 	char *linebuffer = malloc(MAX_LINE_SIZE);
 	list_init(&rev_map, sizeof(int)),
 
-	fprintf(output, "SVN-fs-dump-format-version: %d\n", DUMPFORMAT_VERSION);
+	fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER, DUMPFORMAT_VERSION);
 	fprintf(output, "\n");
 
 	// TODO
@@ -368,9 +373,9 @@ char dump_repository()
 
 	// Write initial revision header
 	int props_length = PROPS_END_LEN;
-	fprintf(output, "Revision-number: %d\n", rev_number);	
-	fprintf(output, "Prop-content-length: %d\n", props_length);
-	fprintf(output, "Content-length: %d\n\n", props_length);	
+	fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, rev_number);	
+	fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
+	fprintf(output, "%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);	
 
 	fprintf(output, PROPS_END);
 	fprintf(output, "\n");
@@ -427,9 +432,9 @@ char dump_repository()
 		}
 
 		// Write initial revision header
-		fprintf(output, "Revision-number: %d\n", rev_number);	
-		fprintf(output, "Prop-content-length: %d\n", props_length);
-		fprintf(output, "Content-length: %d\n\n", props_length);
+		fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, rev_number);	
+		fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
+		fprintf(output, "%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);	
 
 		if (logmsg && strlen(logmsg)) {
 			fprintf(output, "K 7\n");
@@ -464,7 +469,9 @@ char dump_repository()
 			char *realpath = get_real_path(entry->path);
 
 			if (entry->action != NK_DELETE) {
-				entry->kind = svn_get_kind(realpath, repo_rev_number);
+				if (entry->copy_from_path != NULL) {
+					entry->kind = svn_get_kind(realpath, repo_rev_number);
+				}
 			} else {
 				entry->kind = NK_FILE;
 			}

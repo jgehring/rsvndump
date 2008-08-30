@@ -68,12 +68,14 @@ fi
 
 
 # Kill any remaining svnserves
-if [ -n "`pidof -s svnserve`" ]; then
+if [ "`ps ax|grep svnserve|wc -l`" != "1" ]; then
 	killall svnserve
 fi
 
 # Build executable and copy it to this directory
-cd .. && make clean && make
+cd .. && make clean
+CFLAGS="-g" ./configure
+make
 if [ "$?" != "0" ]; then
 	echo "ERROR: making project failed... aborting"
 	exit 1
@@ -168,7 +170,7 @@ if [ "$TEST_VALGRIND_OFFLINE" = "1" ]; then
 	echo "================================================================="
 	echo ">> Performing remote dump..."
 	svn -q -r 0:HEAD log "${REPO}" > svn.log
-	valgrind --leak-check=full --log-file=valgrind_remote_off.log ./rsvndump -l svn.log -o ${DUMPFILE} "${REPO}" 2>> log
+	valgrind --leak-check=full --show-reachable=yes --log-file=valgrind_remote_off.log ./rsvndump -l svn.log -o ${DUMPFILE} "${REPO}" 2>> log
 	rm -rf ${LOCALDIR}
 	mkdir ${LOCALDIR}
 	svnadmin create ${LOCALDIR}
@@ -177,7 +179,7 @@ if [ "$TEST_VALGRIND_OFFLINE" = "1" ]; then
 	cat ${DUMPFILE}| svnadmin load ${LOCALDIR} >> log
 	echo ">> Performing local dump..."
 	svn -q -r 0:HEAD --username "${LOCALUSER}" --password "${LOCALPASS}" log "${LOCALREPO}" > svn.log
-	valgrind --leak-check=full --log-file=valgrind_local_off.log ./rsvndump -l svn.log -o "${DUMPFILE}_local" -u "${LOCALUSER}" -p "${LOCALPASS}" "${LOCALREPO}" 2>> log
+	valgrind --leak-check=full --show-reachable=yes --log-file=valgrind_local_off.log ./rsvndump -l svn.log -o "${DUMPFILE}_local" -u "${LOCALUSER}" -p "${LOCALPASS}" "${LOCALREPO}" 2>> log
 	echo -n ">>> Offline test done in "
 	NOW=$(date +%s)
 	let DIFF=$(($NOW - $BEGIN))
@@ -199,7 +201,7 @@ if [ "$TEST_VALGRIND_ONLINE" = "1" ]; then
 	echo "================================================================="
 	echo ">> Performing remote dump..."
 	svn -q -r 0:HEAD log "${REPO}" > svn.log
-	valgrind --leak-check=full --log-file=valgrind_remote_on.log ./rsvndump -l svn.log -o ${DUMPFILE} --online "${REPO}" 2>> log
+	valgrind --leak-check=full --show-reachable=yes --log-file=valgrind_remote_on.log ./rsvndump -l svn.log -o ${DUMPFILE} --online "${REPO}" 2>> log
 	rm -rf ${LOCALDIR}
 	mkdir ${LOCALDIR}
 	svnadmin create ${LOCALDIR}
@@ -208,7 +210,7 @@ if [ "$TEST_VALGRIND_ONLINE" = "1" ]; then
 	cat ${DUMPFILE}| svnadmin load ${LOCALDIR} >> log
 	echo ">> Performing local dump..."
 	svn -q -r 0:HEAD --username "${LOCALUSER}" --password "${LOCALPASS}" log "${LOCALREPO}" > svn.log
-	valgrind --leak-check=full --log-file=valgrind_local_off.log ./rsvndump -l svn.log -o "${DUMPFILE}_local" -u "${LOCALUSER}" -p "${LOCALPASS}" --online "${LOCALREPO}" 2>> log
+	valgrind --leak-check=full --show-reachable=yes --log-file=valgrind_local_off.log ./rsvndump -l svn.log -o "${DUMPFILE}_local" -u "${LOCALUSER}" -p "${LOCALPASS}" --online "${LOCALREPO}" 2>> log
 	echo -n ">>> Online test done in "
 	NOW=$(date +%s)
 	let DIFF=$(($NOW - $BEGIN))
