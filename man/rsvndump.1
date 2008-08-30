@@ -19,14 +19,16 @@ svn -q -r 0:HEAD log
 is a command line tool to dump a subversion repository that resides on a remote server. All data is dumped in the format that can be read and written by the svnadmin(1) command, so the data produced by
 .B rsvndump
 can easily be imported into a new subversion repository.
-.PP
+.br
 However, since
 .B rsvndump
-allows you to dump only there are quite a few differences to a normal dump:
+allows you to exclusively dump sub-paths of repository, there are a few differences to a normal dump:
 
    - Revision numbers are not synced with the remote repository but are simply counted, starting from 1. 
    - The url that has been specified serves as the new repository root.
 
+If need an exact copy of the original repository, consider using the svnsync(1) program.
+.br
 .B rsvndump
 provides an offline and an online mode and defaults to offline mode. See below for a detailed description and comparison of the modes.
 
@@ -82,7 +84,7 @@ If not specified,
 will write all dumped data to
 .I stdout.
 .TP
-.B "-d [--download-dir]"\ dir
+.BI "-d [--download-dir]"\ dir
 directory where the working svn copy will be stored. 
 .br
 A working copy will only be used when dumping in offline mode (see below for details).
@@ -100,7 +102,7 @@ uses the offline mode, which means that a working
 copy of the repository is kept at the local disk. The copy is then updated
 to every revision specified in the logfile, and all information is fetched
 using the copy. This provides a fast dump for really remote repositories,
-because all data can be transfered at once. 
+because all data can be transfered at once.
 .PP
 However, if you want to dump a repository in your local network that does
 not consist of very much files per change, online mode will propably be faster than
@@ -117,8 +119,10 @@ Unlike svn(1),
 .B rsvndump
 does not save passwords or SSL certifactes on disk for later authentication. Thus, passwords must be entered or specified everytime the program is run. The same is true for accepting SSL certificates.
 .SH BUGS 
-Currently, it seems like there is a memory leak when dumping a repository from an apache server using SSL. All other dumps run fine without any leaks, though.
+Currently, there may be memory leak when dumping a repository from an apache server using SSL. All other dumps run fine, though.
+.SH TODO
+The current TODO list includes svn log functionality, the use of deltas inside the dump output and eventually incremental backups. MD5 checksums are also missing at the moment. For feature requests, feel free to drop a mail. 
 .SH AUTHOR
 Jonas Gehring <jonas.gehring@boolsoft.org>
 .SH SEE ALSO
-svn(1), svnadmin(1)
+svn(1), svnadmin(1), svnsync(1)
