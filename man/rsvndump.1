@@ -1,4 +1,4 @@
-.TH rsvndump "1" "August 24th, 2008" "rsvndump 0.3" "User Commands"
+.TH rsvndump "1" "August 30th, 2008" "rsvndump 0.3.1" "User Commands"
 .SH NAME
 rsvndump \- dump a remote subversion repository
 .SH SYNOPSIS
@@ -25,10 +25,12 @@ However, since
 allows you to dump only there are quite a few differences to a normal dump:
 
    - Revision numbers are not synced with the remote repository but are simply counted, starting from 1. 
-   - The url that has been specified serves as the new repository url. This means that it will be stripped from every directory and file. 
+   - The url that has been specified serves as the new repository root.
 
 .B rsvndump
 provides an offline and an online mode and defaults to offline mode. See below for a detailed description and comparison of the modes.
+
+Please note that there are situations where the dump of the repository can slightly differ from the original repository. A detailed description can be found under NOTES.
 .SH OPTIONS
 Options in brackets are provided as synonyms:
 .TP
@@ -105,11 +107,17 @@ not consist of very much files per change, online mode will propably be faster t
 offline mode. In online mode, all information is fetched directly from the
 repository and no additional data is stored on the local hard disk.
 .SH NOTES
+Since
+.B rsvndump
+allows you to dump an arbitrary path inside of a repository, the dumped data might not represent the exact history of the dumped path. This is due to the fact that
+.B rsvndump
+has to resolve subversion copies if the source of the copy is either not available in the current dump range (revision numbers are not synced) or may reside in another sub-tree of the repository. Here, resolving means that the data will be dumped as if it would have been added, not as if it would have been copied.
+
 Unlike svn(1),
 .B rsvndump
 does not save passwords or SSL certifactes on disk for later authentication. Thus, passwords must be entered or specified everytime the program is run. The same is true for accepting SSL certificates.
 .SH BUGS 
-Currently, it seems like there is a memory leak when dumping a repository from an apache server. All other dumps run fine without any leaks, so maybe there is a bug inside one of the underlying libraries.
+Currently, it seems like there is a memory leak when dumping a repository from an apache server using SSL. All other dumps run fine without any leaks, though.
 .SH AUTHOR
 Jonas Gehring <jonas.gehring@boolsoft.org>
 .SH SEE ALSO
