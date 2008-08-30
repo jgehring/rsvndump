@@ -31,7 +31,6 @@
 
 
 #define MAX_LINE_SIZE 4096 
-#define MAX_COMMENT_SIZE (MAX_LINE_SIZE*64) 
 #define SEPERATOR "------------------------------------------------------------------------\n"
 #define PROPS_END "PROPS-END\n"
 #define PROPS_END_LEN 10 
