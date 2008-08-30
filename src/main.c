@@ -40,9 +40,10 @@ char *repo_dir = NULL;
 char *repo_uuid = NULL;
 char *repo_username = NULL;
 char *repo_password = NULL;
+char *user_prefix = NULL;
 char online = 0;
 char verbosity = 0; // < 0: quiet, > 0: verbose 
-FILE *input, *output;
+FILE *input = NULL, *output = NULL;
 
 // File globals
 static char dir_created = 0;
@@ -69,6 +70,7 @@ static void print_usage()
 	printf("    -v [--verbose]            print extra progress\n");
 	printf("    -u [--username] arg       username\n");
 	printf("    -p [--password] arg       password\n");
+	printf("    --prefix arg              add a prefix to the path that is being dumped\n");
 	printf("    -l [--logfile] arg        output of 'svn -q -r 0:HEAD log'\n");
        	printf("                              if not specified, read from stdin\n");
 	printf("    -o [--outfile] arg        write data to file\n");
@@ -111,6 +113,18 @@ static void rm_temp_dir(const char *path, char remdir)
 }
 
 
+// Closes opened files
+static void close_files()
+{
+	if (input != NULL && input != stdin) {
+		fclose(input);
+	}
+	if (output != NULL && output != stdout) {
+		fclose(output);
+	}
+}
+
+
 // Frees memory used by globals
 static void free_globals()
 {
@@ -134,6 +148,9 @@ static void free_globals()
 	}
 	if (repo_password != NULL) {
 		free(repo_password);
+	}
+	if (user_prefix != NULL) {
+		free(user_prefix);
 	}
 }
 
@@ -161,21 +178,40 @@ int main(int argc, char **argv)
 		} else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")) {
 			verbosity = 1;
 		} else if (i+1 < argc && (!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username"))) {
+			if (repo_username != NULL) {
+				free(repo_username);
+			}
 			repo_username = strdup(argv[++i]);
 		} else if (i+1 < argc && (!strcmp(argv[i], "-p") || !strcmp(argv[i], "--password"))) {
+			if (repo_password != NULL) {
+				free(repo_password);
+			}
 			repo_password = strdup(argv[++i]);
+		} else if (i+1 < argc && !strcmp(argv[i], "--prefix")) {
+			if (user_prefix != NULL) {
+				free(user_prefix);
+			}
+			user_prefix = strdup(argv[++i]);
 		} else if (i+1 < argc && (!strcmp(argv[i], "-l") || !strcmp(argv[i], "--logfile"))) {
+			if (input != NULL && input != stdin) {
+				fclose(input);
+			}
 			input = fopen(argv[++i], "r");
 			if (input == NULL) {
 				fprintf(stderr, "Error opening logfile\n");
 				free_globals();
+				close_files();
 				return EXIT_FAILURE;
 			}
 		} else if (i+1 < argc && (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--outfile"))) {
+			if (output != NULL && output != stdout) {
+				fclose(output);
+			}
 			output = fopen64(argv[++i], "w");
 			if (output == NULL) {
 				fprintf(stderr, "Error opening outfile\n");
 				free_globals();
+				close_files();
 				return EXIT_FAILURE;
 			}
 		} else if (i+1 < argc && (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--download-dir"))) {
@@ -184,21 +220,32 @@ int main(int argc, char **argv)
 			if (!(st.st_mode & S_IFDIR)) {
 				fprintf(stderr, "Error: '%s' is not a directory or does not exist\n", argv[i]);
 				free_globals();
+				close_files();
 				return EXIT_FAILURE;
+			}
+			if (repo_dir != NULL) {
+				free(repo_dir);
 			}
 			repo_dir = strdup(argv[i]);
 		} else if (!strcmp(argv[i], "--online")) {
 			online = 1;
 		} else if (repo_url == NULL && svn_path_is_url(argv[i])) {
+			if (repo_url != NULL) {
+				free(repo_url);
+			}
 			repo_url = strdup(argv[i]);
 		} else {
 			fprintf(stderr, "Argument error: Unkown argument or malformed url '%s'\n", argv[i]);
 			fprintf(stderr, "Type %s --help for usage information\n", argv[0]);
+			free_globals();
+			close_files();
 			return EXIT_FAILURE;
 		}
 	}
 
 	if (repo_url == NULL) {
+		free_globals();
+		close_files();
 		print_usage();
 		return EXIT_FAILURE;
 	}
@@ -221,6 +268,7 @@ int main(int argc, char **argv)
 		if (repo_dir == NULL) {
 			fprintf(stderr, "Error creating download directory\n");
 			free_globals();
+			close_files();
 			return EXIT_FAILURE;
 		}
 		dir_created = 1;
@@ -233,6 +281,7 @@ int main(int argc, char **argv)
 	if (repo_base == NULL) {
 		fprintf(stderr, "Error getting information from repository '%s'\n", repo_url);
 		free_globals();
+		close_files();
 		return EXIT_FAILURE;
 	}
 
@@ -240,17 +289,10 @@ int main(int argc, char **argv)
 
 	svn_free();
 
-	if (input != stdin) {
-		fclose(input);
-	}
-	if (output != stdout) {
-		fclose(output);
-	}
-
+	close_files();
 	if (!online) {
 		rm_temp_dir(repo_dir, dir_created);
 	}
-
 	free_globals();
 	return EXIT_SUCCESS;
 }

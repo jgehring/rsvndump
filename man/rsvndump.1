@@ -62,12 +62,17 @@ Be sure to provide a valid username when providing the log data via
 .I stdin
 , because the username might be taken from the log data.
 .TP
-.BI "-p {--password]"\ password
+.BI "-p [--password]"\ password
 password for repository authentication.
 .br
 If not specified and the given url does not provide anonymous read access,
 .B rsvndump
 will ask for the password.
+.TP
+.BI "--prefix"\ prefix
+A custom string that is prepended to every node that is being dumped. The first revision dumped will also contain the paths neccessary to create the prefix.
+.br
+It is assumed that the prefix is a path, with directories seperated by '/'. If you want the prefix to be a directory, please append a '/' at the end.
 .TP
 .BI "-l [--logfile]"\ logfile
 subversion log file to be used. This file should contain the output of

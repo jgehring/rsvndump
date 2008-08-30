@@ -70,6 +70,7 @@ extern char *repo_dir;
 extern char *repo_uuid;
 extern char *repo_username;
 extern char *repo_password;
+extern char *user_prefix;
 extern char verbosity, online;
 extern FILE *input, *output;
 

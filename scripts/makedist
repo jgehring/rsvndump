@@ -41,7 +41,7 @@ automake -a
 
 # Generate various packages
 echo ">> Generating gzipped package..."
-make dist-gzip
+make dist
 mv "${PROG}-${VERSION}.tar.gz" ..
 echo ">> Generating bzip2 package..."
 make dist-bzip2

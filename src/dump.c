@@ -65,7 +65,7 @@ static int compare_changes(const void *a, const void *b)
 // Allocates and returns the real path for a node
 static char *get_real_path(char *nodename)
 {
-#if DEBUG
+#ifdef DEBUG
 	fprintf(stderr, "get_real_path(%s)\n", nodename);
 #endif
 	char *realpath;
@@ -156,7 +156,7 @@ static void dump_node(change_entry_t *entry)
 	}
 
 	if (entry->kind == NK_NONE || !entry->path || (entry->copy_from_path == NULL && strlen(tpath) == 0)) {
-#if DEBUG
+#ifdef DEBUG
 		fprintf(stderr, "\nThis should not happen.. \n\n");
 #endif
 		return;
@@ -186,7 +186,11 @@ static void dump_node(change_entry_t *entry)
 
 	// Write node header
 	if (strlen(tpath)) {
-		fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_PATH, tpath);
+		if (user_prefix != NULL) {
+			fprintf(output, "%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_PATH, user_prefix, tpath);
+		} else {
+			fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_PATH, tpath);
+		}
 		if (entry->action != NK_DELETE) {
 			fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_KIND, entry->kind == NK_FILE ? "file" : "dir");
 		}
@@ -208,9 +212,17 @@ static void dump_node(change_entry_t *entry)
 
 		if (entry->copy_from_path && entry->use_copy == 1) {
 			if (*(entry->copy_from_path+strlen(repo_prefix)) == '/') {
-				fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, entry->copy_from_path+strlen(repo_prefix)+1);
+				if (user_prefix != NULL) {
+					fprintf(output, "%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, user_prefix, entry->copy_from_path+strlen(repo_prefix)+1);
+				} else {
+					fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, entry->copy_from_path+strlen(repo_prefix)+1);
+				}
 			} else {
-				fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, entry->copy_from_path+strlen(repo_prefix));
+				if (user_prefix != NULL) {
+					fprintf(output, "%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, user_prefix, entry->copy_from_path+strlen(repo_prefix));
+				} else {
+					fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, entry->copy_from_path+strlen(repo_prefix));
+				}
 			}
 			fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_REV, entry->copy_from_rev);
 		}
@@ -290,6 +302,9 @@ static void dump_node(change_entry_t *entry)
 // Recursively dumps a given entry 
 static void dump_copy(change_entry_t *entry)
 {
+#ifdef DEBUG
+	fprintf(stderr, "dump_copy(%s)\n", entry->path);
+#endif
 	int i;
 
 	// Copy resolving has to be done online atm, sorry
@@ -352,6 +367,34 @@ static void dump_copy(change_entry_t *entry)
 
 	online = ton;
 }
+
+
+// Create, and maybe cleanup, user prefix path
+static void create_user_prefix()
+{
+	if (user_prefix == NULL) {
+		return;
+	}
+	char *new_prefix = malloc(strlen(user_prefix));
+	new_prefix[0] = '\0';
+	char *s = user_prefix, *e = user_prefix;
+	while ((e = strchr(s, '/')) != NULL) {
+		if (e-s < 1) {
+			++s;
+			continue;
+		}
+		strncpy(new_prefix+strlen(new_prefix), s, e-s+1);
+		fprintf(output, "%s: ", SVN_REPOS_DUMPFILE_NODE_PATH);
+		fwrite(new_prefix, 1, strlen(new_prefix)-1, output);
+		fputc('\n', output);
+		fprintf(output, "%s: dir\n", SVN_REPOS_DUMPFILE_NODE_KIND);
+		fprintf(output, "%s: add\n\n", SVN_REPOS_DUMPFILE_NODE_ACTION ); 
+		s = e+1;
+	}
+	strcat(new_prefix, s);
+	free(user_prefix);
+	user_prefix = new_prefix;
+}	
 
 
 // Dumps an entire repository
@@ -458,20 +501,23 @@ char dump_repository()
 		fprintf(output, PROPS_END);
 		fprintf(output, "\n");
 
+		// The first revision must contain an eventual user prefix
+		if (user_prefix != NULL && rev_number == 1) {
+			create_user_prefix();
+		}
+
 		list_t changes;
 		changes = svn_list_changes(online ? repo_url : repo_dir, repo_rev_number);
 
 		// Get node type info and insert into hash to prevent duplicates (this can happen
 		// when nodes are copied)
-		hcreate((int)((float)changes.size/0.8f));
+		hcreate((int)((float)changes.size*1.5f));
 		for (i = 0; i < changes.size; i++) {
 			change_entry_t *entry = ((change_entry_t *)changes.elements + i);
 			char *realpath = get_real_path(entry->path);
 
 			if (entry->action != NK_DELETE) {
-				if (entry->copy_from_path != NULL) {
-					entry->kind = svn_get_kind(realpath, repo_rev_number);
-				}
+				entry->kind = svn_get_kind(realpath, repo_rev_number);
 			} else {
 				entry->kind = NK_FILE;
 			}
