@@ -33,7 +33,7 @@
 #define APPAUTHOR "Jonas Gehring <jonas.gehring@boolsoft.org>"
 
 // Other constants
-#define DUMPFORMAT_VERSION "2"
+#define DUMPFORMAT_VERSION 2
 
 
 // Enumerations

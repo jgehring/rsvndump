@@ -73,18 +73,12 @@ static char *get_real_path(char *nodename)
 		}
 		strcat(realpath, nodename+strlen(repo_prefix));
 	} else {
-#if DEBUG
-		fprintf(stderr, "get_real_path(%s): repo_dir=%s, repo_prefix=%s ", nodename, repo_dir, repo_prefix);
-#endif
 		realpath = malloc(strlen(repo_dir)+strlen(nodename+strlen(repo_prefix))+2);
 		strcpy(realpath, repo_dir);
 		if ((repo_dir[strlen(repo_dir)-1] != '/') && (nodename[strlen(repo_prefix)] != '/')) {
 			strcat(realpath, "/");
 		}
 		strcat(realpath, nodename+strlen(repo_prefix));
-#if DEBUG
-		fprintf(stderr, "-> realpath=%s\n", realpath);
-#endif
 	}
 
 	return realpath;
@@ -364,7 +358,7 @@ char dump_repository()
 	char *linebuffer = malloc(MAX_LINE_SIZE);
 	list_init(&rev_map, sizeof(int)),
 
-	fprintf(output, "SVN-fs-dump-format-version: %s\n", DUMPFORMAT_VERSION);
+	fprintf(output, "SVN-fs-dump-format-version: %d\n", DUMPFORMAT_VERSION);
 	fprintf(output, "\n");
 
 	// TODO
