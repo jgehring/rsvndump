@@ -1,4 +1,4 @@
-rsvndump 0.3
+rsvndump 0.3.1
 CopyLeft 2008 by Jonas Gehring <jonas.gehring@boolsoft.org>
 
 
@@ -6,74 +6,19 @@ ABOUT
 =====
 rsvndump is a command line tool to dump a SVN repository
 that resides on a remote server.
-However, since rsvndump allows you to dump onlythere are 
-quite a few differences to a normal dump:
-
- > Revision numbers are not synced with the remote repository
-   but are simply counted, starting from 0. 
- > The url that has been specified serves as the new repository
-   url. This means that it will be stripped from every directory
-   and file. 
 
 
 USAGE
 =====
-rsvndump [options] <url>
-
-Valid options:
-    -q [--quiet]              be quiet
-    -u [--username] arg       username
-    -p [--password] arg       password
-    -l [--logfile] arg        output of 'svn -q -r 0:HEAD log'
-                              if not specified, read from stdin
-    -o [--outfile] arg        write data to file
-                              if not specified, print to stdout
-    -d [--download-dir] arg   directory for svn file downloads
-                              if not specified, create a temporary dir
-    --online                  do not store anything on the disk
-                              (the download dir is ignored then)
-
-By defeault, rsvndump reads the svn log data from stdin and
-prints the dump to stdout. However, since the tac command
-needs the complete svn log to reverse it and rsvndump is
-pretty slow, it might be not be useful to supply a stream from
-stdin. 
-
-
-ONLINE vs. OFFLINE
-==================
-By default, rsvndump uses an offline mode, which means that a working
-copy of the repository is kept at the local disk. The copy is then updated
-to every revision specified in the logfile, and all information is fetched
-using the copy. This provides a fast dump for really remote repositories,
-because all data can be transfered at once. 
-However, if you want to dump a repository in your local network that does
-not consist of very much files, online mode will propably be faster than
-offline mode. In online mode, all information is fetched directly from the
-repository and no additional data is stored on the local hard disk.
-
-
-CAVEATS
-=======
-rsvndump is a quick hack and surely has bugs and security issues
-
-Don't forget the revision range in 'svn -q -r 0:HEAD log'
- 
-
-NOTES
-=====
-SSL certificates are not being saved, so you have to accept them
-everytime you run rsvndump. The same is true for usernames and
-passwords.
-
-Revision ranges or exclusion of specific revisions can be contolled
-by modifying the svn log data.
+For usage information, please refer to the man page shipped
+with this package.
 
 
 CREDITS
 =======
-rsvndump 0.3
+rsvndump 0.3.1
 written by Jonas Gehring <jonas.gehring@boolsoft.org>
+http://saubue.boolsoft.org/projects/rsvndump
 
 
 LICENSE

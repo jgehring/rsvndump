@@ -29,7 +29,7 @@
 
 // Application-specific constants
 #define APPNAME "rsvndump"
-#define APPVERSION "0.3"
+#define APPVERSION "0.3.1"
 #define APPAUTHOR "Jonas Gehring <jonas.gehring@boolsoft.org>"
 
 // Other constants

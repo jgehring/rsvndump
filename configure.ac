@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(rsvndump, 0.3, jonas.gehring@boolsoft.org)
+AC_INIT(rsvndump, 0.3.1, jonas.gehring@boolsoft.org)
 AM_INIT_AUTOMAKE()
 AC_PREFIX_DEFAULT([/usr/local])
 test $prefix = NONE && prefix=/usr/local

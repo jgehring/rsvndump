@@ -29,6 +29,6 @@ cp "${ROOT}/README" web/README
 cp "${ROOT}/ChangeLog" web/ChangeLog
 
 # Create dynamic content
-man2html "${ROOT}/man/${PROG}.1" > web/manpage.html
+rman -f html "${ROOT}/man/${PROG}.1" > web/manpage.html
 
 exit 0
