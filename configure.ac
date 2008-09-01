@@ -45,10 +45,6 @@ CFLAGS="$SCFLAGS"
 CPPFLAGS="$SCPPFLAGS"
 AC_SUBST([SVN_CFLAGS])
 
-# Checks for header files.
-AC_HEADER_STDC
-AC_CHECK_HEADERS_ONCE([stdlib.h string.h unistd.h])
-
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_SIZE_T
