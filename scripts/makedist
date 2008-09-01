@@ -33,6 +33,8 @@ echo ">> Removing unneccessary stuff..."
 # Prepare
 echo ">> Preparing..."
 cd "${PROG}-${VERSION}"
+touch configure.ac
+touch Makefile.am
 autoheader
 aclocal
 autoconf
