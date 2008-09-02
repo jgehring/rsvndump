@@ -4,14 +4,26 @@ Copyright (C) 2008 by Jonas Gehring
 
 ABOUT
 =====
-rsvndump is a command line tool to dump a SVN repository
-that resides on a remote server.
+rsvndump is a command line tool that is able to dump a subversion repository
+that resides on a remote server. All data is dumped in the format that can be
+read/written by svnadmin, so the data produced by rsvndump can easily be
+imported into a new subversion repository.
+
+
+REQUIREMENTS
+============
+rsvndump depends on Subversion, which depends on the Apache Portable Runtinme.
+Therefore, to build rsvndump from source, the development and runtime files
+(headers and libraries) must be present on the system.
+rvnsump uses autotools for automatic dependency checking in ./configure. The
+check for the Apache Portable Runtime library is performed using pkg-config, so
+please make sure that pkg-config knows about the apr-1 and aprutil-1
+configurations.
 
 
 USAGE
 =====
-For usage information, please refer to the man page shipped
-with this package.
+For usage information, please refer to the man page shipped with this package.
 
 
 CREDITS

@@ -24,11 +24,17 @@ ROOT="$1"
 
 # Create web page folder and copy static content
 mkdir web
-cp "${ROOT}/web/index.html" web
+cp "${ROOT}/web/index.html" web/index.html
 cp "${ROOT}/README" web/README
 cp "${ROOT}/ChangeLog" web/ChangeLog
 
 # Create dynamic content
-rman -f html "${ROOT}/man/${PROG}.1" > web/manpage.html
+rman -f html "${ROOT}/man/${PROG}.1" > web/manpage.html 2> /dev/null
+
+# Scramble email address
+for i in web/*;
+do
+	sed -i 's/jonas\.gehring/$FORENAME\.$SURENAME/g' $i;
+done
 
 exit 0
