@@ -132,6 +132,7 @@ if [ "$TEST_ONLINE" = "1" ]; then
 	echo "================================================================="
 	echo "= Doing online mode test...                                     ="
 	echo "================================================================="
+	echo ">> Performing remote dump..."
 	svn -q -r 0:HEAD log "${REPO}"| ./rsvndump -o ${DUMPFILE} --online "${REPO}" 2>> log
 	rm -rf ${LOCALDIR}
 	mkdir ${LOCALDIR}

@@ -52,11 +52,15 @@ static int compare_changes(const void *a, const void *b)
 {
 	char *ap = ((change_entry_t *)a)->path;
 	char *bp = ((change_entry_t *)b)->path;
+	nodeaction_t aa = ((change_entry_t *)a)->action;
+	nodeaction_t ba = ((change_entry_t *)b)->action;
 	if (!strncmp(ap, bp, strlen(ap)) && strlen(ap) < strlen(bp)) {
 		// a is prefix of b and must be commited first
 		return -1; 
 	} else if (!strncmp(ap, bp, strlen(bp)) && strlen(bp) < strlen(ap)) {
 		return 1;
+	} else if (aa != ba) {
+		return (aa < ba ? -1 : 1);
 	}
 	return strcmp(((change_entry_t *)a)->path, ((change_entry_t *)b)->path);
 }

@@ -42,6 +42,7 @@ typedef enum {
 } nodekind_t;
 
 typedef enum {
+	// Ordering is important, see compare_changes() in dump.c
 	NK_CHANGE, NK_ADD, NK_DELETE, NK_REPLACE
 } nodeaction_t;
 
