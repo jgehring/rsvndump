@@ -24,7 +24,7 @@ ROOT="$1"
 
 # Create web page folder and copy static content
 mkdir web
-cp "${ROOT}/web/index.html" web/index.html
+cat "${ROOT}/web/index.html"| sed "s/\$DATE/`date +"%B %d, %Y"`/" > web/index.html
 cp "${ROOT}/README" web/README
 cp "${ROOT}/ChangeLog" web/ChangeLog
 
