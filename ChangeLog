@@ -1,4 +1,5 @@
-0.3.1	20080901	Fixed copy resolving from non-sub-paths with a
+0.3.1	20080901	Added custom prefix for dumped data
+			Fixed copy resolving from non-sub-paths with a
 			  revision number that has already been dumped
 			Fixed node-type checking in copy resolving
 			Fixed leaking memory due to svn_error_t pointers
