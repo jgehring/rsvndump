@@ -69,9 +69,6 @@ static int compare_changes(const void *a, const void *b)
 // Allocates and returns the real path for a node
 static char *get_real_path(char *nodename)
 {
-#ifdef DEBUG
-	fprintf(stderr, "get_real_path(%s)\n", nodename);
-#endif
 	char *realpath;
 	if (online) {
 		realpath = malloc(strlen(repo_url)+strlen(nodename+strlen(repo_prefix))+2);
@@ -270,10 +267,12 @@ static void dump_node(change_entry_t *entry)
 
 			if (entry->kind == NK_FILE && entry->action != NK_DELETE) {
 				if (online) {
-					for (i = 0; i < textlen; i++) {
-						fputc(textbuffer[i], output);
+					if (stream != NULL) {
+						for (i = 0; i < textlen; i++) {
+							fputc(textbuffer[i], output);
+						}
+						svn_close(stream);
 					}
-					svn_close(stream);
 				} else {
 					FILE *f = fopen(realpath, "r");
 					if (f != NULL) {

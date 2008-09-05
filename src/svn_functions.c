@@ -49,10 +49,17 @@ static char initialized = 0;
 // URI encoding
 static const char *encode_path(const char *path)
 {
+	apr_pool_t *apool = revpool;
+	if (apool == NULL) {
+#if DEBUG
+		fprintf(stderr, "encode_path(%s): using global pool!\n", path);
+#endif
+		apool = pool;
+	}
 	if (online) {
-		return svn_path_uri_encode(svn_path_canonicalize(path, revpool ? revpool : pool), revpool ? revpool : pool);
+		return svn_path_uri_encode(svn_path_canonicalize(path, apool), apool);
 	} else {
-		return svn_path_canonicalize(path, revpool ? revpool : pool);
+		return svn_path_canonicalize(path, apool);
 	}
 }
 
@@ -457,20 +464,19 @@ list_t svn_list_props(const char *path, int rev)
 
 	list_t list;
 	list_init(&list, sizeof(prop_t));
-	//	mlist = &list;
 
 	apr_array_header_t *props;
 	svn_error_t *err = svn_client_proplist(&props, encode_path(path), &revision, FALSE, ctx, revpool);
 	if (err) {
 		// This function may fail very often because of the lack of properties for a given node
 #ifdef DEBUG
-//		fprintf(stderr, "error: svn_list_props(%s,%d)\n\n", path, rev);
+		fprintf(stderr, "error: svn_list_props(%s,%d)\n\n", path, rev);
 #endif
 //		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
+		svn_pool_clear(revpool);
 		return list;
 	}
-
 	
 	int i;
 	for (i = 0; i < props->nelts; i++) {
@@ -489,6 +495,7 @@ list_t svn_list_props(const char *path, int rev)
 		}
 	}
 
+	svn_pool_clear(revpool);
 	return list;
 }
 
@@ -496,7 +503,7 @@ list_t svn_list_props(const char *path, int rev)
 // Lists a repository using a given function for "printing"
 nodekind_t mnodekind;
 const char *mnodepath;
-static svn_error_t *svn_get_kind_handler(void *baton, const char *path, const svn_dirent_t *dirent, const svn_lock_t *lock, const char *abs_path, apr_pool_t *pool)
+static svn_error_t *svn_get_kind_handler(void *baton, const char *path, const svn_dirent_t *dirent, const svn_lock_t *lock, const char *abs_path, apr_pool_t *apool)
 {
 	char *full_path = malloc(strlen(path)+strlen(abs_path)+2);
 	sprintf(full_path, "%s/%s", abs_path, path);
@@ -513,6 +520,7 @@ static svn_error_t *svn_get_kind_handler(void *baton, const char *path, const sv
 		}
 	}
 	free(full_path);
+
 	return SVN_NO_ERROR;
 }
 
@@ -548,9 +556,11 @@ nodekind_t svn_get_kind(const char *path, int rev)
 #endif
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
+		svn_pool_clear(revpool);
 		return NK_NONE;
 	}
 
+	svn_pool_clear(revpool);
 	return mnodekind;
 }
 
