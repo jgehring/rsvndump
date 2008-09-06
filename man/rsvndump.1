@@ -1,4 +1,4 @@
-.TH rsvndump "1" "September 1st, 2008" "rsvndump 0.3.1" "User Commands"
+.TH rsvndump "1" "September 6th, 2008" "rsvndump 0.3.2" "User Commands"
 .SH NAME
 rsvndump \- dump a remote subversion repository
 .SH SYNOPSIS
@@ -123,8 +123,6 @@ has to resolve subversion copies if the source of the copy is either not availab
 Unlike svn(1),
 .B rsvndump
 does not save passwords or SSL certifactes on disk for later authentication. Thus, passwords must be entered or specified everytime the program is run. The same is true for accepting SSL certificates.
-.SH BUGS 
-Currently, there may be memory leak when dumping a repository from an apache server using SSL. All other dumps run fine, though.
 .SH TODO
 The current TODO list includes svn log functionality, the use of deltas inside the dump output and eventually incremental backups. MD5 checksums are also missing at the moment. For feature requests, feel free to drop a mail. 
 .SH AUTHOR

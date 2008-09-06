@@ -28,9 +28,16 @@
 
 
 // Application-specific constants
-#define APPNAME "rsvndump"
-#define APPVERSION "0.3.1"
-#define APPAUTHOR "Jonas Gehring <jonas.gehring@boolsoft.org>"
+#ifndef HAVE_CONFIG_H
+ #define APPNAME "rsvndump"
+ #define APPVERSION "0.3.2"
+ #define APPAUTHOR "Jonas Gehring <jonas.gehring@boolsoft.org>"
+#else
+ #include "config.h"
+ #define APPNAME PACKAGE
+ #define APPVERSION PACKAGE_VERSION
+ #define APPAUTHOR "Jonas Gehring <"PACKAGE_BUGREPORT">"
+#endif
 
 // Other constants
 #define DUMPFORMAT_VERSION 2

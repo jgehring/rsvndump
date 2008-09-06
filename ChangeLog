@@ -1,3 +1,7 @@
+0.3.2	20080906	Fixed memory leaks due to long-living pools
+			Changed sorting of dumped nodes (change prior to 
+			  add prior to delete prior to replace)
+
 0.3.1	20080901	Added custom prefix for dumped data
 			Fixed copy resolving from non-sub-paths with a
 			  revision number that has already been dumped
