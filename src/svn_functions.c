@@ -500,7 +500,7 @@ list_t svn_list_props(const char *path, int rev)
 }
 
 
-// Lists a repository using a given function for "printing"
+// Retrieve the kind of a node
 nodekind_t mnodekind;
 const char *mnodepath;
 static svn_error_t *svn_get_kind_handler(void *baton, const char *path, const svn_dirent_t *dirent, const svn_lock_t *lock, const char *abs_path, apr_pool_t *apool)
