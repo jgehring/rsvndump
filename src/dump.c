@@ -229,7 +229,7 @@ static void dump_node(change_entry_t *entry)
 		}
 
 		if (entry->action != NK_DELETE) {
-			int prop_length = PROPS_END_LEN;
+			int prop_length = 0;
 			svn_stream_t *stream = NULL; 
 			char *textbuffer = NULL;
 			int textlen = 0;
@@ -244,8 +244,11 @@ static void dump_node(change_entry_t *entry)
 			for (i = 0; i < props.size; i++) {
 				prop_length += strlen_property((prop_t *)props.elements + i);
 			}
+			if (props.size > 0 || entry->action == NK_ADD) { // svnadmin's behaviour
+				prop_length += PROPS_END_LEN;
+				fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, prop_length);
+			}
 
-			fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, prop_length);
 			if (entry->kind == NK_FILE && entry->action != NK_DELETE) {
 				if (online) {
 					stream = svn_open(realpath, repo_rev_number, &textbuffer, &textlen); 
@@ -259,11 +262,14 @@ static void dump_node(change_entry_t *entry)
 			fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, prop_length+textlen);
 			fprintf(output, "\n");
 
-			for (i = 0; i < props.size; i++) {
-				dump_property((prop_t *)props.elements + i);
-				free_property((prop_t *)props.elements + i);
+			if (props.size > 0 || entry->action == NK_ADD) { // svnadmin's behaviour
+				for (i = 0; i < props.size; i++) {
+					dump_property((prop_t *)props.elements + i);
+					free_property((prop_t *)props.elements + i);
+				}
+				fprintf(output, PROPS_END);
 			}
-			fprintf(output, PROPS_END);
+
 
 			if (entry->kind == NK_FILE && entry->action != NK_DELETE) {
 				if (online) {
