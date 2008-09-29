@@ -211,7 +211,7 @@ if [ "$TEST_VALGRIND_ONLINE" = "1" ]; then
 	cat ${DUMPFILE}| svnadmin load ${LOCALDIR} >> log
 	echo ">> Performing local dump..."
 	svn -q -r 0:HEAD --username "${LOCALUSER}" --password "${LOCALPASS}" log "${LOCALREPO}" > svn.log
-	valgrind --leak-check=full --show-reachable=yes --log-file=valgrind_local_off.log ./rsvndump "${DUMPFILE}_local" -u "${LOCALUSER}" -p "${LOCALPASS}" --online "${LOCALREPO}" 2>> log
+	valgrind --leak-check=full --show-reachable=yes --log-file=valgrind_local_off.log ./rsvndump -o "${DUMPFILE}_local" -u "${LOCALUSER}" -p "${LOCALPASS}" --online "${LOCALREPO}" 2>> log
 	echo -n ">>> Online test done in "
 	NOW=$(date +%s)
 	let DIFF=$(($NOW - $BEGIN))
