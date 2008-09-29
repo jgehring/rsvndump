@@ -15,575 +15,367 @@
  *	You should have received a copy of the GNU General Public License along
  *	with this program; if not, write to the Free Software Foundation, Inc.,
  *	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ *
+ * 	file: dump.c
+ * 	desc: The main work is done here 
  */
 
 
+#include <string.h>
+#include <sys/stat.h>
+
 #include "main.h"
 #include "dump.h"
-#include "svn_functions.h"
-#include "util.h"
-
-#include <search.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include "list.h"
+#include "logentry.h"
+#include "whash.h"
+#include "wsvn.h"
+#ifdef USE_TIMING
+ #include "utils.h"
+#endif
 
 #include <svn_repos.h>
 
 
-#define MAX_LINE_SIZE 4096 
-#define SEPERATOR "------------------------------------------------------------------------\n"
-#define PROPS_END "PROPS-END\n"
-#define PROPS_END_LEN 10 
+/*---------------------------------------------------------------------------*/
+/* Static variables                                                          */
+/*---------------------------------------------------------------------------*/
+
+static dump_options_t *dopts = NULL;
+static list_t *logs = NULL;
 
 
-// File globals
-static int rev_number = 0; 
-static int repo_rev_number = 0;
-static list_t rev_map;
+/*---------------------------------------------------------------------------*/
+/* Static functions                                                          */
+/*---------------------------------------------------------------------------*/
 
-// Prototypes
-static void dump_copy(change_entry_t *entry);
-
-
-// Compares two changes
-static int compare_changes(const void *a, const void *b)
+/* Create, and maybe cleanup, user prefix path */
+static void dump_create_user_prefix()
 {
-	char *ap = ((change_entry_t *)a)->path;
-	char *bp = ((change_entry_t *)b)->path;
-	nodeaction_t aa = ((change_entry_t *)a)->action;
-	nodeaction_t ba = ((change_entry_t *)b)->action;
-	if (!strncmp(ap, bp, strlen(ap)) && strlen(ap) < strlen(bp)) {
-		// a is prefix of b and must be commited first
-		return -1; 
-	} else if (!strncmp(ap, bp, strlen(bp)) && strlen(bp) < strlen(ap)) {
-		return 1;
-	} else if (aa != ba) {
-		return (aa < ba ? -1 : 1);
-	}
-	return strcmp(((change_entry_t *)a)->path, ((change_entry_t *)b)->path);
-}
-
-
-// Allocates and returns the real path for a node
-static char *get_real_path(char *nodename)
-{
-	char *realpath;
-	if (online) {
-		realpath = malloc(strlen(repo_url)+strlen(nodename+strlen(repo_prefix))+2);
-		strcpy(realpath, repo_url);
-		if ((repo_url[strlen(repo_url)-1] != '/') && (nodename[strlen(repo_prefix)] != '/')) {
-			strcat(realpath, "/");
-		}
-		strcat(realpath, nodename+strlen(repo_prefix));
-	} else {
-		realpath = malloc(strlen(repo_dir)+strlen(nodename+strlen(repo_prefix))+2);
-		strcpy(realpath, repo_dir);
-		if ((repo_dir[strlen(repo_dir)-1] != '/') && (nodename[strlen(repo_prefix)] != '/')) {
-			strcat(realpath, "/");
-		}
-		strcat(realpath, nodename+strlen(repo_prefix));
-	}
-
-	return realpath;
-}
-
-
-// Gets the string length of a property
-static int strlen_property(prop_t *prop)
-{
-	if (!prop->key || !prop->value) {
-		return 0;
-	}
-	int len = 0;
-	char buffer[2048];
-	sprintf(buffer, "K %d\n", strlen(prop->key));
-	len += strlen(buffer);
-	sprintf(buffer, "%s\n", prop->key);
-	len += strlen(buffer);
-	sprintf(buffer, "V %d\n", strlen(prop->value));
-	len += strlen(buffer);
-	sprintf(buffer, "%s\n", prop->value);
-	return (len+strlen(buffer));
-}
-
-
-// Frees all node memory
-static void free_property(prop_t *prop)
-{
-	if (prop->key) {
-		free(prop->key);
-	}
-	if (prop->value) {
-		free(prop->value);
-	}
-}
-
-
-// Dumps a property 
-static void dump_property(prop_t *prop)
-{
-	if (!prop->key || !prop->value) {
+	char *new_prefix, *s, *e;
+	if (dopts->user_prefix == NULL) {
 		return;
 	}
-	fprintf(output, "K %d\n", strlen(prop->key));
-	fprintf(output, "%s\n", prop->key);
-	fprintf(output, "V %d\n", strlen(prop->value));
-	fprintf(output, "%s\n", prop->value);
-}
-
-
-// Frees all node memory
-static void free_node(change_entry_t *entry)
-{
-	if (entry->path) {
-		free(entry->path);
-	}
-	if (entry->copy_from_path) {
-		free(entry->copy_from_path);
-	}
-}
-
-
-// Dumps a node
-static void dump_node(change_entry_t *entry)
-{
-	char *tpath;
-	if (*(entry->path+strlen(repo_prefix)) == '/') {
-		tpath = entry->path+strlen(repo_prefix)+1;
-	} else {
-		tpath = entry->path+strlen(repo_prefix);
-	}
-
-	if (entry->kind == NK_NONE || !entry->path || (entry->copy_from_path == NULL && strlen(tpath) == 0)) {
-#ifdef DEBUG
-		fprintf(stderr, "\nThis should not happen.. \n\n");
-#endif
-		return;
-	}
-
-	char *realpath = get_real_path((char *)entry->path);
-
-	if (entry->copy_from_path) {
-		// The node is a copy, but there is always the possibility that the source revision has not been dumped
-		// because it resides on a top-level path. Or, the source path will not be dumped at all
-		int r;
-		for (r = rev_number; r > 0; r--) {
-			if (((int *)rev_map.elements)[r] == entry->copy_from_rev) {
-				break;
-			}
-		}
-		if (r == 0 || strncmp(entry->path, entry->copy_from_path, strlen(repo_prefix))) {
-			// Here we are. This is really painful, because we need to dump the source of the copy now.
-			// If the entry is a directory, it needs to be dumped recursivly (handled by dump_copy later)
-			entry->action = NK_ADD;
-			entry->use_copy = 0;
-		} else {
-			entry->copy_from_rev = r;
-			entry->use_copy = 1;
-		}
-	}
-
-	// Write node header
-	if (strlen(tpath)) {
-		if (user_prefix != NULL) {
-			fprintf(output, "%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_PATH, user_prefix, tpath);
-		} else {
-			fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_PATH, tpath);
-		}
-		if (entry->action != NK_DELETE) {
-			fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_KIND, entry->kind == NK_FILE ? "file" : "dir");
-		}
-		fprintf(output, "%s: ", SVN_REPOS_DUMPFILE_NODE_ACTION ); 
-		switch (entry->action) {
-			case NK_CHANGE:
-				fprintf(output, "change\n"); 
-				break;
-			case NK_ADD:
-				fprintf(output, "add\n"); 
-				break;
-			case NK_DELETE:
-				fprintf(output, "delete\n"); 
-				break;
-			case NK_REPLACE:
-				fprintf(output, "replace\n"); 
-				break;
-		}
-
-		if (entry->copy_from_path && entry->use_copy == 1) {
-			if (*(entry->copy_from_path+strlen(repo_prefix)) == '/') {
-				if (user_prefix != NULL) {
-					fprintf(output, "%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, user_prefix, entry->copy_from_path+strlen(repo_prefix)+1);
-				} else {
-					fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, entry->copy_from_path+strlen(repo_prefix)+1);
-				}
-			} else {
-				if (user_prefix != NULL) {
-					fprintf(output, "%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, user_prefix, entry->copy_from_path+strlen(repo_prefix));
-				} else {
-					fprintf(output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, entry->copy_from_path+strlen(repo_prefix));
-				}
-			}
-			fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_REV, entry->copy_from_rev);
-		}
-
-		if (entry->action != NK_DELETE) {
-			int prop_length = 0;
-			svn_stream_t *stream = NULL; 
-			char *textbuffer = NULL;
-			int textlen = 0;
-
-			int i;
-			list_t props;
-			if (entry->use_copy) {
-				props = svn_list_props(realpath, entry->copy_from_rev);
-			} else {
-				props = svn_list_props(realpath, repo_rev_number);
-			}
-			for (i = 0; i < props.size; i++) {
-				prop_length += strlen_property((prop_t *)props.elements + i);
-			}
-			if (props.size > 0 || entry->action == NK_ADD) { // svnadmin's behaviour
-				prop_length += PROPS_END_LEN;
-				fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, prop_length);
-			}
-
-			if (entry->kind == NK_FILE && entry->action != NK_DELETE) {
-				if (online) {
-					stream = svn_open(realpath, repo_rev_number, &textbuffer, &textlen); 
-				} else {
-					struct stat st;
-					stat(realpath, &st);
-					textlen = (int)st.st_size;
-				}
-				fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_TEXT_CONTENT_LENGTH, textlen);
-			}
-			fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, prop_length+textlen);
-			fprintf(output, "\n");
-
-			if (props.size > 0 || entry->action == NK_ADD) { // svnadmin's behaviour
-				for (i = 0; i < props.size; i++) {
-					dump_property((prop_t *)props.elements + i);
-					free_property((prop_t *)props.elements + i);
-				}
-				fprintf(output, PROPS_END);
-			}
-
-
-			if (entry->kind == NK_FILE && entry->action != NK_DELETE) {
-				if (online) {
-					if (stream != NULL) {
-						for (i = 0; i < textlen; i++) {
-							fputc(textbuffer[i], output);
-						}
-						svn_close(stream);
-					}
-				} else {
-					FILE *f = fopen(realpath, "r");
-					if (f != NULL) {
-						int c;
-						while ((c = fgetc(f)) != EOF) {
-							fputc(c, output);
-						}
-						fclose(f);
-					} else {
-						fprintf(stderr, "\nFatal: Unable to open '%s' for reading (%d)\n", realpath, errno); 
-						exit(1);
-					}
-				}
-			}
-			list_free(&props);
-		}
-
-		fprintf(output, "\n");
-		fprintf(output, "\n");
-	}
-
-	if (entry->use_copy == 0 && entry->kind == NK_DIRECTORY) {
-		dump_copy(entry);
-	}
-
-	free(realpath);
-}
-
-
-// Recursively dumps a given entry 
-static void dump_copy(change_entry_t *entry)
-{
-#ifdef DEBUG
-	fprintf(stderr, "dump_copy(%s)\n", entry->path);
-#endif
-	int i;
-
-	// Copy resolving has to be done online atm, sorry
-	char ton = online;
-	online = 1;
-
-	char *rcopypath = malloc(strlen(repo_base)+strlen(entry->copy_from_path)+2);
-	strcpy(rcopypath, repo_base);
-	if ((repo_base[strlen(repo_base)-1] != '/') && (*entry->copy_from_path != '/')) {
-		strcat(rcopypath, "/");
-	}
-	strcat(rcopypath, entry->copy_from_path); 
-	char *realpath = malloc(strlen(repo_base)+strlen(entry->path)+2);
-	strcpy(realpath, repo_base);
-	if ((repo_base[strlen(repo_base)-1] != '/') && (*entry->path != '/')) {
-		strcat(realpath, "/");
-	}
-	strcat(realpath, entry->path); 
-
-	list_t list = svn_list_path(rcopypath, entry->copy_from_rev);
-
-	for (i = list.size-1; i >= 0; i--) {
-		change_entry_t *te = ((change_entry_t *)list.elements + i);
-		char *mrealpath = malloc(strlen(repo_base)+strlen(te->path)+2);
-		strcpy(mrealpath, repo_base);
-		if ((repo_base[strlen(repo_base)-1] != '/') && (*te->path != '/')) {
-			strcat(mrealpath, "/");
-		}
-		strcat(mrealpath, te->path); 
-
-		if (te->action != NK_DELETE) {
-			te->kind = svn_get_kind(mrealpath, entry->copy_from_rev);
-		} else {
-			te->kind = NK_FILE;
-		}
-
-		// We need to replace the old path (copy-from) with the new one
-		char *newpath = malloc(strlen(te->path)-strlen(entry->copy_from_path)+strlen(entry->path)+3);
-		strcpy(newpath, entry->path);
-		strcat(newpath, te->path+strlen(entry->copy_from_path)); 
-
-		free(te->path);
-		te->path = newpath;
-		free(mrealpath);
-
-		if (hsearch((ENTRY){te->path, NULL}, FIND) != NULL) {
-			// Duplicate item -> remove
-			list_remove(&list, i);
-		}
-	}
-	qsort(list.elements, list.size, list.elsize, compare_changes);
-	for (i = 0; i < list.size; i++) {
-		dump_node((change_entry_t *)list.elements + i);
-		free_node((change_entry_t *)list.elements + i);
-	}
-
-	list_free(&list);
-	free(rcopypath);
-	free(realpath);
-
-	online = ton;
-}
-
-
-// Create, and maybe cleanup, user prefix path
-static void create_user_prefix()
-{
-	if (user_prefix == NULL) {
-		return;
-	}
-	char *new_prefix = malloc(strlen(user_prefix));
+	new_prefix = calloc(strlen(dopts->user_prefix)+1, 1);
 	new_prefix[0] = '\0';
-	char *s = user_prefix, *e = user_prefix;
+	s = e = dopts->user_prefix;
 	while ((e = strchr(s, '/')) != NULL) {
 		if (e-s < 1) {
 			++s;
 			continue;
 		}
 		strncpy(new_prefix+strlen(new_prefix), s, e-s+1);
-		fprintf(output, "%s: ", SVN_REPOS_DUMPFILE_NODE_PATH);
-		fwrite(new_prefix, 1, strlen(new_prefix)-1, output);
-		fputc('\n', output);
-		fprintf(output, "%s: dir\n", SVN_REPOS_DUMPFILE_NODE_KIND);
-		fprintf(output, "%s: add\n\n", SVN_REPOS_DUMPFILE_NODE_ACTION ); 
+		fprintf(dopts->output, "%s: ", SVN_REPOS_DUMPFILE_NODE_PATH);
+		fwrite(new_prefix, 1, strlen(new_prefix)-1, dopts->output);
+		fputc('\n', dopts->output);
+		fprintf(dopts->output, "%s: dir\n", SVN_REPOS_DUMPFILE_NODE_KIND);
+		fprintf(dopts->output, "%s: add\n\n", SVN_REPOS_DUMPFILE_NODE_ACTION ); 
 		s = e+1;
 	}
 	strcat(new_prefix, s);
-	free(user_prefix);
-	user_prefix = new_prefix;
-}	
+	free(dopts->user_prefix);
+	dopts->user_prefix = new_prefix;
+}
 
 
-// Dumps an entire repository
-char dump_repository()
+/* Dumps a revision */
+static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 {
+	int props_length;
 	int i;
-	char first = 1;
-	char *linebuffer = malloc(MAX_LINE_SIZE);
-	list_init(&rev_map, sizeof(int)),
-
-	fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER, DUMPFORMAT_VERSION);
-	fprintf(output, "\n");
-
-	// TODO
-	if (repo_uuid) {
-		fprintf(output, "UUID: %s\n", repo_uuid);
-		fprintf(output, "\n");
+	int failed;
+	list_t nodes;
+#ifdef USE_TIMING
+	stopwatch_t watch = stopwatch_create();
+#endif
+	if (dopts->verbosity > 0) {
+		fprintf(stderr, "* Dumping revision %ld (local: %ld) ... 0%%\n", entry->revision, local_revnum);
 	}
 
-	// Write initial revision header
-	int props_length = PROPS_END_LEN;
-	fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, rev_number);	
-	fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
-	fprintf(output, "%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);	
+	/* Update working if needed */
+	if (dopts->online == 0) {
+		wsvn_update(entry->revision);
+	}
 
-	fprintf(output, PROPS_END);
-	fprintf(output, "\n");
-	++rev_number;
-	int temp = 0;
-	list_add(&rev_map, &temp); 
+	/* Write revision header */
+	props_length = 0;
+	props_length += property_strlen(&entry->author);
+	props_length += property_strlen(&entry->date);
+	props_length += property_strlen(&entry->msg);
+	if (props_length > 0) {
+		props_length += PROPS_END_LEN;
+	}
 
-	fgets(linebuffer, MAX_LINE_SIZE-1, input);
-	while (linebuffer != NULL && !feof(input)) {
-		if (!strcmp(linebuffer, SEPERATOR)) {
-			fgets(linebuffer, MAX_LINE_SIZE-1, input);
-			continue;
-		}
+	fprintf(dopts->output, "%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, local_revnum);	
+	fprintf(dopts->output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
+	fprintf(dopts->output, "%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);
 
-		svn_alloc_rev_pool();
+	if (props_length > 0) {
+		property_dump(&entry->msg, dopts->output);
+		property_dump(&entry->author, dopts->output);
+		property_dump(&entry->date, dopts->output);
 
-		// Parse log entry 
-		repo_rev_number = atoi(linebuffer+1);
+		fprintf(dopts->output, PROPS_END);
+		fprintf(dopts->output, "\n");
+	}
 
-		if (verbosity > 0) {
-			fprintf(stderr, "* Dumping revision %d (local: %d)...\n", repo_rev_number, rev_number);
-		}
-		list_add(&rev_map, &repo_rev_number);
+	/* The first revision must contain the user prefix */
+	if (local_revnum == (svn_revnum_t)1 && dopts->user_prefix != NULL) {
+		dump_create_user_prefix();
+	}
 
-		props_length = PROPS_END_LEN;
+	/* We need a hash to check what elements have already been dumped (if copies occur) */
+	if (whash_create()) {
+		fprintf(stderr, "Error allocating memory.\n");
+		return 1;
+	}
 
-		if (!online) {
-			if (first != 0) {
-				svn_checkout(repo_url, repo_dir, repo_rev_number);
-				first = 0;
-			} else {
-				svn_update_path(repo_dir, repo_rev_number);
+	/* Fetch changed paths of this revision */
+	failed = 0;
+	nodes = list_create(sizeof(node_t));
+	wsvn_get_changeset(entry, &nodes);
+
+	/* Stat nodes (this is needed for proper sorting) */
+	for (i = 0; i < nodes.size; i++) {
+		node_t *n = (node_t *)nodes.elements + i;
+		if (dopts->online) {
+			if (n->action != NA_DELETE && wsvn_stat(n, entry->revision)) {
+				failed = i;
+				break;
 			}
-		}
-		
-		// Write revision properties
-		char *author = NULL, *logmsg = NULL, *date = NULL;
-		char t[10];
-		svn_log(repo_url, repo_rev_number, &author, &logmsg, &date);
-		if (logmsg && strlen(logmsg)) {
-			sprintf(t, "%d", strlen(logmsg));
-			props_length += 16+strlen(t);
-			props_length += strlen(logmsg);
-		}
-		if (author && strlen(author)) {
-			sprintf(t, "%d", strlen(author));
-			props_length += 20+strlen(t);
-			props_length += strlen(author);
-		}
-		if (date && strlen(date)) {
-			sprintf(t, "%d", strlen(date));
-			props_length += 17+strlen(t);
-			props_length += strlen(date);
-		}
-
-		// Write initial revision header
-		fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, rev_number);	
-		fprintf(output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
-		fprintf(output, "%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);	
-
-		if (logmsg && strlen(logmsg)) {
-			fprintf(output, "K 7\n");
-			fprintf(output, "svn:log\n");
-			fprintf(output, "V %d\n", strlen(logmsg));
-			fprintf(output, "%s\n", logmsg);
-		}
-		if (author && strlen(author)) {
-			fprintf(output, "K 10\n");
-			fprintf(output, "svn:author\n");
-			fprintf(output, "V %d\n", strlen(author));
-			fprintf(output, "%s\n", author);
-		}
-		if (date && strlen(date)) {
-			fprintf(output, "K 8\n");
-			fprintf(output, "svn:date\n");
-			fprintf(output, "V %d\n", strlen(date));
-			fprintf(output, "%s\n", date);
-		}
-
-		fprintf(output, PROPS_END);
-		fprintf(output, "\n");
-
-		// The first revision must contain an eventual user prefix
-		if (user_prefix != NULL && rev_number == 1) {
-			create_user_prefix();
-		}
-
-		list_t changes;
-		changes = svn_list_changes(online ? repo_url : repo_dir, repo_rev_number);
-
-		// Get node type info and insert into hash to prevent duplicates (this can happen
-		// when nodes are copied)
-		hcreate((int)((float)changes.size*1.5f));
-		for (i = 0; i < changes.size; i++) {
-			change_entry_t *entry = ((change_entry_t *)changes.elements + i);
-			char *realpath = get_real_path(entry->path);
-
-			if (entry->action != NK_DELETE) {
-				entry->kind = svn_get_kind(realpath, repo_rev_number);
-			} else {
-				entry->kind = NK_FILE;
-			}
-
-			if (verbosity > 0 && online) {
-				fprintf(stderr, "\033[1A");
-				fprintf(stderr, "* Dumping revision %d (local: %d)... %d%%\n", repo_rev_number, rev_number, (i*50)/changes.size);
-			}
-
-			hsearch((ENTRY){entry->path, NULL}, ENTER);
-			free(realpath);
-		}
-
-		// Determine insertion oder
-		qsort(changes.elements, changes.size, changes.elsize, compare_changes);
-
-		// Write nodes
-		for (i = 0; i < changes.size; i++) {
-			dump_node((change_entry_t *)changes.elements + i);
-			free_node((change_entry_t *)changes.elements + i);
-			if (verbosity > 0) {
-				fprintf(stderr, "\033[1A");
-				if (online) {
-					fprintf(stderr, "* Dumping revision %d (local: %d)... %d%%\n", repo_rev_number, rev_number, 50+(i*50)/changes.size);
+		} else if (n->action != NA_DELETE) {
+			struct stat st;
+			char *path = malloc(strlen(dopts->repo_dir)+strlen(n->path)+2);
+			sprintf(path, "%s/%s", dopts->repo_dir, n->path);
+			if (stat(path, &st) == 0) {
+				if (st.st_mode & S_IFDIR) {
+					n->kind = NK_DIRECTORY;
+					n->size = 0;
 				} else {
-					fprintf(stderr, "* Dumping revision %d (local: %d)... %d%%\n", repo_rev_number, rev_number, (i*100)/changes.size);
+					n->kind = NK_FILE;
+					n->size = st.st_size;
 				}
+			} else {
+				failed = i;
+				free(path);
+				break;
 			}
+			free(path);
 		}
-
-		hdestroy();
-		list_free(&changes);
-
-		if (author) {
-			free(author);
+		whash_insert(n->path);
+		if (dopts->verbosity > 0) {
+			fprintf(stderr, "\033[1A\033[K");
+			fprintf(stderr, "* Dumping revision %ld (local: %ld) ... %d%%\n", entry->revision, local_revnum, (i*50)/nodes.size);
 		}
-		if (logmsg) {
-			free(logmsg);
-		}
-		if (date) {
-			free(date);
-		}
-		fgets(linebuffer, MAX_LINE_SIZE-1, input);
-
-		svn_free_rev_pool();
-
-		if (verbosity > 0) { 
-			fprintf(stderr, "\033[1A");
-			fprintf(stderr, "* Dumping revision %d (local: %d)... done\n", repo_rev_number, rev_number);
-		} else if (verbosity == 0) {
-			fprintf(stderr, "* Dumped revision %d (local: %d)\n", repo_rev_number, rev_number);
-		}
-
-		++rev_number;
 	}
 
-	list_free(&rev_map);
-	free(linebuffer);
+	if (failed == 0) {
+		failed = nodes.size; 
+
+		/* Sort nodes to get a dump order (mainly for directories 
+		   being dumped prior to their contents) */
+		list_qsort(&nodes, nodecmp);
+
+		/* Dump and free nodes */
+		for (i = 0; i < nodes.size; i++) {
+			node_t *n = (node_t *)nodes.elements + i;
+			if (node_dump(n, dopts, logs, entry->revision, local_revnum)) {
+				failed = i;
+				break;
+			}
+			node_free(n);
+			if (dopts->verbosity > 0) {
+				fprintf(stderr, "\033[1A\033[K");
+				fprintf(stderr, "* Dumping revision %ld (local: %ld) ... %d%%\n", entry->revision, local_revnum, 50+(i*50)/nodes.size);
+			}
+		}
+	} else {
+		failed = 0;
+	}
+
+	/* Free nodes that have not been dumped */
+	for (i = failed; i < nodes.size; i++) {
+		node_t *n = (node_t *)nodes.elements + i;
+		node_free(n);
+	}
+
+	whash_free();
+
+	if (failed != nodes.size)  {
+		list_free(&nodes);
+		return 1;
+	}
+
+	list_free(&nodes);
+	
+	if (dopts->verbosity >= 0) {
+		if (dopts->verbosity > 0) {
+			fprintf(stderr, "\033[1A\033[K");
+		}
+		fprintf(stderr, "* Dumped revision %ld (local %ld).\n", entry->revision, local_revnum);
+	}
+
+#ifdef USE_TIMING
+	fprintf(stderr, "[[ Revision dumped in %.3f seconds ]]\n", (float)stopwatch_elapsed(&watch));
+#endif
+	return 0;
+}
+
+
+/*---------------------------------------------------------------------------*/
+/* Global functions                                                          */
+/*---------------------------------------------------------------------------*/
+
+/* Creats default dumping options */
+dump_options_t dump_options_create()
+{
+	dump_options_t opts;
+	opts.verbosity = 0;
+	opts.online = 0; 
+	opts.repo_url = NULL;
+	opts.repo_eurl = NULL;
+	opts.repo_base = NULL;
+	opts.repo_uuid = NULL;
+	opts.repo_dir = NULL;
+	opts.repo_prefix = NULL;
+	opts.username = NULL;
+	opts.password = NULL;
+	opts.user_prefix = NULL;
+	opts.prefix_is_file = 0;
+	opts.output = stdout;
+	opts.startrev = 0;
+	opts.endrev = HEAD_REVISION;
+#ifdef USE_DELTAS
+	opts.deltas = 0;
+#endif /* USE_DELTAS */
+	return opts;
+}
+
+
+/* Destroys dumping options, freeing char-pointers if they are not NULL */
+void dump_options_free(dump_options_t *opts)
+{
+	if (opts->repo_url) {
+		free(opts->repo_url);
+	}
+	if (opts->repo_eurl) {
+		free(opts->repo_eurl);
+	}
+	if (opts->repo_base) {
+		free(opts->repo_base);
+	}
+	if (opts->repo_uuid) {
+		free(opts->repo_uuid);
+	}
+	if (opts->repo_dir) {
+		free(opts->repo_dir);
+	}
+	if (opts->repo_prefix) {
+		free(opts->repo_prefix);
+	}
+	if (opts->username) {
+		free(opts->username);
+	}
+	if (opts->password) {
+		free(opts->password);
+	}
+	if (opts->user_prefix) {
+		free(opts->user_prefix);
+	}
+	if (opts->output && opts->output != stdout) {
+		fclose(opts->output);
+	}
+}
+
+
+/* Dumps the complete history of the given url in opts, returning 0 on success */
+char dump(dump_options_t *opts)
+{
+	list_t log;
+	logentry_t current = logentry_create();
+	logentry_t next = logentry_create();
+	node_t node;
+	svn_revnum_t i, headrev;
+	int off;
+#ifdef USE_TIMING
+	stopwatch_t watch = stopwatch_create();
+#endif
+
+	/* Initialize and open the svn session */
+	if (wsvn_init(opts)) {
+		fprintf(stderr, "Error load subversion library / initializing connection.\n");
+		return 1;
+	}
+
+	/* Fetch repository information */
+	if (wsvn_repo_info(opts->repo_eurl, &opts->repo_base, &opts->repo_prefix, &opts->repo_uuid, &headrev)) {
+		fprintf(stderr, "Error fetching repository information.\n");
+		return 1;
+	}
+	if (opts->endrev > headrev || opts->endrev == HEAD_REVISION) {
+		opts->endrev = headrev;
+	}
+
+	/* Determine node kind of dumped root */
+	node = node_create();
+	node.path = ".";
+	wsvn_stat(&node, SVN_INVALID_REVNUM);
+	if (node.kind == NK_FILE) {
+		opts->prefix_is_file = 1;
+		if (opts->online == 0 && opts->verbosity >= 0) {
+			fprintf(stderr, "Switched to online mode because the url refers to a file\n");
+			opts->online = 1;
+		}
+	}
+
+	/* Write dumpfile header */
+	fprintf(opts->output, "%s: 3\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER);
+	fprintf(opts->output, "\n");
+
+	/* Fetch first history item */
+	log = list_create(sizeof(logentry_t));
+	if (wsvn_next_log(NULL, &next)) {
+		fprintf(stderr, "Error fetching repository log info.\n");
+		list_free(&log);
+		return 1;
+	}
+
+	/* Write initial revision header if not starting at revision 0 */
+	if (next.revision != 0) {
+		int props_length = PROPS_END_LEN;
+		fprintf(opts->output, "%s: %d\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, 0);	
+		fprintf(opts->output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
+		fprintf(opts->output, "%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);	
+		fprintf(opts->output, PROPS_END);
+		fprintf(opts->output, "\n");
+	}
+
+	/* Dump all revisions */
+	dopts = opts;
+	logs = &log;
+	off = (next.revision == 0) ? 0 : 1;
+	i = 0;
+	do {
+		list_append(&log, &next);
+		current = next;
+		if (dump_revision(&current, i+off)) {
+			break;
+		}
+		/* This frees all log entry strings */
+		logentry_free(&next);
+		++i;
+	} while (current.revision < opts->endrev &&
+	         wsvn_next_log(&current, &next) == 0 &&
+	         current.revision != next.revision);
+
+	logentry_free(&next);
+	list_free(&log);
+
+	wsvn_free();
+
+#ifdef USE_TIMING
+	fprintf(stderr, "[ Dumping done in %.3f seconds ]]\n", (float)stopwatch_elapsed(&watch));
+#endif
 	return 0;
 }

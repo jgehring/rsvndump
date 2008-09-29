@@ -2,6 +2,8 @@
 #
 #	Test suite for rsvndump
 #
+# USAGE: ./runsuite.pl [--configure] [ARGS]
+#
 
 
 use Cwd;
@@ -13,18 +15,24 @@ $pwd = cwd;
 $playground = "$pwd/playground";
 $work = "$pwd/work";
 $logs = "$pwd/logs";
+@args = @ARGV;
 
 
 # Compile rsvndump with debug information
 print ">>> Compiling program ...";
 chdir "../..";
-system "CFLAGS=\"-DDEBUG -g\" ./configure > /dev/null";
+if (@ARGV[0] eq "--configure") {
+	system "CFLAGS=\"-DDEBUG -g\" ./configure --with-apr=/usr > /dev/null";
+	shift @args;
+}
 system "make clean > /dev/null";
-system "make > /dev/null";
+system "make -j2 > /dev/null";
+if ($? != 0) {
+	die "Failed\n";
+}
 system "cp src/rsvndump $pwd";
 chdir $pwd;
 print " done\n";
-
 
 print ">>> Setting up playground repository ...";
 # Create playground repository
@@ -50,12 +58,12 @@ print " done\n";
 
 # Run a set of checks 
 print "\n";
-@checks = ("./checklog.pl", "checksub.pl");
-@checkmsg = ("log message dumping", "sub-path dumping");
+@checks = ("./checkmultcopy.pl", "./checkcopy.pl", "./checkcopy2.pl", "./checklog.pl", "./checksub.pl");
+@checkmsg = ("copying of single files", "copying of directories", "copying of directories (variant 2)", "log message dumping", "sub-path dumping");
 $i = 0;
 foreach $check (@checks) {
 	print (">> Checking for $checkmsg[$i] ...\n");
-	@cargs = ("$check", "$playground", "$work", "$logs");
+	@cargs = ("$check", "$playground", "$work", "$logs", "@args");
 	$rv = system @cargs; 
 	if ($rv == "0") {
 		print "\n>> ok\n";

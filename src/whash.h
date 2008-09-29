@@ -15,21 +15,28 @@
  *	You should have received a copy of the GNU General Public License along
  *	with this program; if not, write to the Free Software Foundation, Inc.,
  *	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ *
+ * 	file: whash.h
+ * 	desc: A simple wrapper for apr_hash_t supporting strings
  */
 
 
-#include "util.h"
+#ifndef WHASH_H 
+#define WHASH_H
 
 
-// Returns an entry with default fields
-change_entry_t default_entry()
-{
-	change_entry_t entry;
-	entry.path = entry.localpath = NULL;
-	entry.kind = NK_NONE;
-	entry.action = -1;
-	entry.copy_from_path = NULL;
-	entry.copy_from_rev = -2;
-	entry.use_copy = -1;
-	return entry;
-}
+/* Creates the hash table */
+extern char whash_create();
+
+/* Frees the hash table */
+extern void whash_free();
+
+/* Inserts a string into the hash */
+extern void whash_insert(const char *key);
+
+/* Provides string lookup */
+extern char whash_contains(const char *key);
+
+
+#endif

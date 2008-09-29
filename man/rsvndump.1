@@ -1,22 +1,18 @@
-.TH rsvndump "1" "September 6th, 2008" "rsvndump 0.3.2" "User Commands"
+.TH rsvndump "1" "September 27th, 2008" "rsvndump 0.4" "User Commands"
 .SH NAME
 rsvndump \- dump a remote subversion repository
+
 .SH SYNOPSIS
 .ll +8
 .B rsvndump
 .RB [options]
 .I url
-.ll -8
-.br
-svn -q -r 0:HEAD log
-.I url
-|
-.B rsvndump
-.RB [options]
-.I url
+
 .SH DESCRIPTION
 .B rsvndump
-is a command line tool that is able to dump a subversion repository that resides on a remote server. All data is dumped in the format that can be read/written by the svnadmin(1) command, so the data produced by
+is a command line tool that is able to dump a subversion repository that resides on a remote server. All data is dumped in the format that can be read/written by the
+.BR svnadmin (1)
+command, so the data produced by
 .B rsvndump
 can easily be imported into a new subversion repository.
 
@@ -27,12 +23,16 @@ allows you to exclusively dump sub-paths of repository, there are a few differen
    - Revision numbers are not synced with the remote repository but are simply counted, starting from 1. 
    - The url that has been specified serves as the new repository root (but can be prefixed).
 
-If need an exact copy of the original repository, consider using the svnsync(1) program.
+If need an exact copy of the original repository, consider using the
+.BR svnsync (1)
+program.
 
 .B rsvndump
 provides an offline and an online mode and defaults to offline mode. See below for a detailed description and comparison of the modes.
 
-Please note that there are situations where the dump of the repository can slightly differ from the original repository. A detailed description can be found under NOTES.
+Please note that there are situations where the dump of the repository can slightly differ from the original repository. A detailed description can be found under 
+.BR NOTES .
+
 .SH OPTIONS
 Options in brackets are provided as synonyms:
 .TP
@@ -56,11 +56,10 @@ will ask for the username
 If not specified and the given url is not a public repository,
 .B rsvndump
 will ask for the username on 
-.I stdin.   
+.IR stdin .
 .br
 Be sure to provide a valid username when providing the log data via
-.I stdin
-, because the username might be taken from the log data.
+.IR stdin ", because the username might be taken from the log data."
 .TP
 .BI "-p [--password]"\ password
 password for repository authentication.
@@ -69,25 +68,13 @@ If not specified and the given url does not provide anonymous read access,
 .B rsvndump
 will ask for the password.
 .TP
-.BI "--prefix"\ prefix
-A custom string that is prepended to every node that is being dumped. The first revision dumped will also contain the paths neccessary to create the prefix.
-.br
-It is assumed that the prefix is a path, with directories seperated by '/'. If you want the prefix to be a directory, please append a '/' at the end.
-.TP
-.BI "-l [--logfile]"\ logfile
-subversion log file to be used. This file should contain the output of
-.B svn -q -r 0:HEAD log 
-.I url
-.br
-If not specified, the subversion log data is read from stdin.
-.TP
 .BI "-o [--outfile]"\ outfile
 output file for the dumped data.
 .br
 If not specified,
 .B rsvndump
 will write all dumped data to
-.I stdout.
+.IR stdout .
 .TP
 .BI "-d [--download-dir]"\ dir
 directory where the working svn copy will be stored. 
@@ -100,12 +87,22 @@ This directory will be cleared if the program exits.
 .TP
 .B --online
 run in online mode as described below.
-.SH ONLINE/OFFLINE MODE
+.TP
+.BI "--prefix"\ prefix
+A custom string that is prepended to every node that is being dumped. The first revision dumped will also contain the paths neccessary to create the prefix.
+.br
+It is assumed that the prefix is a path, with directories seperated by '/'. If you want the prefix to be a directory, please append a '/' at the end.
+.TP
+.BI "--stop"\ revision
+Stop after dumping the specified revision, which can either be given by a decimal number or by
+.BR HEAD .
+
+.SH ONLINE vs. OFFLINE MODE
 By default,
 .B rsvndump
 uses the offline mode, which means that a working
 copy of the repository is kept at the local disk. The copy is then updated
-to every revision specified in the logfile, and all information is fetched
+frequently to each revision and most information is fetched
 using the copy. This provides a fast dump for really remote repositories,
 because all data can be transfered at once.
 .PP
@@ -113,19 +110,35 @@ However, if you want to dump a repository in your local network that does
 not consist of very much files per change, online mode will propably be faster than
 offline mode. In online mode, all information is fetched directly from the
 repository and no additional data is stored on the local hard disk.
+
 .SH NOTES
 Since
 .B rsvndump
 allows you to dump an arbitrary path inside of a repository, the dumped data might not represent the exact history of the dumped path. This is due to the fact that
 .B rsvndump
 has to resolve subversion copies if the source of the copy is either not available in the current dump range (revision numbers are not synced) or may reside in another sub-tree of the repository. Here, resolving means that the data will be dumped as if it would have been added, not as if it would have been copied.
-
-Unlike svn(1),
+.PP
+Unlike
+.BR svn (1),
 .B rsvndump
 does not save passwords or SSL certifactes on disk for later authentication. Thus, passwords must be entered or specified everytime the program is run. The same is true for accepting SSL certificates.
+.PP
+If only a single file is being dumped,
+.B rsvndump
+automatically switches to online mode since a working copy cannot be a file.
+
+.SH ENVIRONMENT
+.TP
+.B TEMP
+The parent directory of the temporary directory that will be used for the working copy in offline mode.
+
 .SH TODO
 The current TODO list includes svn log functionality, the use of deltas inside the dump output and eventually incremental backups. MD5 checksums are also missing at the moment. For feature requests, feel free to drop a mail. 
+
 .SH AUTHOR
 Jonas Gehring <jonas.gehring@boolsoft.org>
+
 .SH SEE ALSO
-svn(1), svnadmin(1), svnsync(1)
+.BR svn (1)
+.BR svnadmin (1)
+.BR svnsync (1)

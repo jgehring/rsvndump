@@ -5,7 +5,7 @@
 # This is a simple script checking if log messages are extracted
 # correctly.
 #
-#	USAGE: checklog REPOS_BASE WORK LOGS
+#	USAGE: checklog REPOS_BASE WORK LOGS [ARGS]
 #
 
 
@@ -23,6 +23,10 @@ $pwd = cwd;
 $log_file = "$logs/logtest.log";
 @messages = ("First log message", "Second log message", "Some other characters: äöü!§\$%&/()", "M\nu\nlti\nli\nne", "Escapi\tng");
 $delim = "------------------------------------------------------------------------";
+@args = @ARGV;
+shift @args;
+shift @args;
+shift @args;
 
 
 # Create repository
@@ -56,71 +60,37 @@ print " done\n";
 
 
 # Dump and compare log messages
-print "> Running rsvndump in online mode ...";
-system "svn -q -r 0:HEAD log '$repo_host/$repo_name' | $pwd/rsvndump --online -o dump '$repo_host/$repo_name' 2>> '$log_file'";
+print "> Running rsvndump ...";
+system "$pwd/rsvndump -o dump @args '$repo_host/$repo_name' 2>> '$log_file'";
 print " done\n";
 print "> Comparing log messages ...";
 $temp_repo = "logtest_temp";
 mkdir "$playground/$temp_repo";
 system "svnadmin create '$playground/$temp_repo'";
 system "cat dump | svnadmin load '$playground/$temp_repo' >> '$log_file'";
-system "svn log $repo_host/$temp_repo > log";
+system "svn -r 0:HEAD log $repo_host/$temp_repo >> $log_file";
 open(PIPE, "svn -r 0:HEAD log '$repo_host/$temp_repo' |");
 $i = 0;
 while (<PIPE>) {
-# A little hack to get log message from svn log
-/$delim/ and <PIPE> and <PIPE> and next;
-$comment = $_;
-while (<PIPE>) {
-	if (/$delim/) {
-		<PIPE> and <PIPE> and last;
-	} else {
-		$comment = $comment . $_;
+	# A little hack to get log message from svn log
+	/$delim/ and <PIPE> and <PIPE> and next;
+	$comment = $_;
+	while (<PIPE>) {
+		if (/$delim/) {
+			<PIPE> and <PIPE> and last;
+		} else {
+			$comment = $comment . $_;
+		}
 	}
-}
-chomp $comment;
-if ($comment ne $messages[$i]) {
-	print "ERROR: Log message $messages[$i] was not dumped correctly\n";
-	die $!;
-}
-++$i;
+	chomp $comment;
+	if ($comment ne $messages[$i]) {
+		print "ERROR: Log message '$messages[$i]' was not dumped correctly (dumped as '$comment')\n";
+		die $!;
+	}
+	++$i;
 }
 close(PIPE);
 print " ok\n";
-
-print "> Running rsvndump in offline mode ...";
-system "svn -q -r 0:HEAD log '$repo_host/$repo_name' | $pwd/rsvndump -o dump '$repo_host/$repo_name' 2>> '$log_file'";
-print " done\n";
-print "> Comparing log messages ...";
-$temp_repo = "logtest_temp_2";
-mkdir "$playground/$temp_repo";
-system "svnadmin create '$playground/$temp_repo'";
-system "cat dump | svnadmin load '$playground/$temp_repo' >> '$log_file'";
-system "svn log $repo_host/$temp_repo > log";
-open(PIPE, "svn -r 0:HEAD log '$repo_host/$temp_repo' |");
-$i = 0;
-while (<PIPE>) {
-# A little hack to get log message from svn log
-/$delim/ and <PIPE> and <PIPE> and next;
-$comment = $_;
-while (<PIPE>) {
-	if (/$delim/) {
-		<PIPE> and <PIPE> and last;
-	} else {
-		$comment = $comment . $_;
-	}
-}
-chomp $comment;
-if ($comment ne $messages[$i]) {
-	print "ERROR: Log message $messages[$i] was not dumped correctly\n";
-	die $!;
-}
-++$i;
-}
-close(PIPE);
-print " ok\n";
-
-
 
 chdir $pwd;
 exit 0;

@@ -17,39 +17,36 @@
  *      51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * 	
- * 	file: main.h
- * 	desc: Common definitions and types
+ * 	file: property.h
+ * 	desc: Simple convenience type for properties 
  */
 
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef PROPERTRY_H
+#define PROPERTRY_H
 
 
-/* Application-specific constants */
-#ifndef HAVE_CONFIG_H
- #define APPNAME "rsvndump"
- #define APPVERSION "0.4"
- #define APPAUTHOR "Jonas Gehring <jonas.gehring@boolsoft.org>"
-#else
- #include "config.h"
- #define APPNAME PACKAGE
- #define APPVERSION PACKAGE_VERSION
- #define APPAUTHOR "Jonas Gehring <"PACKAGE_BUGREPORT">"
-#endif
+#include <stdio.h>
 
 
-/* Helper definitions */
-#define PROPS_END "PROPS-END\n"
-#define PROPS_END_LEN 10 
+/* Valid node kinds */
+typedef struct {
+	const char	*key;
+	char		*value;
+} property_t;
 
 
-/* Other features, some used for debugging */
-#if defined(USE_TIMING) && !defined(HAVE_GETTIMEOFDAY)
- #undef USE_TIMING
-#endif
-/* This is implemented, but enables flags and options for deltas */
-/*#define USE_DELTAS*/
+/* Creates a new property */
+extern property_t property_create();
+
+/* Destroys a property, freeing the value-pointer if it is not NULL */
+extern void property_free(property_t *prop); 
+
+/* Gets the string length of a property */
+extern unsigned int property_strlen(property_t *prop);
+
+/* Dumps the contents of a property */
+extern void property_dump(property_t *prop, FILE *output);
 
 
 #endif

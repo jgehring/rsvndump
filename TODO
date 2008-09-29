@@ -1,6 +1,12 @@
-> Sorting: add before delete
+== Schedule for 0.4 ==
+> Write more automated tests
+
+== Schedule for 0.5 ==
 > Use deltas in diffs
+
+
+== Someday ==
+> Option: don't stop on copy
 > MD-5 sums?
 > Incremental (is hard because revision map is missing)
-> Use binary search for copy-revision search (glibc)
 > Use getopt for option parsing

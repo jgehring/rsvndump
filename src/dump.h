@@ -15,14 +15,59 @@
  *	You should have received a copy of the GNU General Public License along
  *	with this program; if not, write to the Free Software Foundation, Inc.,
  *	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ *
+ * 	file: dump.h
+ * 	desc: The main work is done here 
  */
 
 
-#ifndef _DUMP_H
-#define _DUMP_H
+#ifndef DUMP_H
+#define DUMP_H
 
 
-extern char dump_repository();
+#include <stdio.h>
+
+#ifdef HAVE_CONFIG_H
+ #include "config.h"
+#endif
+
+
+/* Bundles all information neccessary to start a dump */
+typedef struct {
+#if __CHAR_UNSIGNED__
+	signed char verbosity;
+#else
+	char verbosity;
+#endif
+	char online;
+	char *repo_url;
+	char *repo_eurl;
+	char *repo_base;
+	char *repo_uuid;
+	char *repo_dir;
+	char *repo_prefix;
+	char *username;
+	char *password;
+	char *user_prefix;
+	char prefix_is_file;
+	FILE *output;
+	int startrev;
+	int endrev;
+#ifdef USE_DELTAS
+	char deltas;
+#endif /* USE_DELTAS */
+} dump_options_t;
+
+
+/* Creats default dumping options */
+extern dump_options_t dump_options_create();
+
+/* Destroys dumping options, freeing char-pointers if they are not NULL */
+extern void dump_options_free(dump_options_t *opts);
+
+/* Dumps a repository, returning 0 on success */
+extern char dump(dump_options_t *opts);
 
 
 #endif

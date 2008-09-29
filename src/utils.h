@@ -17,39 +17,40 @@
  *      51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * 	
- * 	file: main.h
- * 	desc: Common definitions and types
+ * 	file: utils.h
+ * 	desc: Miscellaneous utility functions
  */
 
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef UTILS_H
+#define UTILS_H
 
 
-/* Application-specific constants */
-#ifndef HAVE_CONFIG_H
- #define APPNAME "rsvndump"
- #define APPVERSION "0.4"
- #define APPAUTHOR "Jonas Gehring <jonas.gehring@boolsoft.org>"
-#else
- #include "config.h"
- #define APPNAME PACKAGE
- #define APPVERSION PACKAGE_VERSION
- #define APPAUTHOR "Jonas Gehring <"PACKAGE_BUGREPORT">"
-#endif
+#include "main.h"
+#include "dump.h"
 
 
-/* Helper definitions */
-#define PROPS_END "PROPS-END\n"
-#define PROPS_END_LEN 10 
+#ifdef USE_TIMING
+/* Structure for time measurement */
+typedef struct {
+	int mds;
+} stopwatch_t;
 
 
-/* Other features, some used for debugging */
-#if defined(USE_TIMING) && !defined(HAVE_GETTIMEOFDAY)
- #undef USE_TIMING
-#endif
-/* This is implemented, but enables flags and options for deltas */
-/*#define USE_DELTAS*/
+/* Creates a stopwatch with the current time  */
+extern stopwatch_t stopwatch_create();
+
+/* Returns the number of seconds passed */
+extern float stopwatch_elapsed(stopwatch_t *watch);
+#endif /* USE_TIMING */
+
+
+/* Returns a canonicalized path that has been allocated using strdup() */
+extern char *utils_canonicalize_strdup(char *path);
+
+/* Recursively removes the contents of a directory and the directory */
+/* itself it 'rmdir' is non-zero */
+extern void utils_rrmdir(const char *path, char rmdir);
 
 
 #endif

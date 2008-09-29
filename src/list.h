@@ -15,27 +15,42 @@
  *	You should have received a copy of the GNU General Public License along
  *	with this program; if not, write to the Free Software Foundation, Inc.,
  *	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ *
+ * 	file: list.h
+ * 	desc: A simple dynamic list
  */
 
 
-#ifndef _LIST_H
-#define _LIST_H
+#ifndef LIST_H
+#define LIST_H
 
 
 #include <stdlib.h>
 
 
-// Data structures
+/* List structure */
 typedef struct {
-	int	size, max;
-	size_t	elsize;
-	void	*elements;
+	unsigned int	size, max;
+	unsigned int	elsize;
+	void		*elements;
 } list_t;
 
-extern void list_init(list_t *l, size_t elsize);
+
+/* Creates a new list with space for a single element */
+extern list_t list_create(unsigned int elsize);
+
+/* Destroys a list and all its elements */
 extern void list_free(list_t *l);
-extern void list_add(list_t *l, void *element);
-extern void list_remove(list_t *l, int pos);
+
+/* Appends an alement to the list */
+extern list_t *list_append(list_t *l, void *element);
+
+/* Removes the element at pos from the list */
+extern void list_remove(list_t *l, unsigned int pos);
+
+/* Sorts the list using a specified sorting function */
+extern void list_qsort(list_t *l, int (* comparator)(const void *, const void *));
 
 
 #endif

@@ -8,9 +8,17 @@
 		<h2><p align="center">Welcome to the rsvndump web page!</p></h2>
 		<hr />
 		<h3>ABOUT</h3>
-		<p>rsvndump is a command line tool that is able to dump a Subversion repository that resides on a remote server. All data is dumped in the format that can be read and written by <i>svnadmin</i>, so the data which is produced can easily be importerd into a new Subversion repository.</p>
-		<p>Actually, rsvndump can basically be simulated with <i>svnsync</i> and a <i>svnadmin dump</i> afterwards. However, <i>svnsync</i> can not be used to "copy" single subdirectories of a repository. Since <i>svndumpfilter</i> can do this job on a dump, this is not an insuperable issue. But if you do not have access to the repository root or do not want to send the whole repository to your backup PC, rsvndump is the right tool for you.</p>
-		<p>rsvndump is written in C and built on top of the Subversion API, so it can offer all functionality needed to access a Subversion repository, including SSL authentication. At the moment, there is still need for the <i>svn</i> program to produce a log of the revisions that should be dumped (this will change soon). And it's GPLed.</p>
+		<p>rsvndump is a command line tool that is able to dump a Subversion repository that resides on a remote server.
+		All data is dumped in the format that can be read an written by <i>svnadmin dump</i>, so the data which is produced
+		can easily be importerd into a new Subversion repository.</p>
+		<p>Actually, a remote dump can be done using <i>svnsync</i> and <i>svnadmin dump</i> on the locally synced repository. However, 
+		if the remote server does not run Subversion 1.5 or later, <i>svnsync</i> is unable to dump subdirectories of a repository only. This can
+		be solved by syncing the whole repository and using <i>svndumpfilter</i> afterwards, but data of other subdirectories needs to be transferred over the network
+		for no reason. And if you don't have access to the repository root, the whole thing will not work.</p>
+		<p>Long story short: If you want to dump a subdirectory of a remote repository which runs a version of Subversion prior to 1.5, this 
+		is the right tool for you. If not, please consider using <i>svnsync</i>.</p>
+		<p>rsvndump is written in C and built on top of the Subversion API, so it can offer all functionality needed to access a Subversion
+		repository, including SSL authentication. And it's GPLed.</p>
 		<hr />
 		<h3>NEWS</h3>
 		<ul>

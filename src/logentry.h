@@ -17,39 +17,34 @@
  *      51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * 	
- * 	file: main.h
- * 	desc: Common definitions and types
+ * 	file: logentry.h
+ * 	desc: Simple struct for a log entry 
  */
 
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef LOGENTRY_H 
+#define LOGENTRY_H
 
 
-/* Application-specific constants */
-#ifndef HAVE_CONFIG_H
- #define APPNAME "rsvndump"
- #define APPVERSION "0.4"
- #define APPAUTHOR "Jonas Gehring <jonas.gehring@boolsoft.org>"
-#else
- #include "config.h"
- #define APPNAME PACKAGE
- #define APPVERSION PACKAGE_VERSION
- #define APPAUTHOR "Jonas Gehring <"PACKAGE_BUGREPORT">"
-#endif
+#include <svn_types.h>
+
+#include "property.h"
 
 
-/* Helper definitions */
-#define PROPS_END "PROPS-END\n"
-#define PROPS_END_LEN 10 
+/* Log entry */
+typedef struct {
+	svn_revnum_t	revision;
+	property_t	author;
+	property_t	date;
+	property_t	msg;
+} logentry_t;
 
 
-/* Other features, some used for debugging */
-#if defined(USE_TIMING) && !defined(HAVE_GETTIMEOFDAY)
- #undef USE_TIMING
-#endif
-/* This is implemented, but enables flags and options for deltas */
-/*#define USE_DELTAS*/
+/* Creates a new logentry with default values */
+extern logentry_t logentry_create();
+
+/* Destroys a node, freeing all non-NULL value strings  */
+extern void logentry_free(logentry_t *logentry);
 
 
 #endif

@@ -1,26 +1,46 @@
-0.3.2	20080906	Fixed memory leaks due to long-living pools
-			Changed sorting of dumped nodes (change prior to 
-			  add prior to delete prior to replace)
-			Output empty properties only if a node is being added
+2008-09-06  --  version 0.4
+	
+	* Automatic changelog fetching
+	* Big speed improvements for both online and offline mode
+	* Added --stop argument (stop dumping at specified revision)
+	* Better checking for APR and Subversion in resulting ./configure
+	* Username and password arguments are now filled with spaces to hide
+	  them from process viewers
+	* Build system should be more robust now, using the lib/ folder which
+	  implements possibly missing system calls (from gnulib)
+	* Yes, it's a rewrite
 
-0.3.1	20080901	Added custom prefix for dumped data
-			Fixed copy resolving from non-sub-paths with a
-			  revision number that has already been dumped
-			Fixed node-type checking in copy resolving
-			Fixed leaking memory due to svn_error_t pointers
+2008-09-06  --  version 0.3.2
 
-0.3	20080824	Added new offline mode which provides a big speedup
-			  for repositories outside the local network
-			Copies from a source out of reach (i.e. a source that
-			  has not been dumped yet) will be resolved and marked
-			  as "added"
-			Added another verbosity mode and some additional flags
-			  for convenience
-			Added man page
-			Switched to GNU autotools
+	* Fixed memory leaks due to long-living pools
+	* Changed sorting of dumped nodes (change prior to add prior to delete
+	  prior to replace)
+	* Output empty properties only if a node is being added
 
-0.2	20080811	Fixed horrible memory leak(s)
-			Added dumping of rename copyfrom information
-			Added correct uri encoding of path names
+2008-09-01  --  version 0.3.1 
 
-0.1	20080810	Initial release
+	* Added custom prefix for dumped data
+	* Fixed copy resolving from non-sub-paths with a revision number that
+	  has already been dumped
+	* Fixed node-type checking in copy resolving
+	* Fixed leaking memory due to svn_error_t pointers
+
+2008-08-24  --  version 0.3 
+
+	* Added new offline mode which provides a big speedup for repositories
+	  outside the local network
+	* Copies from a source out of reach (i.e. a source that has not been
+	  dumped yet) will be resolved and marked as "added"
+	* Added another verbosity mode and some additional flags for convenience
+	* Added man page
+	* Switched to GNU autotools
+
+2008-08-11  --  version 0.2 
+
+	* Fixed horrible memory leak(s)
+	* Added dumping of rename copyfrom information
+	* Added correct uri encoding of path names
+
+2008-08-10  --  version 0.1 
+
+	* Initial release 

@@ -1,55 +1,47 @@
 /*
- *	rsvndump - remote svn repository dump
- *	Copyright (C) 2008 Jonas Gehring
+ *      rsvndump - remote svn repository dump
+ *      Copyright (C) 2008 Jonas Gehring
  *
- *	This program is free software; you can redistribute it and/or modify
- *	it under the terms of the GNU General Public License as published by
- *	the Free Software Foundation; either version 2 of the License, or
- *	(at your option) any later version.
+ *      This program is free software; you can redistribute it and/or modify
+ *      it under the terms of the GNU General Public License as published by
+ *      the Free Software Foundation; either version 2 of the License, or
+ *      (at your option) any later version.
  *
- *	This program is distributed in the hope that it will be useful,
- *	but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *	GNU General Public License for more details.
+ *      This program is distributed in the hope that it will be useful,
+ *      but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *      GNU General Public License for more details.
  *
- *	You should have received a copy of the GNU General Public License along
- *	with this program; if not, write to the Free Software Foundation, Inc.,
- *	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *      You should have received a copy of the GNU General Public License along
+ *      with this program; if not, write to the Free Software Foundation, Inc.,
+ *      51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * 	
+ * 	file: main.c
+ * 	desc: Program initialization and option parsing
  */
 
 
-#include "main.h"
-#include "dump.h"
-#include "svn_functions.h"
-
-#include <dirent.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
+#include <svn_cmdline.h>
 #include <svn_path.h>
 
-
-// Globals
-char *repo_url = NULL;
-char *repo_base = NULL;
-char *repo_prefix = NULL;
-char *repo_dir = NULL;
-char *repo_uuid = NULL;
-char *repo_username = NULL;
-char *repo_password = NULL;
-char *user_prefix = NULL;
-char online = 0;
-char verbosity = 0; // < 0: quiet, > 0: verbose 
-FILE *input = NULL, *output = NULL;
-
-// File globals
-static char dir_created = 0;
+#include "main.h"
+#include "dump.h"
+#include "wsvn.h"
+#include "utils.h"
 
 
-// Prints the program version
+/*---------------------------------------------------------------------------*/
+/* Static functions                                                          */
+/*---------------------------------------------------------------------------*/
+
+/* Prints the program version */
 static void print_version()
 {
 	printf(APPNAME" "APPVERSION"\n");
@@ -57,7 +49,7 @@ static void print_version()
 }
 
 
-// Prints usage information
+/* Prints usage information */
 static void print_usage()
 {
 	print_version();
@@ -70,229 +62,169 @@ static void print_usage()
 	printf("    -v [--verbose]            print extra progress\n");
 	printf("    -u [--username] arg       username\n");
 	printf("    -p [--password] arg       password\n");
-	printf("    --prefix arg              add a prefix to the path that is being dumped\n");
-	printf("    -l [--logfile] arg        output of 'svn -q -r 0:HEAD log'\n");
-       	printf("                              if not specified, read from stdin\n");
-	printf("    -o [--outfile] arg        write data to file\n");
-       	printf("                              if not specified, print to stdout\n");
-	printf("    -d [--download-dir] arg   directory for svn file downloads\n");
-       	printf("                              if not specified, create a temporary dir\n");
-	printf("    --online                  do not store anything on the disk\n");
-       	printf("                              (the download dir is ignored then)\n");
+	printf("    -o [--outfile] arg        write data to file arg\n");
+	printf("                              if not specified, print to stdout\n");
+	printf("    -d [--download-dir] arg   directory for working copy\n");
+	printf("                              if not specified, create a temporary dir\n");
+	printf("    --online                  don't use a working copy for dumping\n");
+	printf("                              (the download dir is ignored then)\n");
+	printf("    --prefix arg              prepend arg to the path that is being dumped\n");
+	printf("    --stop arg                stop after dumping revision arg\n");
+	printf("                              arg can be a decimal number or HEAD\n");
+#ifdef USE_DELTAS
+	printf("    --deltas                  use deltas in dump output\n");
+#endif /* USE_DELTAS */
 	printf("\n");
 }
 
 
-// Cleans up temporary directory
-static void rm_temp_dir(const char *path, char remdir)
+/* Parses a revision number */
+static int rev_atoi(char *str)
 {
-	DIR *dir;
-	struct dirent *entry;
-
-	if ((dir = opendir(path)) != NULL) {
-		while ((entry = readdir(dir)) != NULL) {
-			if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
-				char *filename = malloc(strlen(path)+strlen(entry->d_name)+2);
-				sprintf(filename, "%s/%s", path, entry->d_name);
-				struct stat st;
-				stat(filename, &st);
-				if (st.st_mode & S_IFDIR) {
-					rm_temp_dir(filename, 1);
-				} else {
-					unlink(filename);
-				}
-				free(filename);
-			}
-		}
-
-		closedir(dir);
-		if (remdir) {
-			rmdir(path);
-		}
+	if (strncmp("HEAD", str, 4) == 0) {
+		return HEAD_REVISION;
 	}
+	return atoi(str);
 }
 
 
-// Closes opened files
-static void close_files()
-{
-	if (input != NULL && input != stdin) {
-		fclose(input);
-	}
-	if (output != NULL && output != stdout) {
-		fclose(output);
-	}
-}
+/*---------------------------------------------------------------------------*/
+/* Global functions                                                          */
+/*---------------------------------------------------------------------------*/
 
-
-// Frees memory used by globals
-static void free_globals()
-{
-	if (repo_url != NULL) {
-		free(repo_url);
-	}
-	if (repo_base != NULL) {
-		free(repo_base);
-	}
-	if (repo_prefix != NULL) {
-		free(repo_prefix);
-	}
-	if (repo_dir != NULL) {
-		free(repo_dir);
-	}
-	if (repo_uuid != NULL) {
-		free(repo_uuid);
-	}
-	if (repo_username != NULL) {
-		free(repo_username);
-	}
-	if (repo_password != NULL) {
-		free(repo_password);
-	}
-	if (user_prefix != NULL) {
-		free(user_prefix);
-	}
-}
-
-
-// Program entry point
+/* Program entry point */
 int main(int argc, char **argv)
 {
+	char ret, dir_created = 0;
 	int i;
+	dump_options_t opts = dump_options_create();
 
-	input = stdin;
-	output = stdout;
+	/* Init subversion (sets apr locale etc.) */
+	if (svn_cmdline_init(APPNAME, stderr) != EXIT_SUCCESS) {
+		return EXIT_FAILURE;
+	}
 
-	// Parse arguments
+	/* Parse arguments */
 	for (i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
 			print_usage();
-			free_globals();
+			dump_options_free(&opts);
 			return EXIT_SUCCESS;
 		} else if (!strcmp(argv[i], "--version")) {
 			print_version();
-			free_globals();
+			dump_options_free(&opts);
 			return EXIT_SUCCESS;
 		} else if (!strcmp(argv[i], "-q") || !strcmp(argv[i], "--quiet")) {
-			verbosity = -1;
+			opts.verbosity = -1;
 		} else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")) {
-			verbosity = 1;
+			opts.verbosity = 1;
+		} else if (!strcmp(argv[i], "--online")) {
+			opts.online = 1;
+#ifdef USE_DELTAS
+		} else if (!strcmp(argv[i], "--deltas")) {
+			opts.deltas = 1;
+#endif /* USE_DELTAS */
+		} else if (i+1 < argc && !strcmp(argv[i], "--stop")) {
+			opts.endrev = rev_atoi(argv[++i]);
 		} else if (i+1 < argc && (!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username"))) {
-			if (repo_username != NULL) {
-				free(repo_username);
+			if (opts.username != NULL) {
+				free(opts.username);
 			}
-			repo_username = strdup(argv[++i]);
+			opts.username = strdup(argv[++i]);
+			/* No one needs to know the username */
+			memset(argv[i], ' ', strlen(argv[i]));
 		} else if (i+1 < argc && (!strcmp(argv[i], "-p") || !strcmp(argv[i], "--password"))) {
-			if (repo_password != NULL) {
-				free(repo_password);
+			if (opts.password != NULL) {
+				free(opts.password);
 			}
-			repo_password = strdup(argv[++i]);
+			opts.password = strdup(argv[++i]);
+			/* No one needs to know the password */
+			memset(argv[i], ' ', strlen(argv[i]));
 		} else if (i+1 < argc && !strcmp(argv[i], "--prefix")) {
-			if (user_prefix != NULL) {
-				free(user_prefix);
+			if (opts.user_prefix != NULL) {
+				free(opts.user_prefix);
 			}
-			user_prefix = strdup(argv[++i]);
-		} else if (i+1 < argc && (!strcmp(argv[i], "-l") || !strcmp(argv[i], "--logfile"))) {
-			if (input != NULL && input != stdin) {
-				fclose(input);
-			}
-			input = fopen(argv[++i], "r");
-			if (input == NULL) {
-				fprintf(stderr, "Error opening logfile\n");
-				free_globals();
-				close_files();
-				return EXIT_FAILURE;
-			}
+			opts.user_prefix = strdup(argv[++i]);
 		} else if (i+1 < argc && (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--outfile"))) {
-			if (output != NULL && output != stdout) {
-				fclose(output);
+			if (opts.output != NULL && opts.output != stdout) {
+				fclose(opts.output);
 			}
-			output = fopen64(argv[++i], "w");
-			if (output == NULL) {
+#ifdef HAVE_FOPEN64
+			opts.output = fopen64(argv[++i], "wb");
+#else
+			opts.output = fopen(argv[++i], "wb");
+#endif
+			if (opts.output == NULL) {
 				fprintf(stderr, "Error opening outfile\n");
-				free_globals();
-				close_files();
+				dump_options_free(&opts);
 				return EXIT_FAILURE;
 			}
 		} else if (i+1 < argc && (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--download-dir"))) {
 			struct stat st;
 			stat(argv[++i], &st);
 			if (!(st.st_mode & S_IFDIR)) {
-				fprintf(stderr, "Error: '%s' is not a directory or does not exist\n", argv[i]);
-				free_globals();
-				close_files();
+				fprintf(stderr, "Error: '%s' is either not a directory or does not exist\n", argv[i]);
+				dump_options_free(&opts);
 				return EXIT_FAILURE;
 			}
-			if (repo_dir != NULL) {
-				free(repo_dir);
+			if (opts.repo_dir != NULL) {
+				free(opts.repo_dir);
 			}
-			repo_dir = strdup(argv[i]);
-		} else if (!strcmp(argv[i], "--online")) {
-			online = 1;
-		} else if (repo_url == NULL && svn_path_is_url(argv[i])) {
-			if (repo_url != NULL) {
-				free(repo_url);
+			opts.repo_dir = utils_canonicalize_strdup(argv[i]);
+		} else if (opts.repo_url == NULL && svn_path_is_url(argv[i])) {
+			if (opts.repo_url != NULL) {
+				free(opts.repo_url);
 			}
-			repo_url = strdup(argv[i]);
+			opts.repo_url = strdup(argv[i]);
 		} else {
 			fprintf(stderr, "Argument error: Unkown argument or malformed url '%s'\n", argv[i]);
 			fprintf(stderr, "Type %s --help for usage information\n", argv[0]);
-			free_globals();
-			close_files();
+			dump_options_free(&opts);
 			return EXIT_FAILURE;
 		}
 	}
 
-	if (repo_url == NULL) {
-		free_globals();
-		close_files();
+	if (opts.repo_url == NULL) {
+		dump_options_free(&opts);
 		print_usage();
 		return EXIT_FAILURE;
 	}
 
-	// Remove trailing slashes
-	char *ptr = repo_url+strlen(repo_url);
-	while (*(--ptr) == '/') {
-		*ptr = '\0';
-	}
-
-	if (repo_dir == NULL && !online) {
-		if (getenv("TMPDIR") != NULL) {
-			repo_dir = malloc(strlen(getenv("TMPDIR"))+strlen(APPNAME)+8);
-			strcpy(repo_dir, getenv("TMPDIR"));
-			strcat(repo_dir, APPNAME"XXXXXX");
+	/* Generate temporary directory if neccessary */
+	if (opts.repo_dir == NULL && !opts.online) {
+		const char *tdir = getenv("TMPDIR");
+		if (tdir != NULL) {
+			char *tmp = malloc(strlen(tdir)+strlen(APPNAME)+8);
+			sprintf(tmp, "%s/%sXXXXXX", tdir, APPNAME);
+			opts.repo_dir = utils_canonicalize_strdup(tmp);
+			free(tmp);
 		} else {
-			repo_dir = strdup("/tmp/"APPNAME"XXXXXX");
+			opts.repo_dir = utils_canonicalize_strdup("/tmp/"APPNAME"XXXXXX");
 		}
-		repo_dir = mkdtemp(repo_dir);
-		if (repo_dir == NULL) {
+		opts.repo_dir = mkdtemp(opts.repo_dir);
+		if (opts.repo_dir == NULL) {
 			fprintf(stderr, "Error creating download directory\n");
-			free_globals();
-			close_files();
+			dump_options_free(&opts);
 			return EXIT_FAILURE;
 		}
 		dir_created = 1;
 	}
 
-	svn_init();
+	/* Get a properly encoded url */
+	opts.repo_eurl = wsvn_uri_encode(opts.repo_url);
 
-	// Get the base url of the repository
-	svn_repo_info(repo_url, &repo_base, &repo_prefix);
-	if (repo_base == NULL) {
-		fprintf(stderr, "Error getting information from repository '%s'\n", repo_url);
-		free_globals();
-		close_files();
+	/* Dump */
+	ret = dump(&opts);
+
+	/* Clean up working copy */
+	if (opts.online == 0) {
+		utils_rrmdir(opts.repo_dir, dir_created);
+	}
+
+	dump_options_free(&opts);
+	if (ret == 0) {
+		return EXIT_SUCCESS;
+	} else {
 		return EXIT_FAILURE;
 	}
-
-	dump_repository();
-
-	svn_free();
-
-	close_files();
-	if (!online) {
-		rm_temp_dir(repo_dir, dir_created);
-	}
-	free_globals();
-	return EXIT_SUCCESS;
 }
