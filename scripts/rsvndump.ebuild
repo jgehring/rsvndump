@@ -4,7 +4,7 @@
 
 DESCRIPTION="Performs a remote dump of a subversion repository"
 HOMEPAGE="http://saubue.boolsoft.org/projects/rsvndump"
-SRC_URI="http://saubue.boolsoft.org/stuff/rsvndump-0.2.tar.gz"
+SRC_URI="http://saubue.boolsoft.org/projects/rsvndump/rsvndump-0.3.2.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
