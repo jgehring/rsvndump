@@ -1,4 +1,4 @@
-.TH rsvndump "1" "September 27th, 2008" "rsvndump 0.4" "User Commands"
+.TH rsvndump "1" "September 29th, 2008" "rsvndump 0.4" "User Commands"
 .SH NAME
 rsvndump \- dump a remote subversion repository
 
@@ -121,7 +121,7 @@ has to resolve subversion copies if the source of the copy is either not availab
 Unlike
 .BR svn (1),
 .B rsvndump
-does not save passwords or SSL certifactes on disk for later authentication. Thus, passwords must be entered or specified everytime the program is run. The same is true for accepting SSL certificates.
+does not save passwords or SSL certifactes on disk for later authentication. Thus, passwords must be entered or passed as arguments everytime the program is run. The same is true for accepting SSL certificates.
 .PP
 If only a single file is being dumped,
 .B rsvndump
@@ -133,7 +133,7 @@ automatically switches to online mode since a working copy cannot be a file.
 The parent directory of the temporary directory that will be used for the working copy in offline mode.
 
 .SH TODO
-The current TODO list includes svn log functionality, the use of deltas inside the dump output and eventually incremental backups. MD5 checksums are also missing at the moment. For feature requests, feel free to drop a mail. 
+The current TODO list includes the use of deltas inside the dump output and eventually incremental backups. MD5 checksums are also missing at the moment. For feature requests, feel free to drop a mail. 
 
 .SH AUTHOR
 Jonas Gehring <jonas.gehring@boolsoft.org>

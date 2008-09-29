@@ -1,4 +1,4 @@
-rsvndump 0.3.2
+rsvndump 0.4
 Copyright (C) 2008 by Jonas Gehring
 
 
@@ -14,11 +14,7 @@ REQUIREMENTS
 ============
 rsvndump depends on Subversion, which depends on the Apache Portable Runtinme.
 Therefore, to build rsvndump from source, the development and runtime files
-(headers and libraries) must be present on the system.
-rvnsump uses autotools for automatic dependency checking in ./configure. The
-check for the Apache Portable Runtime library is performed using pkg-config, so
-please make sure that pkg-config knows about the apr-1 and aprutil-1
-configurations.
+(headers and libraries) of both libraries must be present on the system.
 
 
 USAGE
@@ -28,7 +24,7 @@ For usage information, please refer to the man page shipped with this package.
 
 CREDITS
 =======
-rsvndump 0.3.2
+rsvndump 0.4
 written by Jonas Gehring <jonas.gehring@boolsoft.org>
 http://saubue.boolsoft.org/projects/rsvndump
 
@@ -38,9 +34,9 @@ LICENSE
 rsvndump - remote svn repository dump
 Copyright (C) 2008 Jonas Gehring
 
-This program is free software; you can redistribute it and/or modify
+This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
@@ -48,6 +44,5 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
