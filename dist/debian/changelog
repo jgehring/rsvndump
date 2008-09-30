@@ -1,5 +1,5 @@
-rsvndump (0.3.2) unstable; urgency=low
+rsvndump (0.4) unstable; urgency=low
 
   * Initial debian package generation
 
- -- Jonas Gehring <jonas.gehring@boolsoft.org>  Thu, 18 Sep 2008 02:00:32 +0200
+ -- Jonas Gehring <jonas.gehring@boolsoft.org>  Thu, 01 Oct 2008 01:00:32 +0200
