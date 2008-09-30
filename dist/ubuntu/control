@@ -1,0 +1,11 @@
+Source: rsvndump
+Section: admin
+Priority: optional
+Maintainer: Jonas Gehring <jonas.gehring@boolsoft.org>
+Build-Depends: debhelper (>= 5), libsvn-dev (>= 1.4.0)
+
+Package: rsvndump
+Architecture: $ARCH
+Depends: ${shlibs:Depends}
+Description: Performs a remote dump of a subversion repository
+ rsvndump is a command line tool that is able to dump a subversion repository that resides on a remote server. All data is dumped in the format that can be read/written by the svnadmin command, so the data produced by can easily be imported into a new subversion repository.
