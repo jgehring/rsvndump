@@ -33,11 +33,6 @@ echo "Fetching release from ${MIRROR}..."
 wget -q "${MIRROR}/${PROGRAM}-${VERSION}.tar.bz2" || exit 1
 tar -xjf "${PROGRAM}-${VERSION}.tar.bz2"
 
-echo "Removing unused files..."
-cd "${PROGRAM}-${VERSION}"
-rm -rf TODO
-cd ..
-
 echo "Running dh_make..."
 cd "${PROGRAM}-$VERSION"
 yes|dh_make --single --copyright gpl --email jonas.gehring@boolsoft.org --packagename ${PROGRAM} -f "../${PROGRAM}-$VERSION.tar.bz2"
