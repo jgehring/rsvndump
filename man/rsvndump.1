@@ -111,6 +111,11 @@ might result in the following layout:
 .BI "--stop"\ revision
 Stop after dumping the specified revision, which can either be given by a decimal number or by
 .BR HEAD .
+.TP
+.B "--keep-revnums"
+Keep the revision numbers of the dump in sync with the remote repository. This is only useful
+if a sub-path of the repository is being dumped. If this flag is given, revisions that are
+not being dumped will appear as empty revisions in the dump.
 
 .SH ONLINE vs. OFFLINE MODE
 By default,
@@ -149,6 +154,9 @@ run. The same is true for accepting SSL certificates.
 If only a single file is being dumped,
 .B rsvndump
 automatically switches to online mode since a working copy cannot be a file.
+For performance reasons, online mode is also used if the given url starts
+with
+.IR file:// .
 
 .SH ENVIRONMENT
 .TP

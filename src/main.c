@@ -70,6 +70,9 @@ static void print_usage()
 	printf("    --prefix arg              prepend arg to the path that is being dumped\n");
 	printf("    --stop arg                stop after dumping revision arg\n");
 	printf("                              arg can be a decimal number or HEAD\n");
+	printf("    --keep-revnums            keep the dumped revision numbers in sync with\n");
+	printf("                              the repository by using empty revisions for\n");
+	printf("                              padding\n");
 #ifdef USE_DELTAS
 	printf("    --deltas                  use deltas in dump output\n");
 #endif /* USE_DELTAS */
