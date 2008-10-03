@@ -91,9 +91,22 @@ This directory will be cleared if the program exits.
 run in online mode as described below.
 .TP
 .BI "--prefix"\ prefix
-A custom string that is prepended to every node that is being dumped. The first revision dumped will also contain the paths neccessary to create the prefix.
+A custom string that is prepended to every node that is being dumped. The first
+revision dumped will also contain the paths neccessary to create the prefix.
 .br
-It is assumed that the prefix is a path, with directories seperated by '/'. If you want the prefix to be a directory, please append a '/' at the end.
+It is assumed that the prefix is a path, with directories seperated by '/'. If
+you want the prefix to be a directory, please append a '/' at the end. For example,
+a prefix of
+.B myrepo/old_ 
+might result in the following layout:
+.br
+.B  myrepo
+.br
+.BR  |-old_ branches
+.br
+.BR  |-old_ tags
+.br
+.BR  |-old_ trunk
 .TP
 .BI "--stop"\ revision
 Stop after dumping the specified revision, which can either be given by a decimal number or by
