@@ -1,6 +1,6 @@
 .TH rsvndump "1" "September 29th, 2008" "rsvndump 0.4" "User Commands"
 .SH NAME
-rsvndump \- dump a remote subversion repository
+rsvndump \- dumps a remote subversion repository
 
 .SH SYNOPSIS
 .ll +8
@@ -9,28 +9,33 @@ rsvndump \- dump a remote subversion repository
 
 .SH DESCRIPTION
 .B rsvndump
-is a command line tool that is able to dump a subversion repository that resides on a remote server. All data is dumped in the format that can be read/written by the
+is a command line tool that is able to dump a subversion repository that
+resides on a remote server. All data is dumped in the format that can be
+read/written by the
 .BR svnadmin (1)
 command, so the data produced by
 .B rsvndump
 can easily be imported into a new subversion repository.
 
-However, since
+Since
 .B rsvndump
-allows you to exclusively dump sub-paths of repository, there are a few differences to a normal dump:
-
-   - Revision numbers are not synced with the remote repository but are simply counted, starting from 1. 
-   - The url that has been specified serves as the new repository root (but can be prefixed).
-
-If need an exact copy of the original repository, consider using the
-.BR svnsync (1)
-program.
-
-.B rsvndump
-provides an offline and an online mode and defaults to offline mode. See below for a detailed description and comparison of the modes.
-
-Please note that there are situations where the dump of the repository can slightly differ from the original repository. A detailed description can be found under 
+allows you to exclusively dump sub-paths of a repository, there are a few
+differences to a normal dump:
+.br
+First, revision numbers are not synced with the remote repository but are simply
+counted, starting from 1. Second, the url that has been specified serves as the
+new repository root (but can be prefixed).
+.br
+Please note that these differences do not appear if the whole repository is
+dumped, i.e. the given url points to the root of the repository. If a sub-path
+of a repository is beingThere are situations where the dump of the repository
+can slightly differ from the original repository in other terms, too. A
+detailed description can be found under
 .BR NOTES .
+
+.B rsvndump
+provides an offline and an online mode and defaults to offline mode. See below
+for a detailed description and comparison of the modes.
 
 .SH OPTIONS
 Options in brackets are provided as synonyms:
@@ -47,18 +52,16 @@ print extra progress. This is not very expressive in offline mode.
 .BI "-u [--username]"\ username
 username for repository authentication.
 .br
-If not specified and the repository does not provide anonymous access, the name of the user that has run
+If not specified and the repository does not provide anonymous access, the name
+of the user that has run
 .B rsvndump
 if used. If repository access is still blocked, 
 .B rsvndump
-will ask for the username
-If not specified and the given url is not a public repository,
+will ask for the username. If not specified and the given url is not a public
+repository,
 .B rsvndump
-will ask for the username on 
+will first try your account name and will finally ask for the username on 
 .IR stdin .
-.br
-Be sure to provide a valid username when providing the log data via
-.IR stdin ", because the username might be taken from the log data."
 .TP
 .BI "-p [--password]"\ password
 password for repository authentication.
@@ -78,8 +81,8 @@ will write all dumped data to
 .BI "-d [--download-dir]"\ dir
 directory where the working svn copy will be stored. 
 .br
-A working copy will only be used when dumping in offline mode (see below for details).
-If not specified,
+A working copy will only be used when dumping in offline mode (see below for
+details). If not specified,
 .B rsvndump
 will create a temporary directory inside the system-wide temporary directory.
 This directory will be cleared if the program exits.
@@ -113,14 +116,22 @@ repository and no additional data is stored on the local hard disk.
 .SH NOTES
 Since
 .B rsvndump
-allows you to dump an arbitrary path inside of a repository, the dumped data might not represent the exact history of the dumped path. This is due to the fact that
+allows you to dump an arbitrary path inside of a repository, the dumped data
+might not represent the exact history of the dumped path. This is due to the
+fact that
 .B rsvndump
-has to resolve subversion copies if the source of the copy is either not available in the current dump range (revision numbers are not synced) or may reside in another sub-tree of the repository. Here, resolving means that the data will be dumped as if it would have been added, not as if it would have been copied.
+has to resolve subversion copies if the source of the copy is either not
+available in the current dump range (revision numbers are not synced) or may
+reside in another sub-tree of the repository. Here, resolving means that the
+data will be dumped as if it would have been added, not as if it would have been
+copied.
 .PP
 Unlike
 .BR svn (1),
 .B rsvndump
-does not save passwords or SSL certifactes on disk for later authentication. Thus, passwords must be entered or passed as arguments everytime the program is run. The same is true for accepting SSL certificates.
+does not save passwords or SSL certifactes on disk for later authentication.
+Thus, passwords must be entered or passed as arguments everytime the program is
+run. The same is true for accepting SSL certificates.
 .PP
 If only a single file is being dumped,
 .B rsvndump
@@ -129,10 +140,13 @@ automatically switches to online mode since a working copy cannot be a file.
 .SH ENVIRONMENT
 .TP
 .B TEMP
-The parent directory of the temporary directory that will be used for the working copy in offline mode.
+The parent directory of the temporary directory that will be used for the
+working copy in offline mode.
 
 .SH TODO
-The current TODO list includes the use of deltas inside the dump output and eventually incremental backups. MD5 checksums are also missing at the moment. For feature requests, feel free to drop a mail. 
+The current TODO list includes the use of deltas inside the dump output and
+eventually incremental backups. MD5 checksums are also missing at the moment.
+For feature requests, feel free to drop a mail. 
 
 .SH AUTHOR
 Jonas Gehring <jonas.gehring@boolsoft.org>
