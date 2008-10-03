@@ -1,3 +1,11 @@
+2008-10-XX  --  version 0.4.1
+
+	* Added --keep-revnums flag to sync revision numbers with the
+	  source repository
+	* Automatically switch to online mode for file://-urls
+	* Fixed bug that prevented switching to online mode when dumping a
+	  single file and using little or less verbosity
+
 2008-09-29  --  version 0.4
 	
 	* Automatic changelog fetching

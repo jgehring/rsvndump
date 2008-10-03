@@ -122,6 +122,8 @@ int main(int argc, char **argv)
 			opts.verbosity = 1;
 		} else if (!strcmp(argv[i], "--online")) {
 			opts.online = 1;
+		} else if (!strcmp(argv[i], "--keep-revnums")) {
+			opts.keep_revnums = 1;
 #ifdef USE_DELTAS
 		} else if (!strcmp(argv[i], "--deltas")) {
 			opts.deltas = 1;

@@ -232,6 +232,7 @@ dump_options_t dump_options_create()
 	dump_options_t opts;
 	opts.verbosity = 0;
 	opts.online = 0; 
+	opts.keep_revnums = 0;
 	opts.repo_url = NULL;
 	opts.repo_eurl = NULL;
 	opts.repo_base = NULL;
@@ -322,10 +323,20 @@ char dump(dump_options_t *opts)
 	wsvn_stat(&node, SVN_INVALID_REVNUM);
 	if (node.kind == NK_FILE) {
 		opts->prefix_is_file = 1;
-		if (opts->online == 0 && opts->verbosity >= 0) {
-			fprintf(stderr, "Switched to online mode because the url refers to a file\n");
+		if (opts->online == 0) {
+			if (opts->verbosity >= 0) {
+				fprintf(stderr, "Switched to online mode because the url refers to a file.\n");
+			}
 			opts->online = 1;
 		}
+	}
+
+	/* Check if the url is a file:// url and switch mode if neccessary */
+	if (!strncmp(opts->repo_eurl, "file://", 7) == 0 && opts->online == 0) {
+		if (opts->verbosity >= 0) {
+			fprintf(stderr, "Switched to online mode for performance reasons.\n");
+		}
+		opts->online = 1;
 	}
 
 	/* Write dumpfile header */

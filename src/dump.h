@@ -40,6 +40,7 @@ typedef struct {
 	char verbosity;
 #endif
 	char online;
+	char keep_revnums;
 	char *repo_url;
 	char *repo_eurl;
 	char *repo_base;
