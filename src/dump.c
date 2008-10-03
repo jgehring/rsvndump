@@ -332,7 +332,7 @@ char dump(dump_options_t *opts)
 	}
 
 	/* Check if the url is a file:// url and switch mode if neccessary */
-	if (!strncmp(opts->repo_eurl, "file://", 7) == 0 && opts->online == 0) {
+	if (!strncmp(opts->repo_eurl, "file://", 7) && opts->online == 0) {
 		if (opts->verbosity >= 0) {
 			fprintf(stderr, "Switched to online mode for performance reasons.\n");
 		}
