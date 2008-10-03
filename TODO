@@ -1,5 +1,4 @@
 == Schedule for 0.4.1 ==
-> Switch to online mode if url is a file:// url
 > Add --keep-revnums for padding empty revisions
   when dumping a sub-path
 
