@@ -22,9 +22,17 @@
 		<hr />
 		<h3>NEWS</h3>
 		<ul>
+			<li><h4>October 5th, 2008</h4>
+			<p>rsvndump 0.4.1 is now <a href="#content">available</a>. This release includes new features, mainly a command line option to
+			keep revision numbers in sync with the source repository by adding empty revisions for padding. This is useful when dumping
+			a sub-path without changing revision numbers. Adidtionally, a bug preventing a single file to be dumped in offline
+			mode when using the <i>&#150;&#150;quiet</i> flag has been fixed.<br />
+			A more detailed description of the changes can be found in the <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
+			available as a tarball compressed using either gzip or bzip2. The Debian packages have been updated, too.</li>
+
 			<li><h4>October 1st, 2008</h4>
 			<p>rsvndump 0.4 is now available as a <a href="#content">Debian package</a> for x86 and ARM processors. Both packages have been
-			generated on Debian Etch and should also work on Ubuntu.</p>
+			generated on Debian Etch and should also work on Ubuntu.</p></li>
 
 			<li><h4>September 29th, 2008</h4>
 			<p>rsvndump 0.4 is now <a href="#content">available</a>. This release includes new features as well as bugfixes and is actually
@@ -34,22 +42,22 @@
 			available as a tarball compressed using either gzip or bzip2.</p>
 			<p>Additionally, rsvndump is now released under the GNU General Public License, Version 3, which was needed because some autoconf macros which 
 			are used by rsvndump have been licensed under the Apache License, Version 2.0. This license is incompatible to the GPLv2, so
-			I upgraded to the compatible GPLv3.</p>
+			I upgraded to the compatible GPLv3.</p></li>
 
 			<li><h4>September 8th, 2008</h4>
 			<p>rsvndump 0.3.2 is now <a href="#content">available</a>. This is mainly a bugfix release, fixing a memory leak due to long-living
 			memory pools. Additionally, changes were made to the node dumping order.<br />
 			A more detailed description of the changes can be found in the <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
-			available as a tarball compressed using either gzip or bzip2.
+			available as a tarball compressed using either gzip or bzip2.</li>
 
 			<li><h4>September 3rd, 2008</h4>
-			<p>I updated the README to reflect the dependencies of rsvndump (Subversion and Apacha Portable Runtime).</p>
+			<p>I updated the README to reflect the dependencies of rsvndump (Subversion and Apacha Portable Runtime).</p></li>
 
 			<li><h4>September 1st, 2008</h4>
 			<p>rsvndump 0.3.1 is now <a href="#content">available</a>. This is mainly a bugfix release, fixing two issues
 			regarding copy resolving and a memory leak. As an additional feature, the dumped data can be prefixed with a custom string now.<br />
 			A more detailed description of the changes can be found in the <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
-			available as a tarball compressed using either gzip or bzip2.
+			available as a tarball compressed using either gzip or bzip2.</p></li>
 		</ul>
 		<hr />
 		<a name="content"><h3>CONTENT</h3></a>
@@ -58,10 +66,10 @@
 			<li><a href="manpage.html">man page</a> - Online version of the man page</li>
 			<li><b>Downloads:</b>
 			<ul>
-				<li><b><a href="rsvndump-0.4.tar.gz">rsvndump-0.4.tar.gz</a></b> - Source code distribution</li>
-				<li><b><a href="rsvndump-0.4.tar.bz2">rsvndump-0.4.tar.bz2</a></b> - Source code distribution</li>
-				<li><b><a href="rsvndump_0.4_i386.deb">rsvndump_0.4_i386.deb</a></b> - Debian binary package (x86)</li>
-				<li><b><a href="rsvndump_0.4_arm.deb">rsvndump_0.4_arm.deb</a></b> - Debian binary package (ARM)</li>
+				<li><b><a href="rsvndump-0.4.1.tar.gz">rsvndump-0.4.1.tar.gz</a></b> - Source code distribution</li>
+				<li><b><a href="rsvndump-0.4.1.tar.bz2">rsvndump-0.4.1.tar.bz2</a></b> - Source code distribution</li>
+				<li><b><a href="rsvndump_0.4.1_i386.deb">rsvndump_0.4.1_i386.deb</a></b> - Debian binary package (x86)</li>
+				<li><b><a href="rsvndump_0.4.1_arm.deb">rsvndump_0.4.1_arm.deb</a></b> - Debian binary package (ARM)</li>
 			</ul></li>
 			<li><a href="ChangeLog">ChangeLog</a> - The rsvndump change log</li>
 			<li><a href="http://www.gnu.org/licenses/gpl-3.0.txt">COPYING</a> - The GPL v3, under which rsvndump is released</li>
