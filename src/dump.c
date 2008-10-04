@@ -34,7 +34,9 @@
  #include "utils.h"
 #endif
 
+#include <svn_pools.h>
 #include <svn_repos.h>
+#include <svn_time.h>
 
 
 /*---------------------------------------------------------------------------*/
@@ -89,7 +91,11 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 	stopwatch_t watch = stopwatch_create();
 #endif
 	if (dopts->verbosity > 0) {
-		fprintf(stderr, "* Dumping revision %ld (local: %ld) ... 0%%\n", entry->revision, local_revnum);
+		if (dopts->keep_revnums) {
+			fprintf(stderr, "* Dumping revision %ld ... 0%%\n", entry->revision);
+		} else {
+			fprintf(stderr, "* Dumping revision %ld (local: %ld) ... 0%%\n", entry->revision, local_revnum);
+		}
 	}
 
 	/* Update working if needed */
@@ -165,7 +171,11 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 		whash_insert(n->path);
 		if (dopts->verbosity > 0) {
 			fprintf(stderr, "\033[1A\033[K");
-			fprintf(stderr, "* Dumping revision %ld (local: %ld) ... %d%%\n", entry->revision, local_revnum, (i*50)/nodes.size);
+			if (dopts->keep_revnums) {
+				fprintf(stderr, "* Dumping revision %ld ... %d%%\n", entry->revision, (i*50)/nodes.size);
+			} else {
+				fprintf(stderr, "* Dumping revision %ld (local: %ld) ... %d%%\n", entry->revision, local_revnum, (i*50)/nodes.size);
+			}
 		}
 	}
 
@@ -186,7 +196,11 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 			node_free(n);
 			if (dopts->verbosity > 0) {
 				fprintf(stderr, "\033[1A\033[K");
-				fprintf(stderr, "* Dumping revision %ld (local: %ld) ... %d%%\n", entry->revision, local_revnum, 50+(i*50)/nodes.size);
+				if (dopts->keep_revnums) {
+					fprintf(stderr, "* Dumping revision %ld ... %d%%\n", entry->revision, 50+(i*50)/nodes.size);
+				} else {
+					fprintf(stderr, "* Dumping revision %ld (local: %ld) ... %d%%\n", entry->revision, local_revnum, 50+(i*50)/nodes.size);
+				}
 			}
 		}
 	} else {
@@ -212,13 +226,88 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 		if (dopts->verbosity > 0) {
 			fprintf(stderr, "\033[1A\033[K");
 		}
-		fprintf(stderr, "* Dumped revision %ld (local %ld).\n", entry->revision, local_revnum);
+		if (dopts->keep_revnums) {
+			fprintf(stderr, "* Dumped revision %ld.\n", entry->revision);
+		} else {
+			fprintf(stderr, "* Dumped revision %ld (local %ld).\n", entry->revision, local_revnum);
+		}
 	}
 
 #ifdef USE_TIMING
 	fprintf(stderr, "[[ Revision dumped in %.3f seconds ]]\n", (float)stopwatch_elapsed(&watch));
 #endif
 	return 0;
+}
+
+
+/* Dumps empty revisions between entry1 and entry2 for padding */
+static void dump_pad_revisions(logentry_t *entry1, logentry_t *entry2)
+{
+	svn_revnum_t i;
+	property_t date, msg;
+	apr_time_t time1, time2;
+	apr_pool_t *pool = svn_pool_create(NULL);
+	svn_error_t *err;
+	int props_length = PROPS_END_LEN;
+	char same_time = 0;
+
+	/* The message is the same as in svndumpfilter */
+	msg.key = "svn:log";
+	msg.value = "This is an empty revision for padding.";
+
+	/* The date is basically a hack (not a clean one). We don't want
+	   to fetch additional log entries from the repository (maybe
+	   we aren't even allowed to do so), so simply use the time of
+	   the next entry and subtract one microsecond. If the previous
+	   entry has the same time, simply use the time of the next entry. */ 
+	date.key = "svn:date";
+	if (entry1->date.value != NULL && entry2->date.value != NULL) {
+		err = svn_time_from_cstring(&time2, entry2->date.value, pool);
+		if (err) {
+			svn_error_clear(err);
+			date.value = NULL;
+		} else {
+			err = svn_time_from_cstring(&time1, entry1->date.value, pool);
+			if (err) {
+				svn_error_clear(err);
+				date.value = entry2->date.value;
+			}
+			time2 -= (entry2->revision - entry1->revision);
+			if (time2 < time1) {
+				same_time = 1;
+				date.value = entry2->date.value;
+			} else {
+				date.value = (char *)svn_time_to_cstring(time2, pool);
+			}
+		}
+	} else {
+		date.value = NULL;
+	}
+
+	props_length += property_strlen(&msg) + property_strlen(&date);
+
+	for (i = entry1->revision+1; i < entry2->revision; i++) {
+		fprintf(dopts->output, "%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, i);
+		fprintf(dopts->output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
+		fprintf(dopts->output, "%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);
+
+		if (date.value != NULL && same_time == 0) {
+			++time2;
+			date.value = (char *)svn_time_to_cstring(time2, pool);
+		}
+
+		property_dump(&msg, dopts->output);
+		property_dump(&date, dopts->output);
+		fprintf(dopts->output, PROPS_END);
+		fprintf(dopts->output, "\n");
+
+		if (dopts->verbosity > 0) {
+			fprintf(stderr, "* Padded revision %ld (local %ld).\n", i, i);
+		}
+	}
+
+	svn_pool_clear(pool);
+	svn_pool_destroy(pool);
 }
 
 
@@ -353,10 +442,9 @@ char dump(dump_options_t *opts)
 
 	/* Write initial revision header if not starting at revision 0 */
 	if (next.revision != 0) {
-		int props_length = PROPS_END_LEN;
-		fprintf(opts->output, "%s: %d\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, 0);	
-		fprintf(opts->output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
-		fprintf(opts->output, "%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);	
+		fprintf(opts->output, "%s: %d\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, 0);
+		fprintf(opts->output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, PROPS_END_LEN);
+		fprintf(opts->output, "%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, PROPS_END_LEN);
 		fprintf(opts->output, PROPS_END);
 		fprintf(opts->output, "\n");
 	}
@@ -365,16 +453,26 @@ char dump(dump_options_t *opts)
 	dopts = opts;
 	logs = &log;
 	off = (next.revision == 0) ? 0 : 1;
+	current.revision = 0;	/* Start padding at 0 */
 	i = 0;
 	do {
 		list_append(&log, &next);
-		current = next;
-		if (dump_revision(&current, i+off)) {
-			break;
+		if (opts->keep_revnums) {
+			dump_pad_revisions(&current, &next);
+			current = next;
+			if (dump_revision(&current, current.revision)) {
+				break;
+			}
+		} else {
+			current = next;
+			if (dump_revision(&current, i+off)) {
+				break;
+			}
 		}
 		/* This frees all log entry strings */
 		logentry_free(&next);
 		++i;
+	/* Fetch next log entry */
 	} while (current.revision < opts->endrev &&
 	         wsvn_next_log(&current, &next) == 0 &&
 	         current.revision != next.revision);

@@ -1,6 +1,6 @@
 == Schedule for 0.4.1 ==
-> Add --keep-revnums for padding empty revisions
-  when dumping a sub-path
+> Have a look at svndumpfilter to see how it handles the date
+  of padded revisions
 
 
 == Schedule for 0.5 ==
