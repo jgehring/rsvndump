@@ -271,13 +271,16 @@ static void dump_pad_revisions(logentry_t *entry1, logentry_t *entry2)
 			if (err) {
 				svn_error_clear(err);
 				date.value = entry2->date.value;
-			}
-			time2 -= (entry2->revision - entry1->revision);
-			if (time2 < time1) {
-				same_time = 1;
-				date.value = entry2->date.value;
 			} else {
-				date.value = (char *)svn_time_to_cstring(time2, pool);
+				time2 -= (apr_time_t)(entry2->revision - entry1->revision);
+				if (time2 < time1) {
+					// TODO
+					fprintf(stderr, "smaller: %lld - %lld\n", time1, time2);
+					same_time = 1;
+					date.value = entry2->date.value;
+				} else {
+					date.value = (char *)svn_time_to_cstring(time2, pool);
+				}
 			}
 		}
 	} else {
@@ -463,15 +466,20 @@ char dump(dump_options_t *opts)
 			if (dump_revision(&current, current.revision)) {
 				break;
 			}
+			/* We need the next entry during the next loop for
+			   padding. Free the previous entry instead */
+			if (log.size > 1) {
+				logentry_free((logentry_t *)log.elements + (log.size - 2));
+			}
 		} else {
 			current = next;
 			if (dump_revision(&current, i+off)) {
 				break;
 			}
+			/* This frees all log entry strings */
+			logentry_free(&next);
+			++i;
 		}
-		/* This frees all log entry strings */
-		logentry_free(&next);
-		++i;
 	/* Fetch next log entry */
 	} while (current.revision < opts->endrev &&
 	         wsvn_next_log(&current, &next) == 0 &&
