@@ -244,63 +244,21 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 static void dump_pad_revisions(logentry_t *entry1, logentry_t *entry2)
 {
 	svn_revnum_t i;
-	property_t date, msg;
-	apr_time_t time1, time2;
-	apr_pool_t *pool = svn_pool_create(NULL);
-	svn_error_t *err;
+	property_t msg;
 	int props_length = PROPS_END_LEN;
-	char same_time = 0;
 
 	/* The message is the same as in svndumpfilter */
 	msg.key = "svn:log";
 	msg.value = "This is an empty revision for padding.";
 
-	/* The date is basically a hack (not a clean one). We don't want
-	   to fetch additional log entries from the repository (maybe
-	   we aren't even allowed to do so), so simply use the time of
-	   the next entry and subtract one microsecond. If the previous
-	   entry has the same time, simply use the time of the next entry. */ 
-	date.key = "svn:date";
-	if (entry1->date.value != NULL && entry2->date.value != NULL) {
-		err = svn_time_from_cstring(&time2, entry2->date.value, pool);
-		if (err) {
-			svn_error_clear(err);
-			date.value = NULL;
-		} else {
-			err = svn_time_from_cstring(&time1, entry1->date.value, pool);
-			if (err) {
-				svn_error_clear(err);
-				date.value = entry2->date.value;
-			} else {
-				time2 -= (apr_time_t)(entry2->revision - entry1->revision);
-				if (time2 < time1) {
-					// TODO
-					fprintf(stderr, "smaller: %lld - %lld\n", time1, time2);
-					same_time = 1;
-					date.value = entry2->date.value;
-				} else {
-					date.value = (char *)svn_time_to_cstring(time2, pool);
-				}
-			}
-		}
-	} else {
-		date.value = NULL;
-	}
-
-	props_length += property_strlen(&msg) + property_strlen(&date);
+	props_length += property_strlen(&msg);
 
 	for (i = entry1->revision+1; i < entry2->revision; i++) {
 		fprintf(dopts->output, "%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, i);
 		fprintf(dopts->output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
 		fprintf(dopts->output, "%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);
 
-		if (date.value != NULL && same_time == 0) {
-			++time2;
-			date.value = (char *)svn_time_to_cstring(time2, pool);
-		}
-
 		property_dump(&msg, dopts->output);
-		property_dump(&date, dopts->output);
 		fprintf(dopts->output, PROPS_END);
 		fprintf(dopts->output, "\n");
 
@@ -308,9 +266,6 @@ static void dump_pad_revisions(logentry_t *entry1, logentry_t *entry2)
 			fprintf(stderr, "* Padded revision %ld (local %ld).\n", i, i);
 		}
 	}
-
-	svn_pool_clear(pool);
-	svn_pool_destroy(pool);
 }
 
 
@@ -466,20 +421,15 @@ char dump(dump_options_t *opts)
 			if (dump_revision(&current, current.revision)) {
 				break;
 			}
-			/* We need the next entry during the next loop for
-			   padding. Free the previous entry instead */
-			if (log.size > 1) {
-				logentry_free((logentry_t *)log.elements + (log.size - 2));
-			}
 		} else {
 			current = next;
 			if (dump_revision(&current, i+off)) {
 				break;
 			}
-			/* This frees all log entry strings */
-			logentry_free(&next);
 			++i;
 		}
+		/* This frees all log entry strings */
+		logentry_free(&next);
 	/* Fetch next log entry */
 	} while (current.revision < opts->endrev &&
 	         wsvn_next_log(&current, &next) == 0 &&

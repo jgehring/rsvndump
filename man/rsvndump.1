@@ -95,8 +95,8 @@ A custom string that is prepended to every node that is being dumped. The first
 revision dumped will also contain the paths neccessary to create the prefix.
 .br
 It is assumed that the prefix is a path, with directories seperated by '/'. If
-you want the prefix to be a directory, please append a '/' at the end. For example,
-a prefix of
+you want the prefix to be a directory, please append a '/' at the end. For
+example, a prefix of
 .B myrepo/old_ 
 might result in the following layout:
 .br
@@ -109,13 +109,16 @@ might result in the following layout:
 .BR  |-old_ trunk
 .TP
 .BI "--stop"\ revision
-Stop after dumping the specified revision, which can either be given by a decimal number or by
+Stop after dumping the specified revision, which can either be given by a
+decimal number or by
 .BR HEAD .
 .TP
 .B "--keep-revnums"
-Keep the revision numbers of the dump in sync with the remote repository. This is only useful
-if a sub-path of the repository is being dumped. If this flag is given, revisions that are
-not being dumped will appear as empty revisions in the dump.
+Keep the revision numbers of the dump in sync with the remote repository. This
+is only useful if a sub-path of the repository is being dumped. If this flag is
+given, revisions that are not being dumped will appear as empty revisions in the
+dump, containing a NULL-value for the date and the author and a log message
+indicating that the revision is just for padding.
 
 .SH ONLINE vs. OFFLINE MODE
 By default,
