@@ -1,3 +1,10 @@
+rsvndump (0.4.1) unstable; urgency=low
+
+  * Packaged upstream version 0.4.1
+
+ -- Jonas Gehring <jonas.gehring@boolsoft.org>  Sun, 05 Oct 2008 01:32:18 +0200
+
+
 rsvndump (0.4) unstable; urgency=low
 
   * Initial debian package generation
