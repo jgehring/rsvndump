@@ -1,3 +1,7 @@
+2008-10-08  --  version 0.4.2
+
+	* Fixed segfault when dumping a copy action with --keep-revnums
+
 2008-10-05  --  version 0.4.1
 
 	* Added --keep-revnums flag to sync revision numbers with the
