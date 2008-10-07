@@ -45,6 +45,11 @@ static char node_prepare_copy(node_t *node, dump_options_t *opts, list_t *logs, 
 	/* First, check if the source is reachable, i.e. can be found under
 	   the current session root */
 	if (!strncmp(node->copy_from_path, opts->repo_prefix, strlen(opts->repo_prefix))) {
+		/* If we sync the revision numbers, the copy-from revision is correct */
+		if (opts->keep_revnums) {
+			return;
+		}
+
 		/* This is good news: we already dumped the source. Let's figure
 		   out at which revision */
 		svn_revnum_t r, rr = -1;
@@ -69,10 +74,7 @@ static char node_prepare_copy(node_t *node, dump_options_t *opts, list_t *logs, 
 			}
 		}
 
-		if (!opts->keep_revnums) {
-			/* Use local revision number if revnums are not synced */
-			node->copy_from_rev = rr;
-		}
+		node->copy_from_rev = rr;
 		node->use_copy = 1;
 #if DEBUG
 		fprintf(stderr, "node_prepare_copy: using local %ld\n", rr);
