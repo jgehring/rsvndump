@@ -112,7 +112,11 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 		props_length += PROPS_END_LEN;
 	}
 
-	fprintf(dopts->output, "%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, local_revnum);	
+	if (dopts->keep_revnums) {
+		fprintf(dopts->output, "%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, entry->revision);	
+	} else {
+		fprintf(dopts->output, "%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, local_revnum);	
+	}
 	fprintf(dopts->output, "%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
 	fprintf(dopts->output, "%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);
 
@@ -263,7 +267,7 @@ static void dump_pad_revisions(logentry_t *entry1, logentry_t *entry2)
 		fprintf(dopts->output, "\n");
 
 		if (dopts->verbosity > 0) {
-			fprintf(stderr, "* Padded revision %ld (local %ld).\n", i, i);
+			fprintf(stderr, "* Padded revision %ld.\n", i);
 		}
 	}
 }
@@ -417,17 +421,12 @@ char dump(dump_options_t *opts)
 		list_append(&log, &next);
 		if (opts->keep_revnums) {
 			dump_pad_revisions(&current, &next);
-			current = next;
-			if (dump_revision(&current, current.revision)) {
-				break;
-			}
-		} else {
-			current = next;
-			if (dump_revision(&current, i+off)) {
-				break;
-			}
-			++i;
 		}
+		current = next;
+		if (dump_revision(&current, i+off)) {
+			break;
+		}
+		++i;
 		/* This frees all log entry strings */
 		logentry_free(&next);
 	/* Fetch next log entry */

@@ -1,3 +1,8 @@
+== Schedule for 0.6 ==
+> Dump user prefix first, even with --keep-revnums
+> No copy resolviung with --keep-revnums
+
+
 == Schedule for 0.5 ==
 > Use deltas in diffs
 > Write more automated tests

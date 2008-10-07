@@ -69,7 +69,10 @@ static char node_prepare_copy(node_t *node, dump_options_t *opts, list_t *logs, 
 			}
 		}
 
-		node->copy_from_rev = rr;
+		if (!opts->keep_revnums) {
+			/* Use local revision number if revnums are not synced */
+			node->copy_from_rev = rr;
+		}
 		node->use_copy = 1;
 #if DEBUG
 		fprintf(stderr, "node_prepare_copy: using local %ld\n", rr);
