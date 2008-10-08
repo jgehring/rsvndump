@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
-		<title>rsvndump - remote svn repository dump</title>
+		<title>rsvndump - remote Subversion repository dump</title>
 	</head>
 	<body>
 		<h2><p align="center">Welcome to the rsvndump web page!</p></h2>
@@ -16,12 +16,18 @@
 		be solved by syncing the whole repository and using <i>svndumpfilter</i> afterwards, but data of other subdirectories needs to be transferred over the network
 		for no reason. And if you don't have access to the repository root, the whole thing will not work.</p>
 		<p>Long story short: If you want to dump a subdirectory of a remote repository which runs a version of Subversion prior to 1.5, this 
-		is the right tool for you. If not, please consider using <i>svnsync</i>.</p>
+		is the right tool for you. If not, you should maybe consider using <i>svnsync</i>.</p>
 		<p>rsvndump is written in C and built on top of the Subversion API, so it can offer all functionality needed to access a Subversion
 		repository, including SSL authentication. And it's GPLed.</p>
 		<hr />
 		<h3>NEWS</h3>
 		<ul>
+			<li><h4>October 8th, 2008</h4>
+			<p>rsvndump 0.4.2 is now <a href="#content">available</a>. This is a bugfix release, fixing a segmentation fault that could occur
+			when using the new <i>&#150;&#150;keep&#150;&#150;revnums</i> flag.<br />
+			A more detailed description of the changes can be found in the <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
+			available as a tarball compressed using either gzip or bzip2. The Debian packages have been updated, too.</li>
+
 			<li><h4>October 5th, 2008</h4>
 			<p>rsvndump 0.4.1 is now <a href="#content">available</a>. This release includes new features, mainly a command line option to
 			keep revision numbers in sync with the source repository by adding empty revisions for padding. This is useful when dumping
@@ -66,10 +72,10 @@
 			<li><a href="manpage.html">man page</a> - Online version of the man page</li>
 			<li><b>Downloads:</b>
 			<ul>
-				<li><b><a href="rsvndump-0.4.1.tar.gz">rsvndump-0.4.1.tar.gz</a></b> - Source code distribution</li>
-				<li><b><a href="rsvndump-0.4.1.tar.bz2">rsvndump-0.4.1.tar.bz2</a></b> - Source code distribution</li>
-				<li><b><a href="rsvndump_0.4.1_i386.deb">rsvndump_0.4.1_i386.deb</a></b> - Debian binary package (x86)</li>
-				<li><b><a href="rsvndump_0.4.1_arm.deb">rsvndump_0.4.1_arm.deb</a></b> - Debian binary package (ARM)</li>
+				<li><b><a href="rsvndump-0.4.2.tar.gz">rsvndump-0.4.2.tar.gz</a></b> - Source code distribution</li>
+				<li><b><a href="rsvndump-0.4.2.tar.bz2">rsvndump-0.4.2.tar.bz2</a></b> - Source code distribution</li>
+				<li><b><a href="rsvndump_0.4.2_i386.deb">rsvndump_0.4.2_i386.deb</a></b> - Debian binary package (x86)</li>
+				<li><b><a href="rsvndump_0.4.2_arm.deb">rsvndump_0.4.2_arm.deb</a></b> - Debian binary package (ARM)</li>
 			</ul></li>
 			<li><a href="ChangeLog">ChangeLog</a> - The rsvndump change log</li>
 			<li><a href="http://www.gnu.org/licenses/gpl-3.0.txt">COPYING</a> - The GPL v3, under which rsvndump is released</li>
