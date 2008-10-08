@@ -47,6 +47,7 @@ static char node_prepare_copy(node_t *node, dump_options_t *opts, list_t *logs, 
 	if (!strncmp(node->copy_from_path, opts->repo_prefix, strlen(opts->repo_prefix))) {
 		/* If we sync the revision numbers, the copy-from revision is correct */
 		if (opts->keep_revnums) {
+			node->use_copy = 1;
 			return 0;
 		}
 
