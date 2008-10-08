@@ -1,6 +1,5 @@
-== Schedule for 0.4.2 ==
-> Dump user prefix first, even with --keep-revnums
-> Make the web page description more attractive
+== Schedule for 0.4.3 ==
+> Dump user prefix in first revision, even with --keep-revnums
 
 
 == Schedule for 0.5 ==
