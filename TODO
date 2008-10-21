@@ -8,6 +8,7 @@
 
 
 == Someday ==
+> Retries if connection is lost
 > Option: don't stop on copy
 > MD-5 sums?
 > Incremental (is hard because revision map is missing)
