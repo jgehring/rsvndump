@@ -9,19 +9,34 @@
 		<hr />
 		<h3>ABOUT</h3>
 		<p>rsvndump is a command line tool that is able to dump a Subversion repository that resides on a remote server.
-		All data is dumped in the format that can be read an written by <i>svnadmin dump</i>, so the data which is produced
+		All data is dumped in the format that can be read an written by <i>svnadmin dump/load</i>, so the data which is produced
 		can easily be importerd into a new Subversion repository.</p>
-		<p>Actually, a remote dump can be done using <i>svnsync</i> and <i>svnadmin dump</i> on the locally synced repository. However, 
-		if the remote server does not run Subversion 1.5 or later, <i>svnsync</i> is unable to dump subdirectories of a repository only. This can
-		be solved by syncing the whole repository and using <i>svndumpfilter</i> afterwards, but data of other subdirectories needs to be transferred over the network
-		for no reason. And if you don't have access to the repository root, the whole thing will not work.</p>
-		<p>Long story short: If you want to dump a subdirectory of a remote repository which runs a version of Subversion prior to 1.5, this 
-		is the right tool for you. If not, you should maybe consider using <i>svnsync</i>.</p>
+		<p>There are scenarios in which it might be better to use <i>svnsync</i> and <i>svnadmin dump</i> to perform the dump than to use
+		rsvndump. The reason for this is that these tools are officialy distributed with Subversion and might be more feature-complete than rsvndump.<br />
+		To make it more easier to decide whether to use rsvndump, here's a short comparison of the two solutions for remote repository dumps:</p>
+		<p align="center">
+		<table border="1" width="70%">
+			<tr><td valign="top"><b>Feature</b></td><td valign="top" width="20%"><b>rsvndump</b></td><td valign="top" width="35%"><b>svnsync</b>+<b>svnadmin dump</b></td></tr>
+			<tr><td valign="top">Handle all Subversion protocols (svn://, https://, file:// etc.)</td><td valign="top">yes</td><td valign="top">yes</td></tr>
+			<tr><td valign="top">Dump a whole repository</td><td valign="top">yes</td><td valign="top">yes</td></tr>
+			<tr><td valign="top">Dump a sub-directory of a repository</td><td valign="top">yes</td><td valign="top">only with server running Subversion &gt;= 1.5</td></tr>
+			<tr><td valign="top">Dump a sub-directory of a repository<br />with read access limited to this directory</td><td valign="top">yes</td><td valign="top">no</td></tr>
+			<tr><td valign="top">Officially distributed by the Subversion developers</td><td valign="top">no</td><td valign="top">yes</td></tr>
+		</table>
+		</p>
+		<p>Actually, the "Dump a sub-directory of a repository" can be accomplished with the <i>svnsync</i>+<i>svnadmin dump</i> solution on Subversion servers
+		prior to 1.5, too, by using <i>svndumpfilter</i> on the resulting dump. However, this has the downside that the whole repository data has to be
+		transferred while using <i>svnsync</i>. Additionally, it might not be possible to extract the sub-directory using <i>svndumpfilter</i> due to
+		copies from a directory outside the one that is going to be extracted.</p>
 		<p>rsvndump is written in C and built on top of the Subversion API, so it can offer all functionality needed to access a Subversion
-		repository, including SSL authentication. And it's GPLed.</p>
+		repository, including SSL authentication and support for all of Subversion's protocols (svn://, http://, file:// etc.). And it's GPLed.</p>
 		<hr />
 		<h3>NEWS</h3>
 		<ul>
+			<li><h4>October 27th, 2008</h4>
+			<p>I updated the ABOUT-section on this web page, and there's now a <a href="news-archive.html">seperate page</a> which serves as
+			a news archive. Only the 5 latest news items will be displayed on the main page now.</p>
+
 			<li><h4>October 8th, 2008</h4>
 			<p>rsvndump 0.4.2 is now <a href="#content">available</a>. This is a bugfix release, fixing a segmentation fault that could occur
 			when using the new <i>&#150;&#150;keep&#150;revnums</i> flag.<br />
@@ -50,21 +65,8 @@
 			are used by rsvndump have been licensed under the Apache License, Version 2.0. This license is incompatible to the GPLv2, so
 			I upgraded to the compatible GPLv3.</p></li>
 
-			<li><h4>September 8th, 2008</h4>
-			<p>rsvndump 0.3.2 is now <a href="#content">available</a>. This is mainly a bugfix release, fixing a memory leak due to long-living
-			memory pools. Additionally, changes were made to the node dumping order.<br />
-			A more detailed description of the changes can be found in the <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
-			available as a tarball compressed using either gzip or bzip2.</li>
-
-			<li><h4>September 3rd, 2008</h4>
-			<p>I updated the README to reflect the dependencies of rsvndump (Subversion and Apache Portable Runtime).</p></li>
-
-			<li><h4>September 1st, 2008</h4>
-			<p>rsvndump 0.3.1 is now <a href="#content">available</a>. This is mainly a bugfix release, fixing two issues
-			regarding copy resolving and a memory leak. As an additional feature, the dumped data can be prefixed with a custom string now.<br />
-			A more detailed description of the changes can be found in the <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
-			available as a tarball compressed using either gzip or bzip2.</p></li>
 		</ul>
+		<p><a href="news-archive.html">older news...</a></p>
 		<hr />
 		<a name="content"><h3>CONTENT</h3></a>
 		<ul>
