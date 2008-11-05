@@ -105,7 +105,7 @@ char *utils_canonicalize_strdup(char *path)
 
 
 /* Recursively removes the contents of a directory and the directory */
-/* itself it 'remove_dir' is non-zero */
+/* itself if 'remove_dir' is non-zero */
 void utils_rrmdir(const char *path, char remove_dir)
 {
 	DIR *dir;
@@ -118,8 +118,8 @@ void utils_rrmdir(const char *path, char remove_dir)
 				char *filename = malloc(strlen(path)+strlen(entry->d_name)+2);
 				sprintf(filename, "%s/%s", path, entry->d_name);
 				stat(filename, &st);
-				if (st.st_mode & S_IFDIR) {
-					/* TODO: Symlinks may lead to infinite calls and mallocs here! */
+				/* Descend into other directories if they aren't symlinks */
+				if ((st.st_mode & S_IFDIR) && !(st.st_mode & S_IFLNK)) {
 					utils_rrmdir(filename, 1);
 				} else {
 					unlink(filename);
