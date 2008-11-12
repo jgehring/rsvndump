@@ -64,12 +64,15 @@ static char node_prepare_copy(node_t *node, dump_options_t *opts, list_t *logs, 
 			/* Yes, the +1 is needed */
 			svn_revnum_t d = (node->copy_from_rev - (((logentry_t *)logs->elements)[r].revision))+1;
 #if DEBUG
-			fprintf(stderr, "node_prepare_copy: req: %ld cur: %ld\n", node->copy_from_rev, (((logentry_t *)logs->elements)[r].revision));
+			fprintf(stderr, "node_prepare_copy: req: %ld cur: %ld, local: %ld\n", node->copy_from_rev, (((logentry_t *)logs->elements)[r].revision), r);
 #endif
+			/* TODO: This can be optimized: Once we notice that the distance to the
+			   requested revision gets bigger, it should be safe to break out of this
+			   loop. */
 			if (d >= 0 && d < mind) {
 				mind = d;
 				rr = r;
-				if (d == 0) {
+				if (d <= 1) {
 					break;
 				}
 			}
