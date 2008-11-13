@@ -391,7 +391,7 @@ char dump(dump_options_t *opts)
 	}
 
 	/* Write dumpfile header */
-	fprintf(opts->output, "%s: 3\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER);
+	fprintf(opts->output, "%s: 2\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER);
 	fprintf(opts->output, "\n");
 
 	/* Fetch first history item */
