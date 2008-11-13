@@ -1,4 +1,4 @@
-rsvndump 0.4.2
+rsvndump 0.4.3
 Copyright (C) 2008 by Jonas Gehring
 
 
@@ -24,7 +24,7 @@ For usage information, please refer to the man page shipped with this package.
 
 CREDITS
 =======
-rsvndump 0.4.2
+rsvndump 0.4.3
 written by Jonas Gehring <jonas.gehring@boolsoft.org>
 http://saubue.boolsoft.org/projects/rsvndump
 
