@@ -521,7 +521,8 @@ char wsvn_get_props(node_t *node, list_t *list, svn_revnum_t rev)
 	if (node->kind == NK_FILE) {
 		err = svn_ra_get_file(session, node->path, rev, NULL, NULL, &hash, pool);
 	} else {
-		err = svn_ra_get_dir(session, (!strcmp(node->path, ".") ? "" : node->path), rev, NULL, NULL, &hash, pool);
+		/*err = svn_ra_get_dir(session, (!strcmp(node->path, ".") ? "" : node->path), rev, NULL, NULL, &hash, pool);*/
+		err = svn_ra_get_dir2(session, NULL, NULL, &hash, (!strcmp(node->path, ".") ? "": node->path), rev, 0, pool);
 	}
 	if (err) {
 #if DEBUG
@@ -642,7 +643,8 @@ char wsvn_find(node_t *node, list_t *list, svn_revnum_t rev)
 
 	pool = svn_pool_create(mainpool);
 
-	err = svn_ra_get_dir(session, (!strcmp(node->path, ".") ? "" : node->path), rev, &hash, NULL, NULL, pool);
+	/*err = svn_ra_get_dir(session, (!strcmp(node->path, ".") ? "" : node->path), rev, &hash, NULL, NULL, pool);*/
+	err = svn_ra_get_dir2(session, &hash, NULL, NULL, (!strcmp(node->path, ".") ? "" : node->path), rev, SVN_DIRENT_KIND | SVN_DIRENT_SIZE | SVN_DIRENT_HAS_PROPS, pool);
 	if (err) {
 #if DEBUG
 		fprintf(stderr, "wsvn_find(%p,%p,%ld)\n\n", (void *)node, (void *)list, rev);
