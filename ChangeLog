@@ -1,5 +1,6 @@
 2008-11-XX  --  version 0.4.3
 
+	* Added --dump-uuid option
 	* Fixed error that occured when dumping a sub-directory via a
 	  file://-url that has been the destination of a copy operation
 	* Prohibited descending into symlinked directories while cleaning up
