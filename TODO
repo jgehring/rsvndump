@@ -1,5 +1,6 @@
 == Schedule for 0.4.3 ==
-> Dump user prefix in first revision, even with --keep-revnums
+> An option for dumping the uuid
+> File-not-found if invoking rsvndump on a subdirectory with --stop 0
 
 
 == Schedule for 0.5 ==
@@ -12,4 +13,4 @@
 > Option: don't stop on copy
 > MD-5 sums?
 > Incremental (is hard because revision map is missing)
-> An option for dumping the uuid?
+> Dump user prefix in first revision, even with --keep-revnums
