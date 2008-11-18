@@ -284,6 +284,7 @@ dump_options_t dump_options_create()
 	opts.verbosity = 0;
 	opts.online = 0; 
 	opts.keep_revnums = 0;
+	opts.dump_uuid = 0;
 	opts.repo_url = NULL;
 	opts.repo_eurl = NULL;
 	opts.repo_base = NULL;
@@ -393,6 +394,10 @@ char dump(dump_options_t *opts)
 	/* Write dumpfile header */
 	fprintf(opts->output, "%s: 2\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER);
 	fprintf(opts->output, "\n");
+	if (opts->dump_uuid) {
+		fprintf(opts->output, "UUID: %s\n", opts->repo_uuid);
+		fprintf(opts->output, "\n");
+	}
 
 	/* Fetch first history item */
 	log = list_create(sizeof(logentry_t));

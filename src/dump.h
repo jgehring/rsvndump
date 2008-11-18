@@ -41,6 +41,7 @@ typedef struct {
 #endif
 	char online;
 	char keep_revnums;
+	char dump_uuid;
 	char *repo_url;
 	char *repo_eurl;
 	char *repo_base;

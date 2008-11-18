@@ -73,6 +73,7 @@ static void print_usage()
 	printf("    --keep-revnums            keep the dumped revision numbers in sync with\n");
 	printf("                              the repository by using empty revisions for\n");
 	printf("                              padding\n");
+	printf("    --dump-uuid               dump the repository uuid\n");
 #ifdef USE_DELTAS
 	printf("    --deltas                  use deltas in dump output\n");
 #endif /* USE_DELTAS */
@@ -124,6 +125,8 @@ int main(int argc, char **argv)
 			opts.online = 1;
 		} else if (!strcmp(argv[i], "--keep-revnums")) {
 			opts.keep_revnums = 1;
+		} else if (!strcmp(argv[i], "--dump-uuid")) {
+			opts.dump_uuid = 1;
 #ifdef USE_DELTAS
 		} else if (!strcmp(argv[i], "--deltas")) {
 			opts.deltas = 1;
