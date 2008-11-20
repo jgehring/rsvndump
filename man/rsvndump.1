@@ -1,4 +1,4 @@
-.TH rsvndump "1" "October 8th, 2008" "rsvndump 0.4.2" "User Commands"
+.TH rsvndump "1" "November 21st, 2008" "rsvndump 0.4.3" "User Commands"
 .SH NAME
 rsvndump \- dumps a remote subversion repository
 
@@ -119,6 +119,10 @@ is only useful if a sub-path of the repository is being dumped. If this flag is
 given, revisions that are not being dumped will appear as empty revisions in the
 dump, containing a NULL-value for the date and the author and a log message
 indicating that the revision is just for padding.
+.TP
+.B "--dump-uuid"
+Dump the repository uuid. This is useful for cloning repositories, but it is not
+allowed to use this option when dumping a sub-directory of a repository.
 
 .SH ONLINE vs. OFFLINE MODE
 By default,

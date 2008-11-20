@@ -33,13 +33,23 @@
 		<hr />
 		<h3>NEWS</h3>
 		<ul>
+			<li><h4>November 21th, 2008</h4>
+			<p>rsvndump 0.4.3 is now <a href="#content">available</a>. This release includes new features as well as bugfixes: the
+			command line option <i>--dump-uuid</i> has been added, which dumps the uuid of a repository as well and is useful
+			if repositories should be cloned. A bug which could occur when dumping a sub-directory via a file://-url has been fixed. As
+			a minor change, the svn dump format produces has been changed to version "2" because <i>svndumpfilter</i> refuses to read dump
+			files with format "3" in current versions (currently, this does not affect the rsvndump's output except for a number at the
+			start).<br />
+			A more detailed description of the changes can be found in the <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
+			available as a tarball compressed using either gzip or bzip2. The Debian packages have been updated, too.</p></li>
+
 			<li><h4>October 27th, 2008</h4>
 			<p>I updated the ABOUT-section on this web page, and there's now a <a href="news-archive.html">seperate page</a> which serves as
 			a news archive. Only the 5 latest news items will be displayed on the main page now.</p>
 
 			<li><h4>October 8th, 2008</h4>
 			<p>rsvndump 0.4.2 is now <a href="#content">available</a>. This is a bugfix release, fixing a segmentation fault that could occur
-			when using the new <i>&#150;&#150;keep&#150;revnums</i> flag.<br />
+			when using the new <i>--keep-revnums</i> flag.<br />
 			A more detailed description of the changes can be found in the <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
 			available as a tarball compressed using either gzip or bzip2. The Debian packages have been updated, too.</li>
 
@@ -47,23 +57,13 @@
 			<p>rsvndump 0.4.1 is now <a href="#content">available</a>. This release includes new features, mainly a command line option to
 			keep revision numbers in sync with the source repository by adding empty revisions for padding. This is useful when dumping
 			a sub-path without changing revision numbers. Adidtionally, a bug preventing a single file to be dumped in offline
-			mode when using the <i>&#150;&#150;quiet</i> flag has been fixed.<br />
+			mode when using the <i>--quiet</i> flag has been fixed.<br />
 			A more detailed description of the changes can be found in the <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
-			available as a tarball compressed using either gzip or bzip2. The Debian packages have been updated, too.</li>
+			available as a tarball compressed using either gzip or bzip2. The Debian packages have been updated, too.</p></li>
 
 			<li><h4>October 1st, 2008</h4>
 			<p>rsvndump 0.4 is now available as a <a href="#content">Debian package</a> for x86 and ARM processors. Both packages have been
 			generated on Debian Etch and should also work on Ubuntu.</p></li>
-
-			<li><h4>September 29th, 2008</h4>
-			<p>rsvndump 0.4 is now <a href="#content">available</a>. This release includes new features as well as bugfixes and is actually
-			a complete rewrite of the program. The major changes include automatic log history fetching, heavy speed improvements for both
-			online and offline mode and a more convenient ./configure script with proper checks for the Apache Runtime libraries.<br />
-			A more detailed description of the changes can be found in the <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
-			available as a tarball compressed using either gzip or bzip2.</p>
-			<p>Additionally, rsvndump is now released under the GNU General Public License, Version 3, which was needed because some autoconf macros which 
-			are used by rsvndump have been licensed under the Apache License, Version 2.0. This license is incompatible to the GPLv2, so
-			I upgraded to the compatible GPLv3.</p></li>
 
 		</ul>
 		<p><a href="news-archive.html">older news...</a></p>
@@ -74,10 +74,10 @@
 			<li><a href="manpage.html">man page</a> - Online version of the man page</li>
 			<li><b>Downloads:</b>
 			<ul>
-				<li><b><a href="rsvndump-0.4.2.tar.gz">rsvndump-0.4.2.tar.gz</a></b> - Source code distribution</li>
-				<li><b><a href="rsvndump-0.4.2.tar.bz2">rsvndump-0.4.2.tar.bz2</a></b> - Source code distribution</li>
-				<li><b><a href="rsvndump_0.4.2_i386.deb">rsvndump_0.4.2_i386.deb</a></b> - Debian binary package (x86)</li>
-				<li><b><a href="rsvndump_0.4.2_arm.deb">rsvndump_0.4.2_arm.deb</a></b> - Debian binary package (ARM)</li>
+				<li><b><a href="rsvndump-0.4.3.tar.gz">rsvndump-0.4.3.tar.gz</a></b> - Source code distribution</li>
+				<li><b><a href="rsvndump-0.4.3.tar.bz2">rsvndump-0.4.3.tar.bz2</a></b> - Source code distribution</li>
+				<li><b><a href="rsvndump_0.4.3_i386.deb">rsvndump_0.4.3_i386.deb</a></b> - Debian binary package (x86)</li>
+				<li><b><a href="rsvndump_0.4.3_arm.deb">rsvndump_0.4.3_arm.deb</a></b> - Debian binary package (ARM)</li>
 			</ul></li>
 			<li><a href="ChangeLog">ChangeLog</a> - The rsvndump change log</li>
 			<li><a href="http://www.gnu.org/licenses/gpl-3.0.txt">COPYING</a> - The GPL v3, under which rsvndump is released</li>
