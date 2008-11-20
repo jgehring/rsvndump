@@ -33,7 +33,7 @@ function set_auth {
 
 
 # Some constants 
-REPO="http://slug:8008/svn/rsvndump/trunk"
+REPO="svn://slug/rsvndump/trunk"
 DUMPFILE="dump"
 LOCALDIR="testrepo"
 LOCALREPO="svn://localhost/testrepo"

@@ -357,16 +357,30 @@ char dump(dump_options_t *opts)
 	/* Initialize and open the svn session */
 	if (wsvn_init(opts)) {
 		fprintf(stderr, "Error load subversion library / initializing connection.\n");
+		logentry_free(&current);
+		logentry_free(&next);
 		return 1;
 	}
 
 	/* Fetch repository information */
 	if (wsvn_repo_info(opts->repo_eurl, &opts->repo_base, &opts->repo_prefix, &opts->repo_uuid, &headrev)) {
 		fprintf(stderr, "Error fetching repository information.\n");
+		logentry_free(&current);
+		logentry_free(&next);
 		return 1;
 	}
 	if (opts->endrev > headrev || opts->endrev == HEAD_REVISION) {
 		opts->endrev = headrev;
+	}
+
+	/* Check if --dump-uuid can be used (if it is given) */
+	if (opts->dump_uuid) {
+		if (strlen(opts->repo_prefix) || opts->user_prefix != NULL) {
+			fprintf(stderr, "Sorry, '--dump-uuid' can only be used when dumping a repository root without any user prefix\n");
+			logentry_free(&current);
+			logentry_free(&next);
+			return 1;
+		}
 	}
 
 	/* Determine node kind of dumped root */
@@ -404,6 +418,8 @@ char dump(dump_options_t *opts)
 	if (wsvn_next_log(NULL, &next)) {
 		fprintf(stderr, "Error fetching repository log info.\n");
 		list_free(&log);
+		logentry_free(&current);
+		logentry_free(&next);
 		return 1;
 	}
 
