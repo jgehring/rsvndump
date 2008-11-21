@@ -64,7 +64,7 @@ static void print_usage()
 	printf("    -o [--outfile] arg        write data to file arg\n");
 	printf("                              if not specified, print to stdout\n");
 	printf("    -d [--download-dir] arg   directory for working copy\n");
-	printf("                              if not specified, create a temporary dir\n");
+	printf("                              if not specified, create a temporary directory\n");
 	printf("    --online                  don't use a working copy for dumping\n");
 	printf("                              (the download dir is ignored then)\n");
 	printf("    --prefix arg              prepend arg to the path that is being dumped\n");
