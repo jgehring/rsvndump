@@ -40,7 +40,7 @@ rmtree($playground, 0, 0);
 mkdir $playground or die $!;
 
 # Start svnserve on the repository
-system "killall -q svnserve";
+system "killall svnserve &> /dev/null";
 system "svnserve -d -r $playground";
 print " done\n";
 
