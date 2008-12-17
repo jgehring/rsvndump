@@ -20,24 +20,38 @@ AC_PROG_RANLIB
 
 # Checks for headers
 AC_HEADER_DIRENT
+AC_HEADER_STDBOOL
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_HEADERS([limits.h termios.h])
+AC_CHECK_HEADERS([stddef.h])
+AC_CHECK_HEADERS([stdio_ext.h])
 AC_CHECK_HEADERS([sys/time.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
+AC_C_CHAR_UNSIGNED
 AC_C_CONST
 AC_TYPE_SIZE_T
-AC_C_CHAR_UNSIGNED
+AC_TYPE_SSIZE_T
 
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_MALLOC
+AC_FUNC_FORK
+AC_FUNC_FSEEKO
 AC_CHECK_FUNCS([stat strchr strrchr strdup], ,[AC_MSG_ERROR([Sorry, unable to compile this program without this functions])])
-AC_CHECK_FUNCS([memset], ,[AC_LIBOBJ([memset])])
+USE_COMPAT="no"
+AC_CHECK_FUNCS([memset], ,[AC_LIBOBJ([memset]), use_compat="yes"])
 AC_CHECK_FUNCS([strdup], ,[AC_LIBOBJ([strdup])])
 AC_CHECK_FUNCS([getpass], ,[AC_LIBOBJ([getpass])])
 AC_CHECK_FUNCS([rmdir], ,[AC_LIBOBJ([rmdir])])
 AC_CHECK_FUNCS([gettimeofday fopen64])
+if test "$USE_COMPAT" = "yes"; then
+  COMPAT_LIBS="../lib/libcompat.a"
+  COMPAT_SUBDIRS="lib"
+  AC_SUBST([COMPAT_LIBS])
+  AC_SUBST([COMPAT_SUBDIRS])
+fi
+
 
 # Checks for libraries
 RSVND_FIND_APR
@@ -63,5 +77,7 @@ AC_CHECK_LIB([svn_wc-1], [svn_wc_ensure_adm2], ,[AC_MSG_ERROR([Neccessary Subver
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
-AC_CONFIG_FILES([lib/Makefile])
+if test "$USE_COMPAT" = "yes"; then
+  AC_CONFIG_FILES([lib/Makefile])
+fi
 AC_OUTPUT
