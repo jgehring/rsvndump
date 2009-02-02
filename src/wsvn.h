@@ -41,7 +41,7 @@
 /* Initializes the Subversion API */
 extern char wsvn_init(dump_options_t *opts);
 
-/* Frees all recources of the Subversion API */
+/* Frees all resources of the Subversion API */
 extern void wsvn_free();
 
 /* Encodes an uri */

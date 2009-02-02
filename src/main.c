@@ -178,10 +178,7 @@ int main(int argc, char **argv)
 				free(opts.repo_dir);
 			}
 			opts.repo_dir = utils_canonicalize_strdup(argv[i]);
-		} else if (opts.repo_url == NULL && svn_path_is_url(argv[i])) {
-			if (opts.repo_url != NULL) {
-				free(opts.repo_url);
-			}
+		} else if (svn_path_is_url(argv[i])) {
 			opts.repo_url = strdup(argv[i]);
 		} else {
 			fprintf(stderr, "Argument error: Unkown argument or malformed url '%s'\n", argv[i]);

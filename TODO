@@ -1,3 +1,6 @@
+== 0.4.4 ==
+> Add option for accepting all certifactes 
+
 == Schedule for 0.5 ==
 > Use deltas in diffs
 > Write more automated tests
