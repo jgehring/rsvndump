@@ -126,7 +126,8 @@ static svn_error_t *wsvn_auth_prompt(svn_auth_cred_simple_t **cred, void *baton,
 	fprintf(stderr, "wsvn_auth_prompt() called with realm=%s username=%s\n", realm, username);
 #endif
 	svn_auth_cred_simple_t *ret = apr_pcalloc(pool, sizeof(*ret));
-	char answerbuf[100];
+	char answerbuf[128];
+	char *prompt;
 
 	if (dopts->username) {
 		ret->username = apr_pstrdup(pool, dopts->username);
@@ -137,9 +138,16 @@ static svn_error_t *wsvn_auth_prompt(svn_auth_cred_simple_t **cred, void *baton,
 		ret->username = apr_pstrdup(pool, answerbuf);
 	}
 
-	SVN_ERR(wsvn_read_line("Password: ", answerbuf, sizeof(answerbuf), 1));
-	ret->password = apr_pstrdup(pool, answerbuf);
+	if (ret->username && strnlen(ret->username, 128) < 128) {
+		char *format = "Password for '%s':";
+		prompt = apr_pcalloc(pool, strlen(ret->username) + strlen(format) + 1);
+		sprintf(prompt, format, ret->username);
+	} else {
+		prompt = apr_pstrdup(pool, "Password: ");
+	}
 
+	SVN_ERR(wsvn_read_line(prompt, answerbuf, sizeof(answerbuf), 1));
+	ret->password = apr_pstrdup(pool, answerbuf);
 	*cred = ret;
 	return SVN_NO_ERROR;
 }
