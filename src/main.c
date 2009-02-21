@@ -1,6 +1,6 @@
 /*
  *      rsvndump - remote svn repository dump
- *      Copyright (C) 2008 Jonas Gehring
+ *      Copyright (C) 2008-2009 Jonas Gehring
  *
  *      This program is free software: you can redistribute it and/or modify
  *      it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@
 static void print_version()
 {
 	printf(APPNAME" "APPVERSION"\n");
-	printf("Copyright (C) 2008 by "APPAUTHOR"\n");
+	printf("Copyright (C) 2008-2009 by "APPAUTHOR"\n");
 }
 
 
