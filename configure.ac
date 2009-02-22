@@ -18,6 +18,8 @@ AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_RANLIB
 
+AM_GNU_GETTEXT([external])
+
 # Checks for headers
 AC_HEADER_DIRENT
 AC_HEADER_STDBOOL
@@ -38,7 +40,7 @@ AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_MALLOC
 AC_FUNC_FORK
 AC_FUNC_FSEEKO
-AC_CHECK_FUNCS([stat strchr strrchr strdup], ,[AC_MSG_ERROR([Sorry, unable to compile this program without these functions])])
+AC_CHECK_FUNCS([stat strchr strrchr strdup memchr], ,[AC_MSG_ERROR([Sorry, unable to compile this program without these functions])])
 USE_COMPAT="no"
 AC_CHECK_FUNCS([memset], ,[AC_LIBOBJ([memset]) USE_COMPAT="yes"])
 AC_CHECK_FUNCS([strdup], ,[AC_LIBOBJ([strdup]) USE_COMPAT="yes"])
@@ -76,8 +78,8 @@ AC_CHECK_LIB([svn_subr-1], [svn_auth_open], ,[AC_MSG_ERROR([Neccessary Subversio
 AC_CHECK_LIB([svn_wc-1], [svn_wc_ensure_adm2], ,[AC_MSG_ERROR([Neccessary Subversion libraries are missing])], [-L$SVN_PREFIX/lib])
 
 AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([src/Makefile])
 if test "$USE_COMPAT" = "yes"; then
   AC_CONFIG_FILES([lib/Makefile])
 fi
+AC_CONFIG_FILES([src/Makefile po/Makefile.in])
 AC_OUTPUT

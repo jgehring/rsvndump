@@ -8,6 +8,6 @@
 #
 
 autoheader || (echo "autoheader failed" && exit 1)
-aclocal || (echo "aclocal failed" && exit 1)
+aclocal -I m4 || (echo "aclocal failed" && exit 1)
 automake --add-missing --copy || (echo "automake failed" && exit 1)
 autoconf || (echo "autoconf failed" && exit 1)

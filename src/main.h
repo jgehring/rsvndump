@@ -29,12 +29,17 @@
 #ifndef HAVE_CONFIG_H
  #define APPNAME "rsvndump"
  #define APPVERSION "0.4.4"
- #define APPAUTHOR "Jonas Gehring <jonas.gehring@boolsoft.org>"
-#else
+ #define PACKAGE_BUGREPORT "jonas.gehring@boolsoft.org"
+
+ /* Internationalization */
+ #define _(String) (String)
+ #define N_(String) String
+ #define textdomain(Domain)
+ #define bindtextdomain(Package, Directory)
+#else /* HAVE_CONFIG_H */
  #include "config.h"
  #define APPNAME PACKAGE
  #define APPVERSION PACKAGE_VERSION
- #define APPAUTHOR "Jonas Gehring <"PACKAGE_BUGREPORT">"
 
  /* Compability functions */
  #ifndef HAVE_MEMSET
@@ -52,13 +57,27 @@
  #ifndef HAVE_STRNLEN
   extern size_t strnlen(const char *string, size_t maxlen);
  #endif
-#endif
+ 
+ /* Internationalization */
+ #if ENABLE_NLS
+  #include "../lib/gettext.h"
+  #define _(String) gettext (String)
+  #define gettext_noop(String) String
+  #define N_(String) gettext_noop (String)
+ #else /* ENABLE_NLS */
+  #define _(String) (String)
+  #define N_(String) String
+  #define textdomain(Domain)
+  #define bindtextdomain(Package, Directory)
+ #endif /* ENABLE_NLS */
+#endif /* HAVE_CONFIG_H */
+
+#define APPAUTHOR "Jonas Gehring <"PACKAGE_BUGREPORT">"
 
 
 /* Helper definitions */
 #define PROPS_END "PROPS-END\n"
 #define PROPS_END_LEN (sizeof(PROPS_END))
-
 
 /* Other features, some used for debugging */
 #if defined(USE_TIMING) && !defined(HAVE_GETTIMEOFDAY)

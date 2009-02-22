@@ -53,30 +53,31 @@ static void print_usage()
 {
 	print_version();
 	printf("\n");
-	printf("USAGE: "APPNAME" [options] <url>\n\n");
-	printf("Valid options:\n");
-	printf("    -h [--help]               print a nice help screen\n");
-	printf("    --version                 print the program name and version\n");
-	printf("    -q [--quiet]              be quiet\n");
-	printf("    -v [--verbose]            print extra progress\n");
-	printf("    -u [--username] arg       username\n");
-	printf("    -p [--password] arg       password\n");
-	printf("    -o [--outfile] arg        write data to file arg\n");
-	printf("                              if not specified, print to stdout\n");
-	printf("    -d [--download-dir] arg   directory for working copy\n");
-	printf("                              if not specified, create a temporary directory\n");
-	printf("    --online                  don't use a working copy for dumping\n");
-	printf("    --no-check-certificate    don't validate SSL certificates\n");
-	printf("    --stop arg                stop after dumping revision arg\n");
-	printf("    --prefix arg              prepend arg to the path that is being dumped\n");
-	printf("    --keep-revnums            keep the dumped revision numbers in sync with\n");
-	printf("                              the repository by using empty revisions for\n");
-	printf("                              padding\n");
-	printf("    --dump-uuid               include the repository uuid in the dump\n");
+	printf(_("USAGE: "APPNAME" [options] <url>\n\n"));
+	printf(_("Valid options:\n"));
+	printf(_("    -h [--help]               print a nice help screen\n"));
+	printf(_("    --version                 print the program name and version\n"));
+	printf(_("    -q [--quiet]              be quiet\n"));
+	printf(_("    -v [--verbose]            print extra progress\n"));
+	printf(_("    -u [--username] arg       username\n"));
+	printf(_("    -p [--password] arg       password\n"));
+	printf(_("    -o [--outfile] arg        write data to file arg\n"));
+	printf(_("                              if not specified, print to stdout\n"));
+	printf(_("    -d [--download-dir] arg   directory for working copy\n"));
+	printf(_("                              if not specified, create a temporary directory\n"));
+	printf(_("    --online                  don't use a working copy for dumping\n"));
+	printf(_("    --no-check-certificate    don't validate SSL certificates\n"));
+	printf(_("    --stop arg                stop after dumping revision arg\n"));
+	printf(_("    --prefix arg              prepend arg to the path that is being dumped\n"));
+	printf(_("    --keep-revnums            keep the dumped revision numbers in sync with\n"));
+	printf(_("                              the repository by using empty revisions for\n"));
+	printf(_("                              padding\n"));
+	printf(_("    --dump-uuid               include the repository uuid in the dump\n"));
 #ifdef USE_DELTAS
-	printf("    --deltas                  use deltas in dump output\n");
+	printf(_("    --deltas                  use deltas in dump output\n"));
 #endif /* USE_DELTAS */
 	printf("\n");
+	printf("Report bugs to <"PACKAGE_BUGREPORT">\n");
 }
 
 
@@ -100,6 +101,12 @@ int main(int argc, char **argv)
 	char ret, dir_created = 0;
 	int i;
 	dump_options_t opts = dump_options_create();
+
+#if ENABLE_NLS
+	setlocale(LC_ALL, "");
+	bindtextdomain(PACKAGE, LOCALEDIR);
+	textdomain(PACKAGE);
+#endif /* ENABLE_NLS */
 
 	/* Init subversion (sets apr locale etc.) */
 	if (svn_cmdline_init(APPNAME, stderr) != EXIT_SUCCESS) {
@@ -163,7 +170,7 @@ int main(int argc, char **argv)
 			opts.output = fopen(argv[++i], "wb");
 #endif
 			if (opts.output == NULL) {
-				fprintf(stderr, "Error: Unable to open output file.\n");
+				fprintf(stderr, _("Error: Unable to open output file.\n"));
 				dump_options_free(&opts);
 				return EXIT_FAILURE;
 			}
@@ -171,7 +178,7 @@ int main(int argc, char **argv)
 			struct stat st;
 			stat(argv[++i], &st);
 			if (!(st.st_mode & S_IFDIR)) {
-				fprintf(stderr, "Error: '%s' is either not a directory or does not exist.\n", argv[i]);
+				fprintf(stderr, _("Error: '%s' is either not a directory or does not exist.\n"), argv[i]);
 				dump_options_free(&opts);
 				return EXIT_FAILURE;
 			}
@@ -181,14 +188,14 @@ int main(int argc, char **argv)
 			opts.repo_dir = utils_canonicalize_strdup(argv[i]);
 		} else if (svn_path_is_url(argv[i])) {
 			if (opts.repo_url != NULL) {
-				fprintf(stderr, "Error: multiple URLs detected.\n");
+				fprintf(stderr, _("Error: multiple URLs detected.\n"));
 				dump_options_free(&opts);
 				return EXIT_FAILURE;
 			}
 			opts.repo_url = strdup(argv[i]);
 		} else {
-			fprintf(stderr, "Argument error: Unkown argument or malformed url '%s'\n", argv[i]);
-			fprintf(stderr, "Type %s --help for usage information\n", argv[0]);
+			fprintf(stderr, _("Argument error: Unkown argument or malformed url '%s'\n"), argv[i]);
+			fprintf(stderr, _("Type %s --help for usage information\n"), argv[0]);
 			dump_options_free(&opts);
 			return EXIT_FAILURE;
 		}
@@ -213,7 +220,7 @@ int main(int argc, char **argv)
 		}
 		opts.repo_dir = mkdtemp(opts.repo_dir);
 		if (opts.repo_dir == NULL) {
-			fprintf(stderr, "Error: Unable to create download directory.\n");
+			fprintf(stderr, _("Error: Unable to create download directory.\n"));
 			dump_options_free(&opts);
 			return EXIT_FAILURE;
 		}
