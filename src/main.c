@@ -53,7 +53,9 @@ static void print_usage()
 {
 	print_version();
 	printf("\n");
-	printf(_("USAGE: "APPNAME" [options] <url>\n\n"));
+	printf(_("USAGE:"));
+	printf(" "APPNAME" ");
+	printf(_("[options] <url>\n\n"));
 	printf(_("Valid options:\n"));
 	printf(_("    -h [--help]               print a nice help screen\n"));
 	printf(_("    --version                 print the program name and version\n"));
