@@ -38,12 +38,13 @@ AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_MALLOC
 AC_FUNC_FORK
 AC_FUNC_FSEEKO
-AC_CHECK_FUNCS([stat strchr strrchr strdup], ,[AC_MSG_ERROR([Sorry, unable to compile this program without this functions])])
+AC_CHECK_FUNCS([stat strchr strrchr strdup], ,[AC_MSG_ERROR([Sorry, unable to compile this program without these functions])])
 USE_COMPAT="no"
-AC_CHECK_FUNCS([memset], ,[AC_LIBOBJ([memset]), use_compat="yes"])
-AC_CHECK_FUNCS([strdup], ,[AC_LIBOBJ([strdup])])
-AC_CHECK_FUNCS([getpass], ,[AC_LIBOBJ([getpass])])
-AC_CHECK_FUNCS([rmdir], ,[AC_LIBOBJ([rmdir])])
+AC_CHECK_FUNCS([memset], ,[AC_LIBOBJ([memset]) USE_COMPAT="yes"])
+AC_CHECK_FUNCS([strdup], ,[AC_LIBOBJ([strdup]) USE_COMPAT="yes"])
+AC_CHECK_FUNCS([getpass],  ,[AC_LIBOBJ([getpass]) USE_COMPAT="yes"])
+AC_CHECK_FUNCS([rmdir], ,[AC_LIBOBJ([rmdir]) USE_COMPAT="yes"])
+AC_CHECK_FUNCS([strnlen], ,[AC_LIBOBJ([strnlen]) USE_COMPAT="yes"])
 AC_CHECK_FUNCS([gettimeofday fopen64])
 if test "$USE_COMPAT" = "yes"; then
   COMPAT_LIBS="../lib/libcompat.a"

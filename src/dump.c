@@ -283,6 +283,7 @@ dump_options_t dump_options_create()
 	dump_options_t opts;
 	opts.verbosity = 0;
 	opts.online = 0; 
+	opts.no_check_certificate = 0;
 	opts.keep_revnums = 0;
 	opts.dump_uuid = 0;
 	opts.repo_url = NULL;
@@ -376,7 +377,7 @@ char dump(dump_options_t *opts)
 	/* Check if --dump-uuid can be used (if it is given) */
 	if (opts->dump_uuid) {
 		if (strlen(opts->repo_prefix) || opts->user_prefix != NULL) {
-			fprintf(stderr, "Sorry, '--dump-uuid' can only be used when dumping a repository root without any user prefix\n");
+			fprintf(stderr, "Sorry, '--dump-uuid' can only be used when dumping a repository root and without using a user prefix.\n");
 			logentry_free(&current);
 			logentry_free(&next);
 			return 1;

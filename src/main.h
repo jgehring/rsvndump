@@ -35,19 +35,36 @@
  #define APPNAME PACKAGE
  #define APPVERSION PACKAGE_VERSION
  #define APPAUTHOR "Jonas Gehring <"PACKAGE_BUGREPORT">"
+
+ /* Compability functions */
+ #ifndef HAVE_MEMSET
+  extern void *memset(void *str, int c, size_t len);
+ #endif
+ #ifndef HAVE_STRDUP
+  extern char *strdup(const char *s);
+ #endif 
+ #ifndef HAVE_GETPASS
+  extern char *getpass(const char *prompt);
+ #endif
+ #ifndef HAVE_RMDIR
+  extern int rmdir(char const *dir);
+ #endif
+ #ifndef HAVE_STRNLEN
+  extern size_t strnlen(const char *string, size_t maxlen);
+ #endif
 #endif
 
 
 /* Helper definitions */
 #define PROPS_END "PROPS-END\n"
-#define PROPS_END_LEN 10 
+#define PROPS_END_LEN (sizeof(PROPS_END))
 
 
 /* Other features, some used for debugging */
 #if defined(USE_TIMING) && !defined(HAVE_GETTIMEOFDAY)
  #undef USE_TIMING
 #endif
-/* This is implemented, but enables flags and options for deltas */
+/* This is _not_ implemented, but enables flags and options for deltas */
 /*#define USE_DELTAS*/
 
 

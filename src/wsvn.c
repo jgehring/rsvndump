@@ -158,24 +158,44 @@ static svn_error_t *wsvn_auth_ssl_trust(svn_auth_cred_ssl_server_trust_t **cred,
 	char choice[3];
 
 	if (failures & SVN_AUTH_SSL_UNKNOWNCA) {
-		fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+		if (dopts->no_check_certificate) {
+			fprintf(stderr, "WARNING: Validating server certificate for '%s' failed:\n", realm);
+		} else {
+			fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+		}
 		fprintf(stderr, " - The certificate is not issued by a trusted authority. Use the\n");
 		fprintf(stderr, "   fingerprint to validate the certificate manually!\n");
 	}
 	if (failures & SVN_AUTH_SSL_CNMISMATCH) {
-		fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+		if (dopts->no_check_certificate) {
+			fprintf(stderr, "WARNING: Validating server certificate for '%s' failed:\n", realm);
+		} else {
+			fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+		}
 		fprintf(stderr, " - The certificate hostname does not match.\n");
 	}
 	if (failures & SVN_AUTH_SSL_NOTYETVALID) {
-		fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+		if (dopts->no_check_certificate) {
+			fprintf(stderr, "WARNING: Validating server certificate for '%s' failed:\n", realm);
+		} else {
+			fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+		}
 		fprintf(stderr, " - The certificate is not yet valid.\n");
 	}
 	if (failures & SVN_AUTH_SSL_EXPIRED) {
-		fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+		if (dopts->no_check_certificate) {
+			fprintf(stderr, "WARNING: Validating server certificate for '%s' failed:\n", realm);
+		} else {
+			fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+		}
 		fprintf(stderr, " - The certificate has expired.\n");
 	}
 	if (failures & SVN_AUTH_SSL_OTHER) {
-		fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+		if (dopts->no_check_certificate) {
+			fprintf(stderr, "WARNING: Validating server certificate for '%s' failed:\n", realm);
+		} else {
+			fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+		}
 		fprintf(stderr, " - The certificate has an unknown error.\n");
 	}
 
@@ -189,6 +209,13 @@ static svn_error_t *wsvn_auth_ssl_trust(svn_auth_cred_ssl_server_trust_t **cred,
 			cert_info->valid_until,
 			cert_info->issuer_dname,
 			cert_info->fingerprint);
+
+	if (dopts->no_check_certificate) {
+		*cred = apr_pcalloc(pool, sizeof (**cred));
+		(*cred)->may_save = FALSE;
+		(*cred)->accepted_failures = failures;
+		return SVN_NO_ERROR;
+	}
 
 	fprintf(stderr, ("(R)eject or accept (t)emporarily? "));
 	SVN_ERR(wsvn_read_line(" ", choice, sizeof(choice), 0));

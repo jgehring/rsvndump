@@ -66,14 +66,13 @@ static void print_usage()
 	printf("    -d [--download-dir] arg   directory for working copy\n");
 	printf("                              if not specified, create a temporary directory\n");
 	printf("    --online                  don't use a working copy for dumping\n");
-	printf("                              (the download dir is ignored then)\n");
-	printf("    --prefix arg              prepend arg to the path that is being dumped\n");
+	printf("    --no-check-certificate    don't validate SSL certificates\n");
 	printf("    --stop arg                stop after dumping revision arg\n");
-	printf("                              arg can be a decimal number or HEAD\n");
+	printf("    --prefix arg              prepend arg to the path that is being dumped\n");
 	printf("    --keep-revnums            keep the dumped revision numbers in sync with\n");
 	printf("                              the repository by using empty revisions for\n");
 	printf("                              padding\n");
-	printf("    --dump-uuid               dump the repository uuid\n");
+	printf("    --dump-uuid               include the repository uuid in the dump\n");
 #ifdef USE_DELTAS
 	printf("    --deltas                  use deltas in dump output\n");
 #endif /* USE_DELTAS */
@@ -123,6 +122,8 @@ int main(int argc, char **argv)
 			opts.verbosity = 1;
 		} else if (!strcmp(argv[i], "--online")) {
 			opts.online = 1;
+		} else if (!strcmp(argv[i], "--no-check-certificate")) {
+			opts.no_check_certificate = 1;
 		} else if (!strcmp(argv[i], "--keep-revnums")) {
 			opts.keep_revnums = 1;
 		} else if (!strcmp(argv[i], "--dump-uuid")) {

@@ -41,13 +41,13 @@ for a detailed description and comparison of the modes.
 Options in brackets are provided as synonyms:
 .TP
 .B "-h [--help]"
-print a nice help screen
+Print a nice help screen
 .TP
 .B "-q [--quiet]"
-be quiet
+Be quiet
 .TP
 .B "-v [--verbose]"
-print extra progress. This is not very expressive in offline mode.
+Print extra progress. This is not very expressive in offline mode.
 .TP 
 .BI "-u [--username]"\ username
 username for repository authentication.
@@ -64,7 +64,7 @@ will first try your account name and will finally ask for the username on
 .IR stdin .
 .TP
 .BI "-p [--password]"\ password
-password for repository authentication.
+Password for repository authentication.
 .br
 If not specified and the given url does not provide anonymous read access,
 .B rsvndump
@@ -88,7 +88,26 @@ will create a temporary directory inside the system-wide temporary directory.
 This directory will be cleared if the program exits.
 .TP
 .B --online
-run in online mode as described below.
+Run in online mode as described below.
+.TP
+.B --no-check-certificate
+Disables the need for manually accepting SSL certificates which cannot be validated.
+Please use this option
+.IR only
+if you are unable to interact with the program (e.g when calling it from a script)
+.IR and
+if you are sure the remote location is really what it claims to be (remember that
+you might be sending a username and a password via this connection).
+.br
+When using this option, 
+.B rsvndump
+will still print warnings about unverified SSL certificates to
+.IR stderr .
+.TP
+.BI "--stop"\ revision
+Stop after dumping the specified revision, which can either be given by a
+decimal number or by
+.BR HEAD .
 .TP
 .BI "--prefix"\ prefix
 A custom string that is prepended to every node that is being dumped. The first
@@ -107,11 +126,6 @@ might result in the following layout:
 .BR  |-old_ tags
 .br
 .BR  |-old_ trunk
-.TP
-.BI "--stop"\ revision
-Stop after dumping the specified revision, which can either be given by a
-decimal number or by
-.BR HEAD .
 .TP
 .B "--keep-revnums"
 Keep the revision numbers of the dump in sync with the remote repository. This
@@ -169,7 +183,10 @@ with
 .TP
 .B TEMP
 The parent directory of the temporary directory that will be used for the
-working copy in offline mode.
+working copy in offline mode. The working copy directory can also be specified
+using the
+.B --download-dir
+option
 
 .SH TODO
 The current TODO list includes the use of deltas inside the dump output and
