@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 			opts.output = fopen(argv[++i], "wb");
 #endif
 			if (opts.output == NULL) {
-				fprintf(stderr, "Error opening outfile\n");
+				fprintf(stderr, "Error: Unable to open output file.\n");
 				dump_options_free(&opts);
 				return EXIT_FAILURE;
 			}
@@ -171,7 +171,7 @@ int main(int argc, char **argv)
 			struct stat st;
 			stat(argv[++i], &st);
 			if (!(st.st_mode & S_IFDIR)) {
-				fprintf(stderr, "Error: '%s' is either not a directory or does not exist\n", argv[i]);
+				fprintf(stderr, "Error: '%s' is either not a directory or does not exist.\n", argv[i]);
 				dump_options_free(&opts);
 				return EXIT_FAILURE;
 			}
@@ -180,6 +180,11 @@ int main(int argc, char **argv)
 			}
 			opts.repo_dir = utils_canonicalize_strdup(argv[i]);
 		} else if (svn_path_is_url(argv[i])) {
+			if (opts.repo_url != NULL) {
+				fprintf(stderr, "Error: multiple URLs detected.\n");
+				dump_options_free(&opts);
+				return EXIT_FAILURE;
+			}
 			opts.repo_url = strdup(argv[i]);
 		} else {
 			fprintf(stderr, "Argument error: Unkown argument or malformed url '%s'\n", argv[i]);
@@ -208,7 +213,7 @@ int main(int argc, char **argv)
 		}
 		opts.repo_dir = mkdtemp(opts.repo_dir);
 		if (opts.repo_dir == NULL) {
-			fprintf(stderr, "Error creating download directory\n");
+			fprintf(stderr, "Error: Unable to create download directory.\n");
 			dump_options_free(&opts);
 			return EXIT_FAILURE;
 		}

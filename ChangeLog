@@ -1,3 +1,8 @@
+2009-02-22  --  version 0.4.4
+	* Added --no-check-certificate option which disables SSL certificate
+	  verification
+	* Added username information to password prompt
+
 2008-11-21  --  version 0.4.3
 
 	* Added --dump-uuid option

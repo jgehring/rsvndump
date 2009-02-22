@@ -1,4 +1,4 @@
-rsvndump 0.4.3
+rsvndump 0.4.4
 Copyright (C) 2008-2009 by Jonas Gehring
 
 
@@ -20,13 +20,19 @@ Therefore, to build rsvndump from source, the development and runtime files
 USAGE
 =====
 For usage information, please refer to the man page shipped with this package.
+Less detailed usage information can also be retrieved by passing the '--help'
+argument to the program
 
 
 CREDITS
 =======
-rsvndump 0.4.3
+rsvndump 0.4.4
 written by Jonas Gehring <jonas.gehring@boolsoft.org>
 http://saubue.boolsoft.org/projects/rsvndump
+
+rsvndump uses autoconf macros from APR which are licensed under the Apache
+License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
+For more information, please refer to build/findd_apr.m4
 
 
 LICENSE

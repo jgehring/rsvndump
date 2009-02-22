@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.60)
-AC_INIT(rsvndump, 0.4.3, jonas.gehring@boolsoft.org)
+AC_INIT(rsvndump, 0.4.4, jonas.gehring@boolsoft.org)
 AM_INIT_AUTOMAKE()
 AC_PREFIX_DEFAULT([/usr/local])
 test $prefix = NONE && prefix=/usr/local
@@ -52,7 +52,6 @@ if test "$USE_COMPAT" = "yes"; then
   AC_SUBST([COMPAT_LIBS])
   AC_SUBST([COMPAT_SUBDIRS])
 fi
-
 
 # Checks for libraries
 RSVND_FIND_APR

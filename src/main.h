@@ -28,7 +28,7 @@
 /* Application-specific constants */
 #ifndef HAVE_CONFIG_H
  #define APPNAME "rsvndump"
- #define APPVERSION "0.4.3"
+ #define APPVERSION "0.4.4"
  #define APPAUTHOR "Jonas Gehring <jonas.gehring@boolsoft.org>"
 #else
  #include "config.h"
