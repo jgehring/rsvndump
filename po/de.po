@@ -49,12 +49,12 @@ msgstr ""
 #: src/main.c:62
 #, c-format
 msgid "    -q [--quiet]              be quiet\n"
-msgstr ""
+msgstr "    -q [--quiet]              Nur Fehler ausgeben\n"
 
 #: src/main.c:63
 #, c-format
 msgid "    -v [--verbose]            print extra progress\n"
-msgstr ""
+msgstr "    -v [--verbose]            Zusätzliche Informationen ausgeben\n"
 
 #: src/main.c:64
 #, c-format
@@ -76,11 +76,12 @@ msgstr ""
 #, c-format
 msgid "                              if not specified, print to stdout\n"
 msgstr ""
+"                              (ansonsten wird die Standardausgabe benutzt\n"
 
 #: src/main.c:68
 #, c-format
 msgid "    -d [--download-dir] arg   directory for working copy\n"
-msgstr ""
+msgstr "    -d [--download-dir] arg   Verzeichnes für die working copy\n"
 
 #: src/main.c:69
 #, c-format
@@ -97,18 +98,19 @@ msgstr ""
 #: src/main.c:71
 #, c-format
 msgid "    --no-check-certificate    don't validate SSL certificates\n"
-msgstr ""
+msgstr "    --no-check-certificate    SSL-Zertifikate nicht validieren\n"
 
 #: src/main.c:72
 #, c-format
 msgid "    --stop arg                stop after dumping revision arg\n"
 msgstr ""
+"    --stop arg                Bis einschließlich Revision 'arg' dumpen\n"
 
 #: src/main.c:73
 #, c-format
 msgid ""
 "    --prefix arg              prepend arg to the path that is being dumped\n"
-msgstr ""
+msgstr "    --prefix arg              Zuzsätzlicher Präfix für Pfade\n"
 
 #: src/main.c:74
 #, c-format
@@ -140,29 +142,29 @@ msgstr ""
 #: src/main.c:175
 #, c-format
 msgid "Error: Unable to open output file.\n"
-msgstr ""
+msgstr "Fehler: Ausgabedatei kann nicht geöffnet werden.\n"
 
 #: src/main.c:183
 #, c-format
 msgid "Error: '%s' is either not a directory or does not exist.\n"
-msgstr ""
+msgstr "Fehler: '%s' ist entweder kein Verzeichnis oder existiert nicht.\n"
 
 #: src/main.c:193
 #, c-format
 msgid "Error: multiple URLs detected.\n"
-msgstr ""
+msgstr "Fehler: meherere URLs entdeckt.\n"
 
 #: src/main.c:199
 #, c-format
 msgid "Argument error: Unkown argument or malformed url '%s'\n"
-msgstr ""
+msgstr "Fehler: Ungültiges argument oder ungültige URL '%s'\n"
 
 #: src/main.c:200
 #, c-format
 msgid "Type %s --help for usage information\n"
-msgstr ""
+msgstr "Rufen sie %s --help für Informationen zur Benutzung auf\n"
 
 #: src/main.c:225
 #, c-format
 msgid "Error: Unable to create download directory.\n"
-msgstr ""
+msgstr "Fehler: Kann Verzeichnis für die working copy nicht erstellen.\n"
