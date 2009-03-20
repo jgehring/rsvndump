@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.4.4\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-02-22 04:15+0100\n"
+"POT-Creation-Date: 2009-03-20 19:47+0100\n"
 "PO-Revision-Date: 2009-02-22 03:00+0100\n"
 "Last-Translator:  <jonas.gehring@boolsoft.org>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -15,6 +15,78 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/dump.c:95
+#, c-format
+msgid "* Dumping revision %ld ... 0%%\n"
+msgstr ""
+
+#: src/dump.c:97
+#, c-format
+msgid "* Dumping revision %ld (local: %ld) ... 0%%\n"
+msgstr ""
+
+#: src/dump.c:139
+#, c-format
+msgid "Error allocating memory.\n"
+msgstr ""
+
+#: src/dump.c:179 src/dump.c:204
+#, c-format
+msgid "* Dumping revision %ld ... %d%%\n"
+msgstr ""
+
+#: src/dump.c:181 src/dump.c:206
+#, c-format
+msgid "* Dumping revision %ld (local: %ld) ... %d%%\n"
+msgstr ""
+
+#: src/dump.c:234
+#, c-format
+msgid "* Dumped revision %ld.\n"
+msgstr ""
+
+#: src/dump.c:236
+#, c-format
+msgid "* Dumped revision %ld (local %ld).\n"
+msgstr ""
+
+#: src/dump.c:270
+#, c-format
+msgid "* Padded revision %ld.\n"
+msgstr ""
+
+#: src/dump.c:360
+#, c-format
+msgid "Error load subversion library / initializing connection.\n"
+msgstr ""
+
+#: src/dump.c:368
+#, c-format
+msgid "Error fetching repository information.\n"
+msgstr ""
+
+#: src/dump.c:380
+#, c-format
+msgid ""
+"Sorry, '--dump-uuid' can only be used when dumping a repository root and "
+"without using a user prefix.\n"
+msgstr ""
+
+#: src/dump.c:395
+#, c-format
+msgid "Switched to online mode because the url refers to a file.\n"
+msgstr ""
+
+#: src/dump.c:404
+#, c-format
+msgid "Switched to online mode for performance reasons.\n"
+msgstr ""
+
+#: src/dump.c:420
+#, c-format
+msgid "Error fetching repository log info.\n"
+msgstr ""
 
 #: src/main.c:56
 #, c-format
@@ -67,33 +139,29 @@ msgid "    -p [--password] arg       password\n"
 msgstr "    -p [--password] arg       Passwort\n"
 
 #: src/main.c:66
-#, c-format
-msgid "    -o [--outfile] arg        write data to file arg\n"
+#, fuzzy, c-format
+msgid ""
+"    -o [--outfile] arg        write data to file arg\n"
+"                              if not specified, print to stdout\n"
 msgstr ""
-"    -o [--outfile] arg        Datei 'arg' für Ausgabe der Daten benutzen\n"
-
-#: src/main.c:67
-#, c-format
-msgid "                              if not specified, print to stdout\n"
-msgstr ""
-"                              (ansonsten wird die Standardausgabe benutzt\n"
+"    -o [--outfile] arg        dump in Datei 'arg' schreiben\n"
+"                              (ansonsten wird die Standardausgabe benutzt)\n"
 
 #: src/main.c:68
-#, c-format
-msgid "    -d [--download-dir] arg   directory for working copy\n"
-msgstr "    -d [--download-dir] arg   Verzeichnes für die working copy\n"
-
-#: src/main.c:69
-#, c-format
+#, fuzzy, c-format
 msgid ""
+"    -d [--download-dir] arg   directory for working copy\n"
 "                              if not specified, create a temporary "
 "directory\n"
 msgstr ""
+"    -d [--download-dir] arg   Verzeichnes für die working copy\n"
+"                              (ansonsten wird ein temporäres Verzeichnis "
+"angelegt)\n"
 
 #: src/main.c:70
 #, c-format
 msgid "    --online                  don't use a working copy for dumping\n"
-msgstr ""
+msgstr "    --online                  Keine working copy benutzen\n"
 
 #: src/main.c:71
 #, c-format
@@ -116,28 +184,22 @@ msgstr "    --prefix arg              Zuzsätzlicher Präfix für Pfade\n"
 #, c-format
 msgid ""
 "    --keep-revnums            keep the dumped revision numbers in sync with\n"
-msgstr ""
-
-#: src/main.c:75
-#, c-format
-msgid ""
 "                              the repository by using empty revisions for\n"
+"                              padding\n"
 msgstr ""
-
-#: src/main.c:76
-#, c-format
-msgid "                              padding\n"
-msgstr ""
+"    --keep-revnums            Revisions-Nummern nicht verändern, indem wenn\n"
+"                              nötig leere Revisionen eingefügt werden\n"
 
 #: src/main.c:77
 #, c-format
 msgid "    --dump-uuid               include the repository uuid in the dump\n"
 msgstr ""
+"    --dump-uuid               die UUID des repositories ebenfalls dumpen\n"
 
 #: src/main.c:79
 #, c-format
 msgid "    --deltas                  use deltas in dump output\n"
-msgstr ""
+msgstr "    --deltas                  deltas im dump verwenden\n"
 
 #: src/main.c:175
 #, c-format
@@ -157,14 +219,93 @@ msgstr "Fehler: meherere URLs entdeckt.\n"
 #: src/main.c:199
 #, c-format
 msgid "Argument error: Unkown argument or malformed url '%s'\n"
-msgstr "Fehler: Ungültiges argument oder ungültige URL '%s'\n"
+msgstr "Fehler: Ungültiges Argument oder ungültige URL '%s'\n"
 
 #: src/main.c:200
 #, c-format
 msgid "Type %s --help for usage information\n"
-msgstr "Rufen sie %s --help für Informationen zur Benutzung auf\n"
+msgstr "Rufen sie %s --help auf, um Informationen zur Benutzung zu erhalten\n"
 
 #: src/main.c:225
 #, c-format
 msgid "Error: Unable to create download directory.\n"
 msgstr "Fehler: Kann Verzeichnis für die working copy nicht erstellen.\n"
+
+#: src/node.c:330
+#, c-format
+msgid "Failed to open %s\n"
+msgstr ""
+
+#: src/wsvn.c:137
+msgid "Username: "
+msgstr ""
+
+#: src/wsvn.c:142
+#, c-format
+msgid "Password for '%s':"
+msgstr ""
+
+#: src/wsvn.c:146
+msgid "Password: "
+msgstr ""
+
+#. TRANSLATORS: This is the key used for accepting a certificate temporarily.
+#. * Every other key is used to reject the certificate.
+#: src/wsvn.c:161
+msgid "t"
+msgstr "t"
+
+#: src/wsvn.c:165 src/wsvn.c:174 src/wsvn.c:182 src/wsvn.c:190 src/wsvn.c:198
+#, c-format
+msgid "WARNING: Validating server certificate for '%s' failed:\n"
+msgstr ""
+
+#: src/wsvn.c:167 src/wsvn.c:176 src/wsvn.c:184 src/wsvn.c:192 src/wsvn.c:200
+#, c-format
+msgid "Error validating server certificate for '%s':\n"
+msgstr ""
+
+#: src/wsvn.c:169
+#, c-format
+msgid " - The certificate is not issued by a trusted authority. Use the\n"
+msgstr ""
+
+#: src/wsvn.c:170
+#, c-format
+msgid "   fingerprint to validate the certificate manually!\n"
+msgstr ""
+
+#: src/wsvn.c:178
+#, c-format
+msgid " - The certificate hostname does not match.\n"
+msgstr ""
+
+#: src/wsvn.c:186
+#, c-format
+msgid " - The certificate is not yet valid.\n"
+msgstr ""
+
+#: src/wsvn.c:194
+#, c-format
+msgid " - The certificate has expired.\n"
+msgstr ""
+
+#: src/wsvn.c:202
+#, c-format
+msgid " - The certificate has an unknown error.\n"
+msgstr ""
+
+#: src/wsvn.c:205
+#, c-format
+msgid ""
+"Certificate information:\n"
+" - Hostname: %s\n"
+" - Valid: from %s until %s\n"
+" - Issuer: %s\n"
+" - Fingerprint: %s\n"
+msgstr ""
+
+#: src/wsvn.c:223
+#, c-format
+msgid "(R)eject or accept (t)emporarily? "
+msgstr ""

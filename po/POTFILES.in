@@ -1,2 +1,10 @@
 # List of source files which contain translatable strings.
+src/dump.c
+src/list.c
+src/logentry.c
 src/main.c
+src/node.c
+src/property.c
+src/utils.c
+src/whash.c
+src/wsvn.c

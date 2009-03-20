@@ -92,9 +92,9 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 #endif
 	if (dopts->verbosity > 0) {
 		if (dopts->keep_revnums) {
-			fprintf(stderr, "* Dumping revision %ld ... 0%%\n", entry->revision);
+			fprintf(stderr, _("* Dumping revision %ld ... 0%%\n"), entry->revision);
 		} else {
-			fprintf(stderr, "* Dumping revision %ld (local: %ld) ... 0%%\n", entry->revision, local_revnum);
+			fprintf(stderr, _("* Dumping revision %ld (local: %ld) ... 0%%\n"), entry->revision, local_revnum);
 		}
 	}
 
@@ -136,7 +136,7 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 
 	/* We need a hash to check what elements have already been dumped (if copies occur) */
 	if (whash_create()) {
-		fprintf(stderr, "Error allocating memory.\n");
+		fprintf(stderr, _("Error allocating memory.\n"));
 		return 1;
 	}
 
@@ -176,9 +176,9 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 		if (dopts->verbosity > 0) {
 			fprintf(stderr, "\033[1A\033[K");
 			if (dopts->keep_revnums) {
-				fprintf(stderr, "* Dumping revision %ld ... %d%%\n", entry->revision, (i*50)/nodes.size);
+				fprintf(stderr, _("* Dumping revision %ld ... %d%%\n"), entry->revision, (i*50)/nodes.size);
 			} else {
-				fprintf(stderr, "* Dumping revision %ld (local: %ld) ... %d%%\n", entry->revision, local_revnum, (i*50)/nodes.size);
+				fprintf(stderr, _("* Dumping revision %ld (local: %ld) ... %d%%\n"), entry->revision, local_revnum, (i*50)/nodes.size);
 			}
 		}
 	}
@@ -201,9 +201,9 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 			if (dopts->verbosity > 0) {
 				fprintf(stderr, "\033[1A\033[K");
 				if (dopts->keep_revnums) {
-					fprintf(stderr, "* Dumping revision %ld ... %d%%\n", entry->revision, 50+(i*50)/nodes.size);
+					fprintf(stderr, _("* Dumping revision %ld ... %d%%\n"), entry->revision, 50+(i*50)/nodes.size);
 				} else {
-					fprintf(stderr, "* Dumping revision %ld (local: %ld) ... %d%%\n", entry->revision, local_revnum, 50+(i*50)/nodes.size);
+					fprintf(stderr, _("* Dumping revision %ld (local: %ld) ... %d%%\n"), entry->revision, local_revnum, 50+(i*50)/nodes.size);
 				}
 			}
 		}
@@ -231,9 +231,9 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 			fprintf(stderr, "\033[1A\033[K");
 		}
 		if (dopts->keep_revnums) {
-			fprintf(stderr, "* Dumped revision %ld.\n", entry->revision);
+			fprintf(stderr, _("* Dumped revision %ld.\n"), entry->revision);
 		} else {
-			fprintf(stderr, "* Dumped revision %ld (local %ld).\n", entry->revision, local_revnum);
+			fprintf(stderr, _("* Dumped revision %ld (local %ld).\n"), entry->revision, local_revnum);
 		}
 	}
 
@@ -267,7 +267,7 @@ static void dump_pad_revisions(logentry_t *entry1, logentry_t *entry2)
 		fprintf(dopts->output, "\n");
 
 		if (dopts->verbosity > 0) {
-			fprintf(stderr, "* Padded revision %ld.\n", i);
+			fprintf(stderr, _("* Padded revision %ld.\n"), i);
 		}
 	}
 }
@@ -357,7 +357,7 @@ char dump(dump_options_t *opts)
 
 	/* Initialize and open the svn session */
 	if (wsvn_init(opts)) {
-		fprintf(stderr, "Error load subversion library / initializing connection.\n");
+		fprintf(stderr, _("Error load subversion library / initializing connection.\n"));
 		logentry_free(&current);
 		logentry_free(&next);
 		return 1;
@@ -365,7 +365,7 @@ char dump(dump_options_t *opts)
 
 	/* Fetch repository information */
 	if (wsvn_repo_info(opts->repo_eurl, &opts->repo_base, &opts->repo_prefix, &opts->repo_uuid, &headrev)) {
-		fprintf(stderr, "Error fetching repository information.\n");
+		fprintf(stderr, _("Error fetching repository information.\n"));
 		logentry_free(&current);
 		logentry_free(&next);
 		return 1;
@@ -377,7 +377,7 @@ char dump(dump_options_t *opts)
 	/* Check if --dump-uuid can be used (if it is given) */
 	if (opts->dump_uuid) {
 		if (strlen(opts->repo_prefix) || opts->user_prefix != NULL) {
-			fprintf(stderr, "Sorry, '--dump-uuid' can only be used when dumping a repository root and without using a user prefix.\n");
+			fprintf(stderr, _("Sorry, '--dump-uuid' can only be used when dumping a repository root and without using a user prefix.\n"));
 			logentry_free(&current);
 			logentry_free(&next);
 			return 1;
@@ -392,7 +392,7 @@ char dump(dump_options_t *opts)
 		opts->prefix_is_file = 1;
 		if (opts->online == 0) {
 			if (opts->verbosity >= 0) {
-				fprintf(stderr, "Switched to online mode because the url refers to a file.\n");
+				fprintf(stderr, _("Switched to online mode because the url refers to a file.\n"));
 			}
 			opts->online = 1;
 		}
@@ -401,7 +401,7 @@ char dump(dump_options_t *opts)
 	/* Check if the url is a file:// url and switch mode if neccessary */
 	if (!strncmp(opts->repo_eurl, "file://", 7) && opts->online == 0) {
 		if (opts->verbosity >= 0) {
-			fprintf(stderr, "Switched to online mode for performance reasons.\n");
+			fprintf(stderr, _("Switched to online mode for performance reasons.\n"));
 		}
 		opts->online = 1;
 	}
@@ -417,7 +417,7 @@ char dump(dump_options_t *opts)
 	/* Fetch first history item */
 	log = list_create(sizeof(logentry_t));
 	if (wsvn_next_log(NULL, &next)) {
-		fprintf(stderr, "Error fetching repository log info.\n");
+		fprintf(stderr, _("Error fetching repository log info.\n"));
 		list_free(&log);
 		logentry_free(&current);
 		logentry_free(&next);

@@ -134,16 +134,16 @@ static svn_error_t *wsvn_auth_prompt(svn_auth_cred_simple_t **cred, void *baton,
 	} else if (username) {
 		ret->username = apr_pstrdup(pool, username);
 	} else {
-		SVN_ERR(wsvn_read_line("Username: ", answerbuf, sizeof(answerbuf), 0));
+		SVN_ERR(wsvn_read_line(_("Username: "), answerbuf, sizeof(answerbuf), 0));
 		ret->username = apr_pstrdup(pool, answerbuf);
 	}
 
 	if (ret->username && strnlen(ret->username, 128) < 128) {
-		char *format = "Password for '%s':";
+		char *format = _("Password for '%s':");
 		prompt = apr_pcalloc(pool, strlen(ret->username) + strlen(format) + 1);
 		sprintf(prompt, format, ret->username);
 	} else {
-		prompt = apr_pstrdup(pool, "Password: ");
+		prompt = apr_pstrdup(pool, _("Password: "));
 	}
 
 	SVN_ERR(wsvn_read_line(prompt, answerbuf, sizeof(answerbuf), 1));
@@ -156,54 +156,57 @@ static svn_error_t *wsvn_auth_prompt(svn_auth_cred_simple_t **cred, void *baton,
 static svn_error_t *wsvn_auth_ssl_trust(svn_auth_cred_ssl_server_trust_t **cred, void *baton, const char *realm, apr_uint32_t failures, const svn_auth_ssl_server_cert_info_t *cert_info, svn_boolean_t may_save, apr_pool_t *pool)
 {
 	char choice[3];
+	/* TRANSLATORS: This is the key used for accepting a certificate temporarily.
+	 * Every other key is used to reject the certificate. */
+	const char *accept = _("t");
 
 	if (failures & SVN_AUTH_SSL_UNKNOWNCA) {
 		if (dopts->no_check_certificate) {
-			fprintf(stderr, "WARNING: Validating server certificate for '%s' failed:\n", realm);
+			fprintf(stderr, _("WARNING: Validating server certificate for '%s' failed:\n"), realm);
 		} else {
-			fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+			fprintf(stderr, _("Error validating server certificate for '%s':\n"), realm);
 		}
-		fprintf(stderr, " - The certificate is not issued by a trusted authority. Use the\n");
-		fprintf(stderr, "   fingerprint to validate the certificate manually!\n");
+		fprintf(stderr, _(" - The certificate is not issued by a trusted authority. Use the\n"));
+		fprintf(stderr, _("   fingerprint to validate the certificate manually!\n"));
 	}
 	if (failures & SVN_AUTH_SSL_CNMISMATCH) {
 		if (dopts->no_check_certificate) {
-			fprintf(stderr, "WARNING: Validating server certificate for '%s' failed:\n", realm);
+			fprintf(stderr, _("WARNING: Validating server certificate for '%s' failed:\n"), realm);
 		} else {
-			fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+			fprintf(stderr, _("Error validating server certificate for '%s':\n"), realm);
 		}
-		fprintf(stderr, " - The certificate hostname does not match.\n");
+		fprintf(stderr, _(" - The certificate hostname does not match.\n"));
 	}
 	if (failures & SVN_AUTH_SSL_NOTYETVALID) {
 		if (dopts->no_check_certificate) {
-			fprintf(stderr, "WARNING: Validating server certificate for '%s' failed:\n", realm);
+			fprintf(stderr, _("WARNING: Validating server certificate for '%s' failed:\n"), realm);
 		} else {
-			fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+			fprintf(stderr, _("Error validating server certificate for '%s':\n"), realm);
 		}
-		fprintf(stderr, " - The certificate is not yet valid.\n");
+		fprintf(stderr, _(" - The certificate is not yet valid.\n"));
 	}
 	if (failures & SVN_AUTH_SSL_EXPIRED) {
 		if (dopts->no_check_certificate) {
-			fprintf(stderr, "WARNING: Validating server certificate for '%s' failed:\n", realm);
+			fprintf(stderr, _("WARNING: Validating server certificate for '%s' failed:\n"), realm);
 		} else {
-			fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+			fprintf(stderr, _("Error validating server certificate for '%s':\n"), realm);
 		}
-		fprintf(stderr, " - The certificate has expired.\n");
+		fprintf(stderr, _(" - The certificate has expired.\n"));
 	}
 	if (failures & SVN_AUTH_SSL_OTHER) {
 		if (dopts->no_check_certificate) {
-			fprintf(stderr, "WARNING: Validating server certificate for '%s' failed:\n", realm);
+			fprintf(stderr, _("WARNING: Validating server certificate for '%s' failed:\n"), realm);
 		} else {
-			fprintf(stderr, "Error validating server certificate for '%s':\n", realm);
+			fprintf(stderr, _("Error validating server certificate for '%s':\n"), realm);
 		}
-		fprintf(stderr, " - The certificate has an unknown error.\n");
+		fprintf(stderr, _(" - The certificate has an unknown error.\n"));
 	}
 
-	fprintf(stderr, "Certificate information:\n"
+	fprintf(stderr, _("Certificate information:\n"
 			" - Hostname: %s\n"
 			" - Valid: from %s until %s\n"
 			" - Issuer: %s\n"
-			" - Fingerprint: %s\n",
+			" - Fingerprint: %s\n"),
 			cert_info->hostname,
 			cert_info->valid_from,
 			cert_info->valid_until,
@@ -217,10 +220,10 @@ static svn_error_t *wsvn_auth_ssl_trust(svn_auth_cred_ssl_server_trust_t **cred,
 		return SVN_NO_ERROR;
 	}
 
-	fprintf(stderr, ("(R)eject or accept (t)emporarily? "));
+	fprintf(stderr, _("(R)eject or accept (t)emporarily? "));
 	SVN_ERR(wsvn_read_line(" ", choice, sizeof(choice), 0));
 
-	if (choice[0] == 't' || choice[0] == 'T') {
+	if (tolower(choice[0]) == *accept) {
 		*cred = apr_pcalloc(pool, sizeof (**cred));
 		(*cred)->may_save = FALSE;
 		(*cred)->accepted_failures = failures;

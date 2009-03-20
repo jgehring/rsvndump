@@ -1,3 +1,6 @@
+== Remaining tests for 0.4.4 ==
+> Test certificate accepting and rejecting using a german locale
+
 == Schedule for 0.5 ==
 > Rename --download-dir option to --wc-dir (and -d to -w)
 > Remove --outfile option

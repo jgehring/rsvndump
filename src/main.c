@@ -63,17 +63,17 @@ static void print_usage()
 	printf(_("    -v [--verbose]            print extra progress\n"));
 	printf(_("    -u [--username] arg       username\n"));
 	printf(_("    -p [--password] arg       password\n"));
-	printf(_("    -o [--outfile] arg        write data to file arg\n"));
-	printf(_("                              if not specified, print to stdout\n"));
-	printf(_("    -d [--download-dir] arg   directory for working copy\n"));
-	printf(_("                              if not specified, create a temporary directory\n"));
+	printf(_("    -o [--outfile] arg        write data to file arg\n" \
+	         "                              if not specified, print to stdout\n"));
+	printf(_("    -d [--download-dir] arg   directory for working copy\n" \
+	         "                              if not specified, create a temporary directory\n"));
 	printf(_("    --online                  don't use a working copy for dumping\n"));
 	printf(_("    --no-check-certificate    don't validate SSL certificates\n"));
 	printf(_("    --stop arg                stop after dumping revision arg\n"));
 	printf(_("    --prefix arg              prepend arg to the path that is being dumped\n"));
-	printf(_("    --keep-revnums            keep the dumped revision numbers in sync with\n"));
-	printf(_("                              the repository by using empty revisions for\n"));
-	printf(_("                              padding\n"));
+	printf(_("    --keep-revnums            keep the dumped revision numbers in sync with\n" \
+	         "                              the repository by using empty revisions for\n" \
+	         "                              padding\n"));
 	printf(_("    --dump-uuid               include the repository uuid in the dump\n"));
 #ifdef USE_DELTAS
 	printf(_("    --deltas                  use deltas in dump output\n"));

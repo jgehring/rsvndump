@@ -45,6 +45,9 @@ static char node_prepare_copy(node_t *node, dump_options_t *opts, list_t *logs, 
 	/* First, check if the source is reachable, i.e. can be found under
 	   the current session root */
 	if (!strncmp(node->copy_from_path, opts->repo_prefix, strlen(opts->repo_prefix))) {
+		svn_revnum_t r, rr = -1;
+		svn_revnum_t mind = LONG_MAX;
+
 		/* If we sync the revision numbers, the copy-from revision is correct */
 		if (opts->keep_revnums) {
 			node->use_copy = 1;
@@ -53,8 +56,6 @@ static char node_prepare_copy(node_t *node, dump_options_t *opts, list_t *logs, 
 
 		/* This is good news: we already dumped the source. Let's figure
 		   out at which revision */
-		svn_revnum_t r, rr = -1;
-		svn_revnum_t mind = LONG_MAX;
 
 		/* Find the best matching revision.
 		   This will work, because if we have not dumped the requested
@@ -326,7 +327,7 @@ static char node_dump_offline(node_t *node, dump_options_t *opts, list_t *logs, 
 				sprintf(path, "%s/%s", opts->repo_dir, node->path);
 				f = fopen(path, "rb");
 				if (f == NULL) {
-					fprintf(stderr, "Failed to open %s\n", path);
+					fprintf(stderr, _("Failed to open %s\n"), path);
 					free(path);
 					free(buffer);
 					return 1;
