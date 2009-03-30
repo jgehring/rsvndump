@@ -327,7 +327,7 @@ static char node_dump_offline(node_t *node, dump_options_t *opts, list_t *logs, 
 				sprintf(path, "%s/%s", opts->repo_dir, node->path);
 				f = fopen(path, "rb");
 				if (f == NULL) {
-					fprintf(stderr, _("Failed to open %s\n"), path);
+					fprintf(stderr, _("ERROR: Failed to open %s.\n"), path);
 					free(path);
 					free(buffer);
 					return 1;

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.4.4\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-03-20 23:45+0100\n"
+"POT-Creation-Date: 2009-03-30 13:19+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,7 +28,7 @@ msgstr ""
 
 #: src/dump.c:139
 #, c-format
-msgid "Error allocating memory.\n"
+msgid "ERROR: Out of memory.\n"
 msgstr ""
 
 #: src/dump.c:179 src/dump.c:204
@@ -58,12 +58,14 @@ msgstr ""
 
 #: src/dump.c:360
 #, c-format
-msgid "Error load subversion library / initializing connection.\n"
+msgid ""
+"ERROR: Connection could not be established / Subversion library could not be "
+"initialized.\n"
 msgstr ""
 
 #: src/dump.c:368
 #, c-format
-msgid "Error fetching repository information.\n"
+msgid "ERROR: Unable to fetch repository information.\n"
 msgstr ""
 
 #: src/dump.c:380
@@ -75,17 +77,17 @@ msgstr ""
 
 #: src/dump.c:395
 #, c-format
-msgid "Switched to online mode because the url refers to a file.\n"
+msgid "NOTE: Switched to online mode because the url refers to a file.\n"
 msgstr ""
 
 #: src/dump.c:404
 #, c-format
-msgid "Switched to online mode for performance reasons.\n"
+msgid "NOTE: Switched to online mode for performance reasons.\n"
 msgstr ""
 
 #: src/dump.c:420
 #, c-format
-msgid "Error fetching repository log info.\n"
+msgid "ERROR: Unable to fetch repository log info.\n"
 msgstr ""
 
 #: src/main.c:56
@@ -191,37 +193,37 @@ msgstr ""
 
 #: src/main.c:175
 #, c-format
-msgid "Error: Unable to open output file.\n"
+msgid "ERROR: Unable to open output file.\n"
 msgstr ""
 
 #: src/main.c:183
 #, c-format
-msgid "Error: '%s' is either not a directory or does not exist.\n"
+msgid "ERROR: '%s' is either not a directory or does not exist.\n"
 msgstr ""
 
 #: src/main.c:193
 #, c-format
-msgid "Error: multiple URLs detected.\n"
+msgid "ERROR: multiple URLs detected.\n"
 msgstr ""
 
 #: src/main.c:199
 #, c-format
-msgid "Argument error: Unkown argument or malformed url '%s'\n"
+msgid "ERROR: Unkown argument or malformed url '%s'.\n"
 msgstr ""
 
 #: src/main.c:200
 #, c-format
-msgid "Type %s --help for usage information\n"
+msgid "Type %s --help for usage information.\n"
 msgstr ""
 
 #: src/main.c:225
 #, c-format
-msgid "Error: Unable to create download directory.\n"
+msgid "ERROR: Unable to create download directory.\n"
 msgstr ""
 
 #: src/node.c:330
 #, c-format
-msgid "Failed to open %s\n"
+msgid "ERROR: Failed to open %s.\n"
 msgstr ""
 
 #: src/wsvn.c:137

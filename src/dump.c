@@ -136,7 +136,7 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 
 	/* We need a hash to check what elements have already been dumped (if copies occur) */
 	if (whash_create()) {
-		fprintf(stderr, _("Error allocating memory.\n"));
+		fprintf(stderr, _("ERROR: Out of memory.\n"));
 		return 1;
 	}
 
@@ -357,7 +357,7 @@ char dump(dump_options_t *opts)
 
 	/* Initialize and open the svn session */
 	if (wsvn_init(opts)) {
-		fprintf(stderr, _("Error load subversion library / initializing connection.\n"));
+		fprintf(stderr, _("ERROR: Connection could not be established / Subversion library could not be initialized.\n"));
 		logentry_free(&current);
 		logentry_free(&next);
 		return 1;
@@ -365,7 +365,7 @@ char dump(dump_options_t *opts)
 
 	/* Fetch repository information */
 	if (wsvn_repo_info(opts->repo_eurl, &opts->repo_base, &opts->repo_prefix, &opts->repo_uuid, &headrev)) {
-		fprintf(stderr, _("Error fetching repository information.\n"));
+		fprintf(stderr, _("ERROR: Unable to fetch repository information.\n"));
 		logentry_free(&current);
 		logentry_free(&next);
 		return 1;
@@ -392,7 +392,7 @@ char dump(dump_options_t *opts)
 		opts->prefix_is_file = 1;
 		if (opts->online == 0) {
 			if (opts->verbosity >= 0) {
-				fprintf(stderr, _("Switched to online mode because the url refers to a file.\n"));
+				fprintf(stderr, _("NOTE: Switched to online mode because the url refers to a file.\n"));
 			}
 			opts->online = 1;
 		}
@@ -401,7 +401,7 @@ char dump(dump_options_t *opts)
 	/* Check if the url is a file:// url and switch mode if neccessary */
 	if (!strncmp(opts->repo_eurl, "file://", 7) && opts->online == 0) {
 		if (opts->verbosity >= 0) {
-			fprintf(stderr, _("Switched to online mode for performance reasons.\n"));
+			fprintf(stderr, _("NOTE: Switched to online mode for performance reasons.\n"));
 		}
 		opts->online = 1;
 	}
@@ -417,7 +417,7 @@ char dump(dump_options_t *opts)
 	/* Fetch first history item */
 	log = list_create(sizeof(logentry_t));
 	if (wsvn_next_log(NULL, &next)) {
-		fprintf(stderr, _("Error fetching repository log info.\n"));
+		fprintf(stderr, _("ERROR: Unable to fetch repository log info.\n"));
 		list_free(&log);
 		logentry_free(&current);
 		logentry_free(&next);
