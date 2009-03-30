@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.4.4\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-03-20 19:47+0100\n"
+"POT-Creation-Date: 2009-03-20 23:45+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -230,7 +230,7 @@ msgstr ""
 
 #: src/wsvn.c:142
 #, c-format
-msgid "Password for '%s':"
+msgid "Password for '%s': "
 msgstr ""
 
 #: src/wsvn.c:146
@@ -255,12 +255,9 @@ msgstr ""
 
 #: src/wsvn.c:169
 #, c-format
-msgid " - The certificate is not issued by a trusted authority. Use the\n"
-msgstr ""
-
-#: src/wsvn.c:170
-#, c-format
-msgid "   fingerprint to validate the certificate manually!\n"
+msgid ""
+" - The certificate is not issued by a trusted authority. Use the\n"
+"   fingerprint to validate the certificate manually!\n"
 msgstr ""
 
 #: src/wsvn.c:178

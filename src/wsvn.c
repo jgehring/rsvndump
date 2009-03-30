@@ -139,7 +139,7 @@ static svn_error_t *wsvn_auth_prompt(svn_auth_cred_simple_t **cred, void *baton,
 	}
 
 	if (ret->username && strnlen(ret->username, 128) < 128) {
-		char *format = _("Password for '%s':");
+		char *format = _("Password for '%s': ");
 		prompt = apr_pcalloc(pool, strlen(ret->username) + strlen(format) + 1);
 		sprintf(prompt, format, ret->username);
 	} else {
@@ -166,8 +166,8 @@ static svn_error_t *wsvn_auth_ssl_trust(svn_auth_cred_ssl_server_trust_t **cred,
 		} else {
 			fprintf(stderr, _("Error validating server certificate for '%s':\n"), realm);
 		}
-		fprintf(stderr, _(" - The certificate is not issued by a trusted authority. Use the\n"));
-		fprintf(stderr, _("   fingerprint to validate the certificate manually!\n"));
+		fprintf(stderr, _(" - The certificate is not issued by a trusted authority. Use the\n" \
+		                  "   fingerprint to validate the certificate manually!\n"));
 	}
 	if (failures & SVN_AUTH_SSL_CNMISMATCH) {
 		if (dopts->no_check_certificate) {

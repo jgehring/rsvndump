@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.4.4\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-03-20 19:47+0100\n"
+"POT-Creation-Date: 2009-03-20 23:45+0100\n"
 "PO-Revision-Date: 2009-02-22 03:00+0100\n"
 "Last-Translator:  <jonas.gehring@boolsoft.org>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -19,52 +19,55 @@ msgstr ""
 #: src/dump.c:95
 #, c-format
 msgid "* Dumping revision %ld ... 0%%\n"
-msgstr ""
+msgstr "* Dumpe Revision %ld ... 0%%\n"
 
 #: src/dump.c:97
 #, c-format
 msgid "* Dumping revision %ld (local: %ld) ... 0%%\n"
-msgstr ""
+msgstr "* Dumpe Revisioni %ld (lokal: %ld) ... 0%%\n"
 
 #: src/dump.c:139
 #, c-format
 msgid "Error allocating memory.\n"
-msgstr ""
+msgstr "Fehler: nicht genug Arbeitsspeicher.\n"
 
 #: src/dump.c:179 src/dump.c:204
 #, c-format
 msgid "* Dumping revision %ld ... %d%%\n"
-msgstr ""
+msgstr "* Dumpe Revision %ld ... %d%%\n"
 
 #: src/dump.c:181 src/dump.c:206
 #, c-format
 msgid "* Dumping revision %ld (local: %ld) ... %d%%\n"
-msgstr ""
+msgstr "* Dumpe Revision %ld (local: %ld) ... %d%%\n"
 
 #: src/dump.c:234
 #, c-format
 msgid "* Dumped revision %ld.\n"
-msgstr ""
+msgstr " * Revision %ld gedumpt.\n"
 
 #: src/dump.c:236
 #, c-format
 msgid "* Dumped revision %ld (local %ld).\n"
-msgstr ""
+msgstr "* Revision %ld gedumpt (lokal: %ld).\n"
 
 #: src/dump.c:270
 #, c-format
 msgid "* Padded revision %ld.\n"
-msgstr ""
+msgstr "* Revision %ld aufgefüllt.\n"
 
 #: src/dump.c:360
 #, c-format
 msgid "Error load subversion library / initializing connection.\n"
 msgstr ""
+"Fehler beim Verbindungsaufbau oder Fehler bei laden der Subversion-"
+"Bibliothek.\n"
 
 #: src/dump.c:368
 #, c-format
 msgid "Error fetching repository information.\n"
 msgstr ""
+"Fehler: Informationen des Repositorys konnten nicht empfangen werden.\n"
 
 #: src/dump.c:380
 #, c-format
@@ -72,21 +75,25 @@ msgid ""
 "Sorry, '--dump-uuid' can only be used when dumping a repository root and "
 "without using a user prefix.\n"
 msgstr ""
+"'--dump-uuid' kann nur benutzt werden, wenn die Wurzel eines Repositoryes "
+"ohne zusätzlichen Präfix gedumpt wird.\n"
 
 #: src/dump.c:395
 #, c-format
 msgid "Switched to online mode because the url refers to a file.\n"
-msgstr ""
+msgstr "Wechsle inden online-Modus, da die URL ein eine Datei ist.\n"
 
 #: src/dump.c:404
 #, c-format
 msgid "Switched to online mode for performance reasons.\n"
-msgstr ""
+msgstr "Wechsle aus Performanz-Gründen inden online-Modus.\n"
 
 #: src/dump.c:420
 #, c-format
 msgid "Error fetching repository log info.\n"
 msgstr ""
+"Fehler: Die log-Informationen des Repositorys konnten nicht empfangen "
+"werden.\n"
 
 #: src/main.c:56
 #, c-format
@@ -139,7 +146,7 @@ msgid "    -p [--password] arg       password\n"
 msgstr "    -p [--password] arg       Passwort\n"
 
 #: src/main.c:66
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "    -o [--outfile] arg        write data to file arg\n"
 "                              if not specified, print to stdout\n"
@@ -148,13 +155,13 @@ msgstr ""
 "                              (ansonsten wird die Standardausgabe benutzt)\n"
 
 #: src/main.c:68
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "    -d [--download-dir] arg   directory for working copy\n"
 "                              if not specified, create a temporary "
 "directory\n"
 msgstr ""
-"    -d [--download-dir] arg   Verzeichnes für die working copy\n"
+"    -d [--download-dir] arg   Verzeichnis für die working copy\n"
 "                              (ansonsten wird ein temporäres Verzeichnis "
 "angelegt)\n"
 
@@ -234,20 +241,20 @@ msgstr "Fehler: Kann Verzeichnis für die working copy nicht erstellen.\n"
 #: src/node.c:330
 #, c-format
 msgid "Failed to open %s\n"
-msgstr ""
+msgstr "Fehler: Kann %s nicht öffnen\n"
 
 #: src/wsvn.c:137
 msgid "Username: "
-msgstr ""
+msgstr "Benutzername: "
 
 #: src/wsvn.c:142
 #, c-format
-msgid "Password for '%s':"
-msgstr ""
+msgid "Password for '%s': "
+msgstr "Passwort für '%s': "
 
 #: src/wsvn.c:146
 msgid "Password: "
-msgstr ""
+msgstr "Passwort: "
 
 #. TRANSLATORS: This is the key used for accepting a certificate temporarily.
 #. * Every other key is used to reject the certificate.
@@ -258,42 +265,42 @@ msgstr "t"
 #: src/wsvn.c:165 src/wsvn.c:174 src/wsvn.c:182 src/wsvn.c:190 src/wsvn.c:198
 #, c-format
 msgid "WARNING: Validating server certificate for '%s' failed:\n"
-msgstr ""
+msgstr "WARNUNG: Zertifikat für '%s' konnte nicht validiert werden:\n"
 
 #: src/wsvn.c:167 src/wsvn.c:176 src/wsvn.c:184 src/wsvn.c:192 src/wsvn.c:200
 #, c-format
 msgid "Error validating server certificate for '%s':\n"
-msgstr ""
+msgstr "Fehler: Zertifikat für '%s' konnte nicht validiert werden:\n"
 
 #: src/wsvn.c:169
 #, c-format
-msgid " - The certificate is not issued by a trusted authority. Use the\n"
+msgid ""
+" - The certificate is not issued by a trusted authority. Use the\n"
+"   fingerprint to validate the certificate manually!\n"
 msgstr ""
-
-#: src/wsvn.c:170
-#, c-format
-msgid "   fingerprint to validate the certificate manually!\n"
-msgstr ""
+" - Das Zertifikat is nicht von einer zuverlässigen Zertifizierungsstelle\n"
+"   ausgestellt wordem. Benutzen Sie den Fingerprint, um das Zertifikat\n"
+"   manuell zu verifizieren!\n"
 
 #: src/wsvn.c:178
 #, c-format
 msgid " - The certificate hostname does not match.\n"
-msgstr ""
+msgstr " - Der Hostname des Zertifikats passt nicht.\n"
 
 #: src/wsvn.c:186
 #, c-format
 msgid " - The certificate is not yet valid.\n"
-msgstr ""
+msgstr " - Das Zertifikat is noch nicht gültig.\n"
 
 #: src/wsvn.c:194
 #, c-format
 msgid " - The certificate has expired.\n"
-msgstr ""
+msgstr " - Das Zertifikat ist abgelaufen.\n"
 
 #: src/wsvn.c:202
 #, c-format
 msgid " - The certificate has an unknown error.\n"
-msgstr ""
+msgstr " - Das Zertifikat besitzt einen unbekannten Fehler.\n"
 
 #: src/wsvn.c:205
 #, c-format
@@ -304,8 +311,13 @@ msgid ""
 " - Issuer: %s\n"
 " - Fingerprint: %s\n"
 msgstr ""
+"Informatioen zum Zertifikat:\n"
+" - Hostname: %s\n"
+" - Gültig: von %s bis %s\n"
+" - Aussteller: %s\n"
+" - Fingerprint: %s\n"
 
 #: src/wsvn.c:223
 #, c-format
 msgid "(R)eject or accept (t)emporarily? "
-msgstr ""
+msgstr "A(b)lehnen oder (t)emporär akzeptieren? "
