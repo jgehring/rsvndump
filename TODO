@@ -1,3 +1,7 @@
+== Schedule for 0.4.5 ==
+> Output help on missing arguments, i.e. s.th. like "rsvndump --stop"
+
+
 == Schedule for 0.5 ==
 > Rename --download-dir option to --wc-dir (and -d to -w)
 > Remove --outfile option
