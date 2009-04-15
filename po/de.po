@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.4.4\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-03-30 13:19+0200\n"
+"POT-Creation-Date: 2009-04-15 23:00+0200\n"
 "PO-Revision-Date: 2009-02-22 03:00+0100\n"
 "Last-Translator:  <jonas.gehring@boolsoft.org>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -246,36 +246,36 @@ msgstr "FEHLER: Kann Verzeichnis für die working copy nicht erstellen.\n"
 msgid "ERROR: Failed to open %s.\n"
 msgstr "FEHLER: Kann %s nicht öffnen.\n"
 
-#: src/wsvn.c:137
+#: src/wsvn.c:138
 msgid "Username: "
 msgstr "Benutzername: "
 
-#: src/wsvn.c:142
+#: src/wsvn.c:143
 #, c-format
 msgid "Password for '%s': "
 msgstr "Passwort für '%s': "
 
-#: src/wsvn.c:146
+#: src/wsvn.c:147
 msgid "Password: "
 msgstr "Passwort: "
 
 #. TRANSLATORS: This is the key used for accepting a certificate temporarily.
 #. * Every other key is used to reject the certificate.
-#: src/wsvn.c:161
+#: src/wsvn.c:162
 msgid "t"
 msgstr "t"
 
-#: src/wsvn.c:165 src/wsvn.c:174 src/wsvn.c:182 src/wsvn.c:190 src/wsvn.c:198
+#: src/wsvn.c:166 src/wsvn.c:175 src/wsvn.c:183 src/wsvn.c:191 src/wsvn.c:199
 #, c-format
 msgid "WARNING: Validating server certificate for '%s' failed:\n"
 msgstr "WARNUNG: Zertifikat für '%s' konnte nicht validiert werden:\n"
 
-#: src/wsvn.c:167 src/wsvn.c:176 src/wsvn.c:184 src/wsvn.c:192 src/wsvn.c:200
+#: src/wsvn.c:168 src/wsvn.c:177 src/wsvn.c:185 src/wsvn.c:193 src/wsvn.c:201
 #, c-format
 msgid "Error validating server certificate for '%s':\n"
 msgstr "Fehler: Zertifikat für '%s' konnte nicht validiert werden:\n"
 
-#: src/wsvn.c:169
+#: src/wsvn.c:170
 #, c-format
 msgid ""
 " - The certificate is not issued by a trusted authority. Use the\n"
@@ -285,27 +285,27 @@ msgstr ""
 "   ausgestellt wordem. Benutzen Sie den Fingerprint, um das Zertifikat\n"
 "   manuell zu verifizieren!\n"
 
-#: src/wsvn.c:178
+#: src/wsvn.c:179
 #, c-format
 msgid " - The certificate hostname does not match.\n"
 msgstr " - Der Hostname des Zertifikats passt nicht.\n"
 
-#: src/wsvn.c:186
+#: src/wsvn.c:187
 #, c-format
 msgid " - The certificate is not yet valid.\n"
 msgstr " - Das Zertifikat is noch nicht gültig.\n"
 
-#: src/wsvn.c:194
+#: src/wsvn.c:195
 #, c-format
 msgid " - The certificate has expired.\n"
 msgstr " - Das Zertifikat ist abgelaufen.\n"
 
-#: src/wsvn.c:202
+#: src/wsvn.c:203
 #, c-format
 msgid " - The certificate has an unknown error.\n"
 msgstr " - Das Zertifikat besitzt einen unbekannten Fehler.\n"
 
-#: src/wsvn.c:205
+#: src/wsvn.c:206
 #, c-format
 msgid ""
 "Certificate information:\n"
@@ -320,7 +320,7 @@ msgstr ""
 " - Aussteller: %s\n"
 " - Fingerprint: %s\n"
 
-#: src/wsvn.c:223
+#: src/wsvn.c:224
 #, c-format
 msgid "(R)eject or accept (t)emporarily? "
 msgstr "A(b)lehnen oder (t)emporär akzeptieren? "
