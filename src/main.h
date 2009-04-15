@@ -28,7 +28,7 @@
 /* Application-specific constants */
 #ifndef HAVE_CONFIG_H
  #define APPNAME "rsvndump"
- #define APPVERSION "0.4.4"
+ #define APPVERSION "0.4.4-1"
  #define PACKAGE_BUGREPORT "jonas.gehring@boolsoft.org"
 
  /* Internationalization */

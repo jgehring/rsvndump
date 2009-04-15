@@ -1,3 +1,7 @@
+2009-04-15  --  version 0.4.4-1
+
+	* Fixed build issues with Subversion 1.6.1
+
 2009-03-30  --  version 0.4.4
 
 	* Added --no-check-certificate option which disables SSL certificate

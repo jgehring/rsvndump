@@ -1,4 +1,4 @@
-== Schedule for 0.4.6 ==
+== Schedule for 0.4.5 ==
 > Replace commands that are deprecated in Subversion 1.6.1
 > Output help on missing arguments, i.e. s.th. like "rsvndump --stop"
 
