@@ -21,7 +21,7 @@
  */
 
 
-#include <svn_repos.h>
+#include <svn_props.h>
 
 #include "logentry.h"
 

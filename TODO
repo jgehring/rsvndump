@@ -1,4 +1,5 @@
-== Schedule for 0.4.5 ==
+== Schedule for 0.4.6 ==
+> Replace commands that are deprecated in Subversion 1.6.1
 > Output help on missing arguments, i.e. s.th. like "rsvndump --stop"
 
 
@@ -6,6 +7,7 @@
 > Rename --download-dir option to --wc-dir (and -d to -w)
 > Remove --outfile option
 > Use deltas in diffs
+> Proper range specification, i.e. like svnadmin's -r START:STOP
 > Write more automated tests
 
 
