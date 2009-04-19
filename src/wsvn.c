@@ -97,9 +97,7 @@ static svn_error_t *wsvn_read_line(const char *prompt, char *buffer, size_t max,
 /* Try to authenticate with given arguments */
 static svn_error_t *wsvn_auth_arguments(svn_auth_cred_simple_t **cred, void *baton, const char *realm, const char *username, svn_boolean_t may_save, apr_pool_t *pool)
 {
-#if DEBUG
-	fprintf(stderr, "wsvn_auth_arguments() called with realm=%s username=%s\n", realm, username);
-#endif
+	DEBUG_MSG("wsvn_auth_arguments() called with realm=%s username=%s\n", realm, username);
 	svn_auth_cred_simple_t *ret = apr_pcalloc(pool, sizeof(*ret));
 
 	if (dopts->username) {
@@ -123,9 +121,7 @@ static svn_error_t *wsvn_auth_arguments(svn_auth_cred_simple_t **cred, void *bat
 /* Try to authenticate via a prompt  */
 static svn_error_t *wsvn_auth_prompt(svn_auth_cred_simple_t **cred, void *baton, const char *realm, const char *username, svn_boolean_t may_save, apr_pool_t *pool)
 {
-#if DEBUG
-	fprintf(stderr, "wsvn_auth_prompt() called with realm=%s username=%s\n", realm, username);
-#endif
+	DEBUG_MSG("wsvn_auth_prompt() called with realm=%s username=%s\n", realm, username);
 	svn_auth_cred_simple_t *ret = apr_pcalloc(pool, sizeof(*ret));
 	char answerbuf[128];
 	char *prompt;
@@ -465,9 +461,7 @@ char wsvn_next_log(logentry_t *current, logentry_t *next)
 
 	err = svn_ra_get_log(session, paths, (current ? current->revision+1 : dopts->startrev), dopts->endrev, 1, FALSE, TRUE, wsvn_log_handler, next, pool);
 	if (err) {
-#ifdef DEBUG
-		fprintf(stderr, "wsvn_next_log(%ld,%ld)\n\n", current->revision, next->revision);
-#endif
+		DEBUG_MSG("wsvn_next_log(%ld,%ld)\n\n", current->revision, next->revision);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_clear(pool);
@@ -489,9 +483,7 @@ char wsvn_stat(node_t *node, svn_revnum_t rev)
 
 	svn_error_t *err = svn_ra_stat(session, svn_path_canonicalize(node->path, pool), rev, &dirent, pool);
 	if (err) {
-#ifdef DEBUG
-		fprintf(stderr, "wsvn_stat(%p,%ld)\n\n", (void *)node, rev);
-#endif
+		DEBUG_MSG("wsvn_stat(%p,%ld)\n\n", (void *)node, rev);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_clear(pool);
@@ -525,9 +517,7 @@ char wsvn_cat(node_t *node, svn_revnum_t rev, FILE *output)
 
 	svn_error_t *err = svn_ra_get_file(session, svn_path_canonicalize(node->path, pool), rev, stream, NULL, NULL, pool);
 	if (err) {
-#if DEBUG
-		fprintf(stderr, "wsvn_cat(%p,%ld)\n\n", (void *)node, rev);
-#endif
+		DEBUG_MSG("wsvn_cat(%p,%ld)\n\n", (void *)node, rev);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_clear(pool);
@@ -564,9 +554,7 @@ char wsvn_get_props(node_t *node, list_t *list, svn_revnum_t rev)
 		err = svn_ra_get_dir2(session, NULL, NULL, &hash, (!strcmp(node->path, ".") ? "": node->path), rev, 0, pool);
 	}
 	if (err) {
-#if DEBUG
-		fprintf(stderr, "wsvn_get_props(%p,%p,%ld)\n\n", (void *)node, (void *)list, rev);
-#endif
+		DEBUG_MSG("wsvn_get_props(%p,%p,%ld)\n\n", (void *)node, (void *)list, rev);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_clear(pool);
@@ -619,9 +607,7 @@ char wsvn_get_wc_props(node_t *node, list_t *list)
 	/* Get anchor (without locks) */
 	err = svn_wc_adm_open_anchor(&adm_access, &dir_access, &wc_target, dopts->repo_dir, FALSE, -1, ctx->cancel_func, ctx->cancel_baton, pool);
 	if (err) {
-#ifdef DEBUG
-		fprintf(stderr, "wsvn_get_wc_props(%p,%p)\n\n", (void *)node, (void *)list);
-#endif
+		DEBUG_MSG("wsvn_get_wc_props(%p,%p)\n\n", (void *)node, (void *)list);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_clear(pool);
@@ -634,9 +620,7 @@ char wsvn_get_wc_props(node_t *node, list_t *list)
 	err = svn_wc_prop_list(&hash, path, adm_access, pool);
 	free(path);
 	if (err) {
-#if DEBUG
-		fprintf(stderr, "wsvn_get_wc_props(%p,%p)\n\n", (void *)node, (void *)list);
-#endif
+		DEBUG_MSG("wsvn_get_wc_props(%p,%p)\n\n", (void *)node, (void *)list);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 #if (SVN_VER_MAJOR == 1) && (SVN_VER_MINOR >= 6)
@@ -693,9 +677,7 @@ char wsvn_find(node_t *node, list_t *list, svn_revnum_t rev)
 	/*err = svn_ra_get_dir(session, (!strcmp(node->path, ".") ? "" : node->path), rev, &hash, NULL, NULL, pool);*/
 	err = svn_ra_get_dir2(session, &hash, NULL, NULL, (!strcmp(node->path, ".") ? "" : node->path), rev, SVN_DIRENT_KIND | SVN_DIRENT_SIZE | SVN_DIRENT_HAS_PROPS, pool);
 	if (err) {
-#if DEBUG
-		fprintf(stderr, "wsvn_find(%p,%p,%ld)\n\n", (void *)node, (void *)list, rev);
-#endif
+		DEBUG_MSG("wsvn_find(%p,%p,%ld)\n\n", (void *)node, (void *)list, rev);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_clear(pool);
@@ -746,9 +728,7 @@ char wsvn_get_changeset(logentry_t *entry, list_t *list)
 
 	err = svn_ra_get_log(session, paths, entry->revision, entry->revision, 1, TRUE, TRUE, wsvn_get_changeset_handler, list, pool);
 	if (err) {
-#ifdef DEBUG
-		fprintf(stderr, "wsvn_get_changeset(%p)\n\n", (void *)entry);
-#endif
+		DEBUG_MSG("wsvn_get_changeset(%p)\n\n", (void *)entry);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_clear(pool);
@@ -780,9 +760,7 @@ char wsvn_repo_info(char *path, char **url, char **prefix, char **uuid, svn_revn
 	/* TODO: Subversion 1.5 offers svn_client_root_url_from_path() */
 	err = svn_client_info(dopts->repo_eurl, &revision, &revision, wsvn_repo_info_handler, &info, FALSE, ctx, pool);
 	if (err) {
-#ifdef DEBUG
-		fprintf(stderr, "wsvn_repo_info(%s,%p,%p)\n\n", path, (void *)url, (void *)prefix);
-#endif
+		DEBUG_MSG("wsvn_repo_info(%s,%p,%p)\n\n", path, (void *)url, (void *)prefix);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_clear(pool);
@@ -821,9 +799,7 @@ char wsvn_update(svn_revnum_t rev)
 	if (wc_setup == 0) {
 		err = svn_wc_ensure_adm2(dopts->repo_dir, dopts->repo_uuid, dopts->repo_eurl, dopts->repo_base, rev, pool);
 		if (err) {
-#ifdef DEBUG
-			fprintf(stderr, "wsvn_update(%ld): -1\n\n", rev);
-#endif
+			DEBUG_MSG("wsvn_update(%ld): -1\n\n", rev);
 			svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 			svn_error_clear(err);
 			svn_pool_clear(pool);
@@ -836,9 +812,7 @@ char wsvn_update(svn_revnum_t rev)
 	/* Get anchor and locks */
 	err = svn_wc_adm_open_anchor(&adm_access, &dir_access, &wc_target, dopts->repo_dir, TRUE, -1, ctx->cancel_func, ctx->cancel_baton, pool);
 	if (err) {
-#ifdef DEBUG
-		fprintf(stderr, "wsvn_update(%ld): 0\n\n", rev);
-#endif
+		DEBUG_MSG("wsvn_update(%ld): 0\n\n", rev);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_clear(pool);
@@ -853,9 +827,7 @@ char wsvn_update(svn_revnum_t rev)
 	/* Fetch the update editor */
 	err = svn_wc_get_update_editor2(&rev, adm_access, wc_target, FALSE,TRUE, NULL, NULL, ctx->cancel_func, ctx->cancel_baton, NULL, &editor, &editor_baton, NULL, pool);
 	if (err) {
-#ifdef DEBUG
-		fprintf(stderr, "wsvn_update(%ld): 1\n\n", rev);
-#endif
+		DEBUG_MSG("wsvn_update(%ld): 1\n\n", rev);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_clear(pool);
@@ -866,9 +838,7 @@ char wsvn_update(svn_revnum_t rev)
 	/* Perform the update */
 	err = svn_ra_do_update(session, &reporter, &reporter_baton, rev, wc_target, TRUE, editor, editor_baton, pool); 
 	if (err) {
-#ifdef DEBUG
-		fprintf(stderr, "wsvn_update(%ld): 2\n\n", rev);
-#endif
+		DEBUG_MSG("wsvn_update(%ld): 2\n\n", rev);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_clear(pool);
@@ -878,9 +848,7 @@ char wsvn_update(svn_revnum_t rev)
 
 	err = svn_wc_crawl_revisions2(dopts->repo_dir, dir_access, reporter, reporter_baton, TRUE, TRUE, TRUE, NULL, NULL, traversal_info, pool);
 	if (err) {
-#ifdef DEBUG
-		fprintf(stderr, "wsvn_update(%ld): 3\n\n", rev);
-#endif
+		DEBUG_MSG("wsvn_update(%ld): 3\n\n", rev);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_clear(pool);
@@ -894,9 +862,7 @@ char wsvn_update(svn_revnum_t rev)
 	err = svn_wc_adm_close(adm_access);
 #endif // svn >= 1.6
 	if (err) {
-#ifdef DEBUG
-		fprintf(stderr, "wsvn_update(%ld): 4\n\n", rev);
-#endif
+		DEBUG_MSG("wsvn_update(%ld): 4\n\n", rev);
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_clear(pool);

@@ -22,6 +22,7 @@
 
 
 #include <dirent.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h>
@@ -90,6 +91,18 @@ float stopwatch_elapsed(stopwatch_t *watch)
 }
 
 #endif /* USE_TIMING */
+
+
+/* Calls vfprintf on stderr using the given arguments */
+int utils_debug(const char *format, ...)
+{
+	int res;
+	va_list argptr;
+	va_start(argptr, format);
+	res = vfprintf(stderr, format, argptr);
+	va_end(argptr);
+	return res;
+}
 
 
 /* Returns a canonicalized path that has been allocated using strdup() */

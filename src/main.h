@@ -83,6 +83,14 @@
 #if defined(USE_TIMING) && !defined(HAVE_GETTIMEOFDAY)
  #undef USE_TIMING
 #endif
+
+#ifdef DEBUG
+ extern int utils_debug(const char *format, ...);
+ #define DEBUG_MSG utils_debug
+#else
+ #define DEBUG_MSG
+#endif /* DEBUG */
+
 /* This is _not_ implemented, but enables flags and options for deltas */
 /*#define USE_DELTAS*/
 

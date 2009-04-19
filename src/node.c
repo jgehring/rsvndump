@@ -64,9 +64,7 @@ static char node_prepare_copy(node_t *node, dump_options_t *opts, list_t *logs, 
 		for (r = local_revnum-1; r > 0; r--) {
 			/* Yes, the +1 is needed */
 			svn_revnum_t d = (node->copy_from_rev - (((logentry_t *)logs->elements)[r].revision))+1;
-#if DEBUG
-			fprintf(stderr, "node_prepare_copy: req: %ld cur: %ld, local: %ld\n", node->copy_from_rev, (((logentry_t *)logs->elements)[r].revision), r);
-#endif
+			DEBUG_MSG("node_prepare_copy: req: %ld cur: %ld, local: %ld\n", node->copy_from_rev, (((logentry_t *)logs->elements)[r].revision), r);
 			/* TODO: This can be optimized: Once we notice that the distance to the
 			   requested revision gets bigger, it should be safe to break out of this
 			   loop. */
@@ -81,9 +79,7 @@ static char node_prepare_copy(node_t *node, dump_options_t *opts, list_t *logs, 
 
 		node->copy_from_rev = rr;
 		node->use_copy = 1;
-#if DEBUG
-		fprintf(stderr, "node_prepare_copy: using local %ld\n", rr);
-#endif
+		DEBUG_MSG("node_prepare_copy: using local %ld\n", rr);
 	} else {
 		/* Hm, this is bad. we have to ignore the copy operation and
 		   simulate it by simple dumping it the node as being added.
