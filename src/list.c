@@ -45,8 +45,10 @@ list_t list_create(unsigned int elsize)
 /* Destroys a list and all its elements */
 void list_free(list_t *l)
 {
-	free(l->elements);
-	l->elements = NULL;
+	if (l->elements != NULL) {
+		free(l->elements);
+		l->elements = NULL;
+	}
 }
 
 
