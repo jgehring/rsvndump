@@ -408,7 +408,7 @@ char dump(dump_options_t *opts)
 	}
 
 	/* Write dumpfile header */
-	fprintf(opts->output, "%s: 2\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER);
+	fprintf(opts->output, "%s: %d\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER, opts->deltas ? 3 : 2);
 	fprintf(opts->output, "\n");
 	if (opts->dump_uuid) {
 		fprintf(opts->output, "UUID: %s\n", opts->repo_uuid);
@@ -435,7 +435,7 @@ char dump(dump_options_t *opts)
 	}
 
 
-    /* If we are dumping the root of a repository or --keep-revnums
+	/* If we are dumping the root of a repository or --keep-revnums
 	   was specified, the local revision number is identical to the
 	   global one */
 	if (opts->keep_revnums || !strlen(opts->repo_prefix)) {

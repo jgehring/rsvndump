@@ -21,6 +21,10 @@
  */
 
 
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+
 #include <svn_delta.h>
 #include <svn_pools.h>
 #include <svn_repos.h>
@@ -64,7 +68,7 @@ static node_baton_t *dump_delta_node_create(baton_t *baton, apr_pool_t *pool)
 {
 	node_baton_t *node = apr_palloc(pool, sizeof(node_baton_t));
 	node->baton = baton;
-	node->props = list_create(sizeof(property_t *));
+	node->props = list_create(sizeof(property_t));
 	node->dumped = 0;
 	return node;
 }
@@ -72,13 +76,19 @@ static node_baton_t *dump_delta_node_create(baton_t *baton, apr_pool_t *pool)
 /* Frees the memory of the node baton that was not alloced using a pool */
 static void dump_delta_node_free(node_baton_t *node)
 {
+	int i;
+	for (i = 0; i < node->props.size; i++) {
+		property_free((property_t *)node->props.elements + i);
+	}
 	list_free(&node->props);
 }
 
 
-/* Dumps a node header */
-static void dump_delta_node_header(node_baton_t *node)
+/* Dumps a node */
+static char dump_delta_node(node_baton_t *node)
 {
+	int i;
+	unsigned long prop_len, content_len;
 	dump_options_t *opts = ((baton_t *)node->baton)->opts;
 	char *path = node->path;
 
@@ -111,9 +121,74 @@ static void dump_delta_node_header(node_baton_t *node)
 			break;
 	}
 
-	fprintf(opts->output, "\n\n");
+	/* Write properties & content if neccessary */
+	if (node->action == NA_DELETE) {
+		fprintf(opts->output, "\n\n");
+		node->dumped = 1;
+		return 0;
+	}
 
+	prop_len = PROPS_END_LEN;
+	content_len = 0;
+
+	/* Write property size */
+	for (i = 0; i < node->props.size; i++) {
+		property_t *p = (property_t *)node->props.elements + i; 
+		prop_len += property_strlen(p);
+	}
+	if (node->props.size != 0 || node->action == NA_ADD) {
+		fprintf(opts->output, "%s: %lu\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, prop_len);
+	} else {
+		prop_len = 0;
+	}
+
+	/* Write content size */
+	if (node->kind == NK_FILE) {
+		struct stat st;
+		if (stat(node->filename, &st)) {
+			DEBUG_MSG("dump_delta_node: FATAL: cannot stat %s\n", node->filename);
+			return 1;
+		}
+		content_len = st.st_size;
+
+		fprintf(opts->output, "%s: true\n", SVN_REPOS_DUMPFILE_TEXT_DELTA);
+		fprintf(opts->output, "%s: %lu\n", SVN_REPOS_DUMPFILE_TEXT_CONTENT_LENGTH, content_len);
+	}
+
+	fprintf(opts->output, "%s: %lu\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, (unsigned long)prop_len+content_len);
+	fprintf(opts->output, "\n");
+
+	/* Write properties */
+	if (node->props.size != 0 || node->action == NA_ADD) {
+		for (i = 0; i < node->props.size; i++) {
+			property_t *p = (property_t *)node->props.elements + i; 
+			property_dump(p, opts->output);
+			free((char *)p->key);
+		}
+		fprintf(opts->output, PROPS_END);
+	}
+	
+	/* Write content */
+	if (node->kind != NK_DIRECTORY) {
+		FILE *f;
+		char *buffer = malloc(2049);
+		size_t s;
+
+		f = fopen(node->filename, "rb");
+		if (f == NULL) {
+			fprintf(stderr, _("ERROR: Failed to open %s.\n"), node->filename);
+			free(buffer);
+			return 1;
+		}
+		while ((s = fread(buffer, 1, 2048, f))) {
+			fwrite(buffer, 1, s, opts->output);
+		}
+		free(buffer);
+	}
+
+	fprintf(opts->output, "\n\n");
 	node->dumped = 1;
+	return 0;
 }
 
 /*
@@ -141,12 +216,12 @@ static svn_error_t *open_root(void *edit_baton, svn_revnum_t base_revision, apr_
 static svn_error_t *delete_entry(const char *path, svn_revnum_t revision, void *parent_baton, apr_pool_t *pool)
 {
 	node_baton_t *parent;
-	dump_options_t *opts = ((baton_t *)parent_baton)->opts;
+	dump_options_t *opts = ((node_baton_t *)parent_baton)->baton->opts;
 
 	/* Check if the parent dump needs to be dumped */
 	parent = (node_baton_t *)parent_baton;
 	if (!parent->dumped) {
-		dump_delta_node_header(parent);
+		dump_delta_node(parent);
 	}
 
 	/* A deletion can be dumped without additional notification */
@@ -169,7 +244,7 @@ static svn_error_t *add_directory(const char *path, void *parent_baton, const ch
 	/* Check if the parent node needs to be dumped */
 	parent = (node_baton_t *)parent_baton;
 	if (!parent->dumped) {
-		dump_delta_node_header(parent);
+		dump_delta_node(parent);
 	}
 
 	node = dump_delta_node_create(parent->baton, dir_pool);
@@ -185,7 +260,22 @@ static svn_error_t *add_directory(const char *path, void *parent_baton, const ch
 
 static svn_error_t *open_directory(const char *path, void *parent_baton, svn_revnum_t base_revision, apr_pool_t *dir_pool, void **child_baton)
 {
-	fprintf(stderr, "open_directory(%s)\n", path);
+	DEBUG_MSG("open_directory(%s)\n", path);
+	node_baton_t *parent, *node;
+
+	/* Check if the parent node needs to be dumped */
+	parent = (node_baton_t *)parent_baton;
+	if (!parent->dumped) {
+		dump_delta_node(parent);
+	}
+
+	node = dump_delta_node_create(parent->baton, dir_pool);
+	node->kind = NK_DIRECTORY;
+
+	node->path = apr_pstrdup(dir_pool, path);
+	node->action = NA_CHANGE;
+
+	*child_baton = node;
 	return SVN_NO_ERROR;
 }
 
@@ -194,24 +284,31 @@ static svn_error_t *change_dir_prop(void *dir_baton, const char *name, const svn
 {
 	DEBUG_MSG("change_dir_prop(%s)\n", name);
 
-	property_t *p = apr_palloc(pool, sizeof(property_t));
-	p->key = apr_pstrdup(pool, name);
+	property_t p = property_create();
+	p.key = strdup(name);
 	if (value != NULL) {
-		p->value = apr_pstrdup(pool, (char *)value->data);
+		p.value = strdup(value->data);
 	} else {
-		p->value = NULL;
+		p.value = NULL;
 	}
 
-	list_append(&((node_baton_t *)dir_baton)->props, p);
+	list_append(&((node_baton_t *)dir_baton)->props, &p);
 
 	return SVN_NO_ERROR;
 }
 
 static svn_error_t *close_directory(void *dir_baton, apr_pool_t *pool)
 {
-	DEBUG_MSG("close_direcotry\n");
-	node_baton_t *node = (node_baton_t *)dir_baton;
-	list_free(&node->props);
+	DEBUG_MSG("close_direcotry()\n");
+	node_baton_t *node;
+
+	/* Check if the this node needs to be dumped */
+	node = (node_baton_t *)dir_baton;
+	if (!node->dumped) {
+		dump_delta_node(node);
+	}
+
+	dump_delta_node_free(node);
 	return SVN_NO_ERROR;
 }
 
@@ -229,7 +326,7 @@ static svn_error_t *add_file(const char *path, void *parent_baton, const char *c
 	/* Check if the parent node needs to be dumped */
 	parent = (node_baton_t *)parent_baton;
 	if (!parent->dumped) {
-		dump_delta_node_header(parent);
+		dump_delta_node(parent);
 	}
 
 	node = dump_delta_node_create(parent->baton, file_pool);
@@ -250,7 +347,7 @@ static svn_error_t *open_file(const char *path, void *parent_baton, svn_revnum_t
 	/* Check if the parent node needs to be dumped */
 	parent = (node_baton_t *)parent_baton;
 	if (!parent->dumped) {
-		dump_delta_node_header(parent);
+		dump_delta_node(parent);
 	}
 
 	node = dump_delta_node_create(parent->baton, file_pool);
@@ -259,6 +356,7 @@ static svn_error_t *open_file(const char *path, void *parent_baton, svn_revnum_t
 	node->path = apr_pstrdup(file_pool, path);
 	node->action = NA_CHANGE;
 
+	*file_baton = node;
 	return SVN_NO_ERROR;
 }
 
@@ -284,15 +382,15 @@ static svn_error_t *change_file_prop(void *file_baton, const char *name, const s
 {
 	DEBUG_MSG("change_file_prop(%s)\n", name);
 
-	property_t *p = apr_palloc(pool, sizeof(property_t));
-	p->key = apr_pstrdup(pool, name);
+	property_t p = property_create();
+	p.key = strdup(name);
 	if (value != NULL) {
-		p->value = apr_pstrdup(pool, (char *)value->data);
+		p.value = strdup(value->data);
 	} else {
-		p->value = NULL;
+		p.value = NULL;
 	}
 
-	list_append(&((node_baton_t *)file_baton)->props, p);
+	list_append(&((node_baton_t *)file_baton)->props, &p);
 
 	return SVN_NO_ERROR;
 }
@@ -305,29 +403,28 @@ static svn_error_t *close_file(void *file_baton, const char *text_checksum, apr_
 	/* Check if the this node needs to be dumped */
 	node = (node_baton_t *)file_baton;
 	if (!node->dumped) {
-		dump_delta_node_header(node);
+		dump_delta_node(node);
 	}
 
-	list_free(&node->props);
-
+	dump_delta_node_free(node);
 	return SVN_NO_ERROR;
 }
 
 static svn_error_t *absent_file(const char *path, void *parent_baton, apr_pool_t *pool)
 {
-	fprintf(stderr, "absent_file(%s)\n", path);
+	DEBUG_MSG("absent_file(%s)\n", path);
 	return SVN_NO_ERROR;
 }
 
 static svn_error_t *close_edit(void *edit_baton, apr_pool_t *pool)
 {
-	fprintf(stderr, "close_edit\n");
+	DEBUG_MSG("close_edit\n");
 	return SVN_NO_ERROR;
 }
 
 static svn_error_t *abort_edit(void *edit_baton, apr_pool_t *pool)
 {
-	fprintf(stderr, "abort_edit\n");
+	DEBUG_MSG("abort_edit\n");
 	return SVN_NO_ERROR;
 }
 
@@ -388,6 +485,7 @@ char dump_delta_revision(dump_options_t *opts, logentry_t *entry, svn_revnum_t l
 	editor->close_edit = close_edit;
 	editor->absent_directory = absent_directory;
 	editor->absent_file = absent_file;
+	editor->abort_edit = abort_edit;
 
 	editor_baton = malloc(sizeof(baton_t));
 	editor_baton->opts = opts;
@@ -400,6 +498,18 @@ char dump_delta_revision(dump_options_t *opts, logentry_t *entry, svn_revnum_t l
 	ret = wsvn_do_diff(opts, &prev, entry, editor, editor_baton);
 
 	prev.revision = entry->revision;
+
+	if (opts->verbosity >= 0) {
+		if (opts->verbosity > 0) {
+			fprintf(stderr, "\033[1A\033[K");
+		}
+
+		if (opts->keep_revnums || !strlen(opts->repo_prefix)) {
+			fprintf(stderr, _("* Dumped revision %ld.\n"), entry->revision);
+		} else {
+			fprintf(stderr, _("* Dumped revision %ld (local %ld).\n"), entry->revision, local_revnum);
+		}
+	}
 
 	free(editor_baton);
 	svn_pool_clear(pool);
