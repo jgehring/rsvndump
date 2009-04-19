@@ -639,9 +639,13 @@ char wsvn_get_wc_props(node_t *node, list_t *list)
 #endif
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
+#if (SVN_VER_MAJOR == 1) && (SVN_VER_MINOR >= 6)
+		svn_wc_adm_close2(adm_access, pool);
+#else
+		svn_wc_adm_close(adm_access);
+#endif // svn >= 1.6
 		svn_pool_clear(pool);
 		svn_pool_destroy(pool);
-		svn_wc_adm_close(adm_access);
 		return 1;
 	}
 
@@ -661,9 +665,13 @@ char wsvn_get_wc_props(node_t *node, list_t *list)
 		list_append(list, &prop);
 	}
 
+#if (SVN_VER_MAJOR == 1) && (SVN_VER_MINOR >= 6)
+	svn_wc_adm_close2(adm_access, pool);
+#else
+	svn_wc_adm_close(adm_access);
+#endif // svn >= 1.6
 	svn_pool_clear(pool);
 	svn_pool_destroy(pool);
-	svn_wc_adm_close(adm_access);
 	return 0;
 }
 
@@ -880,7 +888,11 @@ char wsvn_update(svn_revnum_t rev)
 		return 1;
 	}
 
+#if (SVN_VER_MAJOR == 1) && (SVN_VER_MINOR >= 6)
+	err = svn_wc_adm_close2(adm_access, pool);
+#else
 	err = svn_wc_adm_close(adm_access);
+#endif // svn >= 1.6
 	if (err) {
 #ifdef DEBUG
 		fprintf(stderr, "wsvn_update(%ld): 4\n\n", rev);
@@ -894,6 +906,5 @@ char wsvn_update(svn_revnum_t rev)
 
 	svn_pool_clear(pool);
 	svn_pool_destroy(pool);
-	svn_wc_adm_close(adm_access);
 	return 0;
 }
