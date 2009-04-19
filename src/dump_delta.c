@@ -27,6 +27,7 @@
 
 #include <svn_delta.h>
 #include <svn_pools.h>
+#include <svn_props.h>
 #include <svn_repos.h>
 
 #include "main.h"
@@ -55,6 +56,9 @@ typedef struct {
 	list_t		props;
 	nodeaction_t	action;
 	nodekind_t	kind;
+	char 		*copy_from_path;
+	svn_revnum_t	copy_from_rev;
+	char 		use_copy;
 	char		dumped;
 } node_baton_t;
 
@@ -91,6 +95,13 @@ static char dump_delta_node(node_baton_t *node)
 	unsigned long prop_len, content_len;
 	dump_options_t *opts = ((baton_t *)node->baton)->opts;
 	char *path = node->path;
+
+	/* If the node is a directory and no properties have been changed,
+	   we don't need to dump it */
+	if (node->action != NA_ADD && node->kind == NK_DIRECTORY && node->props.size == 0) {
+		node->dumped = 1;
+		return 0;
+	}
 
 	if (opts->prefix_is_file) {
 		path = strrchr(opts->repo_eurl, '/')+1;
@@ -251,6 +262,8 @@ static svn_error_t *add_directory(const char *path, void *parent_baton, const ch
 	node->kind = NK_DIRECTORY;
 
 	node->path = apr_pstrdup(dir_pool, path);
+	node->copy_from_path = apr_pstrdup(dir_pool, copyfrom_path);
+	node->copy_from_rev = copyfrom_revision;
 	node->action = NA_ADD;
 
 	*child_baton = node;
@@ -283,6 +296,10 @@ static svn_error_t *open_directory(const char *path, void *parent_baton, svn_rev
 static svn_error_t *change_dir_prop(void *dir_baton, const char *name, const svn_string_t *value, apr_pool_t *pool)
 {
 	DEBUG_MSG("change_dir_prop(%s)\n", name);
+
+	if (svn_property_kind(NULL, name) != svn_prop_regular_kind) {
+		return SVN_NO_ERROR;
+	}
 
 	property_t p = property_create();
 	p.key = strdup(name);
@@ -333,6 +350,8 @@ static svn_error_t *add_file(const char *path, void *parent_baton, const char *c
 	node->kind = NK_FILE;
 
 	node->path = apr_pstrdup(file_pool, path);
+	node->copy_from_path = apr_pstrdup(file_pool, copyfrom_path);
+	node->copy_from_rev = copyfrom_revision;
 	node->action = NA_ADD;
 
 	*file_baton = node;
@@ -381,6 +400,10 @@ static svn_error_t *apply_textdelta(void *file_baton, const char *base_checksum,
 static svn_error_t *change_file_prop(void *file_baton, const char *name, const svn_string_t *value, apr_pool_t *pool)
 {
 	DEBUG_MSG("change_file_prop(%s)\n", name);
+
+	if (svn_property_kind(NULL, name) != svn_prop_regular_kind) {
+		return SVN_NO_ERROR;
+	}
 
 	property_t p = property_create();
 	p.key = strdup(name);
@@ -490,7 +513,7 @@ char dump_delta_revision(dump_options_t *opts, logentry_t *entry, svn_revnum_t l
 	editor_baton = malloc(sizeof(baton_t));
 	editor_baton->opts = opts;
 
-	if (!prev_created) {
+	if (prev_created == 0) {
 		prev.revision = 0;
 		prev_created = 1;
 	}
