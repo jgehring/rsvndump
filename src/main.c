@@ -75,9 +75,7 @@ static void print_usage()
 	         "                              the repository by using empty revisions for\n" \
 	         "                              padding\n"));
 	printf(_("    --dump-uuid               include the repository uuid in the dump\n"));
-#ifdef USE_DELTAS
 	printf(_("    --deltas                  use deltas in dump output\n"));
-#endif /* USE_DELTAS */
 	printf("\n");
 	printf("Report bugs to <"PACKAGE_BUGREPORT">\n");
 }
@@ -137,10 +135,8 @@ int main(int argc, char **argv)
 			opts.keep_revnums = 1;
 		} else if (!strcmp(argv[i], "--dump-uuid")) {
 			opts.dump_uuid = 1;
-#ifdef USE_DELTAS
 		} else if (!strcmp(argv[i], "--deltas")) {
 			opts.deltas = 1;
-#endif /* USE_DELTAS */
 		} else if (i+1 < argc && !strcmp(argv[i], "--stop")) {
 			opts.endrev = rev_atoi(argv[++i]);
 		} else if (i+1 < argc && (!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username"))) {
@@ -210,7 +206,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Generate temporary directory if neccessary */
-	if (opts.repo_dir == NULL && !opts.online) {
+	if (opts.repo_dir == NULL && (opts.online == 0 || opts.deltas)) {
 		const char *tdir = getenv("TMPDIR");
 		if (tdir != NULL) {
 			char *tmp = malloc(strlen(tdir)+strlen(APPNAME)+8);
@@ -236,7 +232,7 @@ int main(int argc, char **argv)
 	ret = dump(&opts);
 
 	/* Clean up working copy */
-	if (opts.online == 0) {
+	if (opts.online == 0 || opts.deltas) {
 		utils_rrmdir(opts.repo_dir, dir_created);
 	}
 

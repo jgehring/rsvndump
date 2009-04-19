@@ -26,6 +26,7 @@
 
 #include "main.h"
 #include "dump.h"
+#include "dump_delta.h"
 #include "list.h"
 #include "logentry.h"
 #include "whash.h"
@@ -301,9 +302,7 @@ dump_options_t dump_options_create()
 	opts.output = stdout;
 	opts.startrev = 0;
 	opts.endrev = HEAD_REVISION;
-#ifdef USE_DELTAS
 	opts.deltas = 0;
-#endif /* USE_DELTAS */
 	return opts;
 }
 
@@ -455,8 +454,14 @@ char dump(dump_options_t *opts)
 			dump_pad_revisions(&current, &next);
 		}
 		current = next;
-		if (dump_revision(&current, i+off)) {
-			break;
+		if (opts->deltas) {
+			if (dump_delta_revision(opts, &current, i+off)) {
+				break;
+			}
+		} else {
+			if (dump_revision(&current, i+off)) {
+				break;
+			}
 		}
 		++i;
 		/* This frees all log entry strings */

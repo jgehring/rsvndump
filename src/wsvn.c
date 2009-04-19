@@ -874,3 +874,47 @@ char wsvn_update(svn_revnum_t rev)
 	svn_pool_destroy(pool);
 	return 0;
 }
+
+
+/* Runs a diff against two revisions of a given repository path */
+char wsvn_do_diff(dump_options_t *opts, logentry_t *base, logentry_t *entry, svn_delta_editor_t *editor, void *editor_baton)
+{
+	const svn_ra_reporter3_t *reporter;
+	void *report_baton;
+	svn_error_t *err;
+	apr_pool_t *pool = svn_pool_create(mainpool);
+
+	err = svn_ra_do_diff3(session, &reporter, &report_baton, entry->revision, opts->repo_prefix, svn_depth_infinity, FALSE, TRUE, opts->repo_base, editor, editor_baton, pool);
+	if (err) {
+		DEBUG_MSG("wsvn_do_diff(%ld): 1\n\n", entry->revision); 
+		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
+		svn_pool_clear(pool);
+		svn_pool_destroy(pool);
+		return 1;
+	}
+
+	err = reporter->set_path(report_baton, opts->repo_prefix, base->revision, svn_depth_infinity, FALSE, NULL, pool);
+	if (err) {
+		DEBUG_MSG("wsvn_do_diff(%ld): 2\n\n", entry->revision); 
+		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
+		svn_pool_clear(pool);
+		svn_pool_destroy(pool);
+		return 1;
+	}
+
+	err = reporter->finish_report(report_baton, pool);
+	if (err) {
+		DEBUG_MSG("wsvn_do_diff(%ld): 3\n\n", entry->revision); 
+		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
+		svn_pool_clear(pool);
+		svn_pool_destroy(pool);
+		return 1;
+	}
+
+	svn_pool_clear(pool);
+	svn_pool_destroy(pool);
+	return 0;
+}

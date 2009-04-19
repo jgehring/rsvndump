@@ -254,7 +254,7 @@ static char node_dump_offline(node_t *node, dump_options_t *opts, list_t *logs, 
 		if (node->action != NA_DELETE) {
 			fprintf(opts->output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_KIND, node->kind == NK_FILE ? "file" : "dir");
 		}
-		fprintf(opts->output, "%s: ", SVN_REPOS_DUMPFILE_NODE_ACTION ); 
+		fprintf(opts->output, "%s: ", SVN_REPOS_DUMPFILE_NODE_ACTION);
 		switch (node->action) {
 			case NA_CHANGE:
 				fprintf(opts->output, "change\n"); 

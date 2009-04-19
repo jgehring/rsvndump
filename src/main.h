@@ -91,8 +91,5 @@
  #define DEBUG_MSG
 #endif /* DEBUG */
 
-/* This is _not_ implemented, but enables flags and options for deltas */
-/*#define USE_DELTAS*/
-
 
 #endif

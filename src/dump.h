@@ -17,7 +17,7 @@
  *
  *
  *      file: dump.h
- *      desc: The main work is done here 
+ *      desc: The main work is done here
  */
 
 
@@ -56,9 +56,7 @@ typedef struct {
 	FILE *output;
 	int startrev;
 	int endrev;
-#ifdef USE_DELTAS
 	char deltas;
-#endif /* USE_DELTAS */
 } dump_options_t;
 
 

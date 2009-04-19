@@ -28,6 +28,7 @@
 #include <stdio.h>
 
 #include <svn_types.h>
+#include <svn_delta.h>
 
 #include "dump.h"
 #include "list.h"
@@ -73,6 +74,9 @@ extern char wsvn_repo_info(char *path, char **url, char **prefix, char **uuid, s
 
 /* Updates the repository to the specified revision */
 extern char wsvn_update(svn_revnum_t rev);
+
+/* Runs a diff against two revisions of a given repository path */
+extern char wsvn_do_diff(dump_options_t *opts, logentry_t *base, logentry_t *entry, svn_delta_editor_t *editor, void *editor_baton);
 
 
 #endif
