@@ -43,6 +43,7 @@
 /* Static variables                                                          */
 /*---------------------------------------------------------------------------*/
 
+static char output_local = 1;
 static dump_options_t *dopts = NULL;
 static list_t *logs = NULL;
 
@@ -91,7 +92,7 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 	stopwatch_t watch = stopwatch_create();
 #endif
 	if (dopts->verbosity > 0) {
-		if (dopts->keep_revnums) {
+		if (!output_local) {
 			fprintf(stderr, _("* Dumping revision %ld ... 0%%\n"), entry->revision);
 		} else {
 			fprintf(stderr, _("* Dumping revision %ld (local: %ld) ... 0%%\n"), entry->revision, local_revnum);
@@ -175,7 +176,7 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 		whash_insert(n->path);
 		if (dopts->verbosity > 0) {
 			fprintf(stderr, "\033[1A\033[K");
-			if (dopts->keep_revnums) {
+			if (!output_local) {
 				fprintf(stderr, _("* Dumping revision %ld ... %d%%\n"), entry->revision, (i*50)/nodes.size);
 			} else {
 				fprintf(stderr, _("* Dumping revision %ld (local: %ld) ... %d%%\n"), entry->revision, local_revnum, (i*50)/nodes.size);
@@ -200,7 +201,7 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 			node_free(n);
 			if (dopts->verbosity > 0) {
 				fprintf(stderr, "\033[1A\033[K");
-				if (dopts->keep_revnums) {
+				if (!output_local) {
 					fprintf(stderr, _("* Dumping revision %ld ... %d%%\n"), entry->revision, 50+(i*50)/nodes.size);
 				} else {
 					fprintf(stderr, _("* Dumping revision %ld (local: %ld) ... %d%%\n"), entry->revision, local_revnum, 50+(i*50)/nodes.size);
@@ -230,7 +231,8 @@ static char dump_revision(logentry_t *entry, svn_revnum_t local_revnum)
 		if (dopts->verbosity > 0) {
 			fprintf(stderr, "\033[1A\033[K");
 		}
-		if (dopts->keep_revnums) {
+
+		if (!output_local) {
 			fprintf(stderr, _("* Dumped revision %ld.\n"), entry->revision);
 		} else {
 			fprintf(stderr, _("* Dumped revision %ld (local %ld).\n"), entry->revision, local_revnum);
@@ -431,6 +433,14 @@ char dump(dump_options_t *opts)
 		fprintf(opts->output, "%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, PROPS_END_LEN);
 		fprintf(opts->output, PROPS_END);
 		fprintf(opts->output, "\n");
+	}
+
+
+    /* If we are dumping the root of a repository or --keep-revnums
+	   was specified, the local revision number is identical to the
+	   global one */
+	if (opts->keep_revnums || !strlen(opts->repo_prefix)) {
+		output_local = 0;
 	}
 
 	/* Dump all revisions */
