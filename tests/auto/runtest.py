@@ -18,7 +18,7 @@ wc_dir = "work/wc"
 dump_dir = "work/dumps"
 log_dir = "work/logs"
 test_id = ""
-extra_args = ""
+extra_args = []
 
 
 def setup_repos(name, modify):
@@ -94,7 +94,15 @@ def rsvndump_dump():
 		os.stat(dest_dir)
 	except:
 		os.mkdir(dest_dir)
-	run("../../src/rsvndump", extra_args, "file://"+os.getcwd()+"/"+repos_dir+"/"+test_id, output=dump_dir+"/"+test_id+"/"+"rsvndump.dump", error=log_dir+"/"+test_id)
+	args = []
+	args.append("../../src/rsvndump")
+	for i in range(0, len(extra_args)):
+		args.append(extra_args[i])
+	args.append("file://"+os.getcwd()+"/"+repos_dir+"/"+test_id)
+	redir = {}
+	redir['output'] = dump_dir+"/"+test_id+"/"+"rsvndump.dump"
+	redir['error'] = log_dir+"/"+test_id
+	run(*tuple(args), **redir)
 
 
 def rsvndump_load():
@@ -119,8 +127,9 @@ if __name__ == "__main__":
 	if len(sys.argv) < 2:
 		print("USAGE: runtest.py <test> [extra_args]")
 		raise SystemExit(1)
-	extra_args += "--dump-uuid "
-	extra_args = extra_args.strip()
+	extra_args.append("--dump-uuid")
+	for i in range(2, len(sys.argv)):
+		extra_args.append(sys.argv[i])
 
 	test = __import__(sys.argv[1], None, None, [''])
 	print("** Starting test '"+test.info()+"'")
