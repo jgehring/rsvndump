@@ -21,8 +21,11 @@ extra_args = ""
 
 def run(*args, **redir):
 	redirections = {}
+	input = redir.pop("input", None)
 	output = redir.pop("output", None)
 	error = redir.pop("error", None)
+	if input:
+		redirections['stdin'] = open(input, "r")
 	if output:
 		redirections['stdout'] = open(output, "a+")
 	if error:
@@ -68,7 +71,7 @@ def setup_repos(name, modify):
 		test_id = name+str(num)
 		current_repos = repos_dir+"/"+test_id
 	os.mkdir(current_repos)
-	print("** Starting test with id '"+test_id+"'")
+	print("** ID: '"+test_id+"'")
 	print(">> Creating repository...")
 	os.system("svnadmin create "+current_repos)
 	current_repos = os.getcwd()+"/"+current_repos
@@ -107,11 +110,16 @@ def rsvndump_dump():
 
 
 def rsvndump_load():
-	return
+	print(">> Importing dumpfile...")
+	repos = repos_dir+"/"+test_id+".tmp"
+	run("svnadmin", "create", repos)
+	run("svnadmin", "load", repos, input=dump_dir+"/"+test_id+"/rsvndump.dump")
 
 
 def rsvndump_diff():
-	return
+	print(">> Validating...")
+	run("svnadmin", "dump", repos_dir+"/"+test_id+".tmp", output=dump_dir+"/"+test_id+"/"+"validate.dump", error=log_dir+"/"+test_id)
+	run("diff", "-Naur", dump_dir+"/"+test_id+"/original.dump", dump_dir+"/"+test_id+"/validate.dump")
 
 
 # Program entry point
@@ -123,6 +131,7 @@ if __name__ == "__main__":
 	extra_args = extra_args.strip()
 
 	test = __import__(sys.argv[1], None, None, [''])
+	print("** Starting test '"+test.info()+"'")
 	setup_repos(sys.argv[1], test.modify_tree)
 	dump_repos()
 	rsvndump_dump()
