@@ -8,6 +8,8 @@ import os
 import sys
 import subprocess
 
+from run import run
+
 
 # Some globals
 work_dir = "work"
@@ -18,19 +20,6 @@ log_dir = "work/logs"
 test_id = ""
 extra_args = ""
 
-
-def run(*args, **redir):
-	redirections = {}
-	input = redir.pop("input", None)
-	output = redir.pop("output", None)
-	error = redir.pop("error", None)
-	if input:
-		redirections['stdin'] = open(input, "r")
-	if output:
-		redirections['stdout'] = open(output, "a+")
-	if error:
-		redirections['stderr'] = open(error, "a+")
-	subprocess.check_call(args, **redirections)
 
 def setup_repos(name, modify):
 	# Create all needed directories
@@ -54,7 +43,6 @@ def setup_repos(name, modify):
 		os.stat(log_dir)
 	except:
 		os.mkdir(log_dir)
-
 
 	# Setup repos direcotry and working copy
 	global test_id
@@ -83,8 +71,8 @@ def setup_repos(name, modify):
 	# Run committer
 	print(">> Committing...")
 	step = 0
-	while modify(wc_dir+"/"+test_id, step):
-		os.system("svn commit -m 'commit step "+str(step)+"'")
+	while modify(step, old_dir+"/"+log_dir+"/"+test_id):
+		run("svn", "commit", "-m 'commit step "+str(step)+"'", output=old_dir+"/"+log_dir+"/"+test_id)
 		step += 1
 	os.chdir(old_dir)
 
@@ -113,13 +101,17 @@ def rsvndump_load():
 	print(">> Importing dumpfile...")
 	repos = repos_dir+"/"+test_id+".tmp"
 	run("svnadmin", "create", repos)
-	run("svnadmin", "load", repos, input=dump_dir+"/"+test_id+"/rsvndump.dump")
+	run("svnadmin", "load", repos, input=dump_dir+"/"+test_id+"/rsvndump.dump", output=log_dir+"/"+test_id)
 
 
 def rsvndump_diff():
-	print(">> Validating...")
+	print ">> Validating...",
 	run("svnadmin", "dump", repos_dir+"/"+test_id+".tmp", output=dump_dir+"/"+test_id+"/"+"validate.dump", error=log_dir+"/"+test_id)
-	run("diff", "-Naur", dump_dir+"/"+test_id+"/original.dump", dump_dir+"/"+test_id+"/validate.dump")
+	try:
+		run("diff", "-Naur", dump_dir+"/"+test_id+"/original.dump", dump_dir+"/"+test_id+"/validate.dump", output=log_dir+"/"+test_id+".diff")
+		print(" ok")
+	except:
+		print(" failed. See "+log_dir+"/"+test_id+".diff for details")
 
 
 # Program entry point
