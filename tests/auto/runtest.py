@@ -48,7 +48,7 @@ def setup_repos(name, modify):
 	global test_id
 	num = 1
 	name = os.path.basename(name)
-	test_id = name+str(num)
+	test_id = name+"_"+str(num)
 	current_repos = repos_dir+"/"+test_id
 	while 1:
 		try:
@@ -56,7 +56,7 @@ def setup_repos(name, modify):
 		except:
 			break
 		num += 1
-		test_id = name+str(num)
+		test_id = name+"_"+str(num)
 		current_repos = repos_dir+"/"+test_id
 	os.mkdir(current_repos)
 	print("** ID: '"+test_id+"'")
@@ -73,11 +73,12 @@ def setup_repos(name, modify):
 	step = 0
 	while modify(step, old_dir+"/"+log_dir+"/"+test_id):
 		run("svn", "commit", "-m 'commit step "+str(step)+"'", output=old_dir+"/"+log_dir+"/"+test_id)
+		run("svn", "up", output=old_dir+"/"+log_dir+"/"+test_id)
 		step += 1
 	os.chdir(old_dir)
 
 
-def dump_repos():
+def dump_repos(preproc = None):
 	print(">> Creating reference dump...")
 	dest_dir = dump_dir+"/"+test_id
 	try:
@@ -85,9 +86,11 @@ def dump_repos():
 	except:
 		os.mkdir(dest_dir)
 	run("svnadmin", "dump", repos_dir+"/"+test_id, output=dump_dir+"/"+test_id+"/"+"original.dump", error=log_dir+"/"+test_id)
+	if preproc:
+		preproc(dump_dir+"/"+test_id+"/"+"original.dump", log_dir+"/"+test_id)
 
 
-def rsvndump_dump():
+def rsvndump_dump(subdir = None):
 	print(">> Running rsvndump...")
 	dest_dir = dump_dir+"/"+test_id
 	try:
@@ -98,7 +101,10 @@ def rsvndump_dump():
 	args.append("../../src/rsvndump")
 	for i in range(0, len(extra_args)):
 		args.append(extra_args[i])
-	args.append("file://"+os.getcwd()+"/"+repos_dir+"/"+test_id)
+	url = "file://"+os.getcwd()+"/"+repos_dir+"/"+test_id
+	if subdir:
+		url += "/"+subdir()
+	args.append(url)
 	redir = {}
 	redir['output'] = dump_dir+"/"+test_id+"/"+"rsvndump.dump"
 	redir['error'] = log_dir+"/"+test_id
@@ -121,20 +127,59 @@ def rsvndump_diff():
 	except:
 		print(" failed. See "+log_dir+"/"+test_id+".diff for details")
 
+def rsvndump_diff_ref():
+	print ">> Validating..."
+	try:
+		run("diff", "-Naur", dump_dir+"/"+test_id+"/original.dump", dump_dir+"/"+test_id+"/rsvndump.dump", output=log_dir+"/"+test_id+".diff")
+		print(" ok")
+	except:
+		print(" failed. See "+log_dir+"/"+test_id+".diff for details")
+
 
 # Program entry point
 if __name__ == "__main__":
 	if len(sys.argv) < 2:
 		print("USAGE: runtest.py <test> [extra_args]")
 		raise SystemExit(1)
-	extra_args.append("--dump-uuid")
 	for i in range(2, len(sys.argv)):
 		extra_args.append(sys.argv[i])
 
+	if sys.argv[1].endswith(".py"):
+		sys.argv[1] = sys.argv[1][:-3]
 	test = __import__(sys.argv[1], None, None, [''])
 	print("** Starting test '"+test.info()+"'")
 	setup_repos(sys.argv[1], test.modify_tree)
-	dump_repos()
-	rsvndump_dump()
+
+	try:
+		fn = test.write_reference_dump
+		print ">> Copying reference dump..."
+		try:
+			fn(dump_dir+"/"+test_id+"/"+"original.dump")
+		except:
+			print "!! Failed:", sys.exc_info()[0]
+			raise SystemExit(1)
+	except SystemExit:
+		raise
+	else:
+		preproc = None
+		try:
+			preproc = test.preprocess_dump
+		except:
+			pass
+		dump_repos(preproc)
+
+	subdir = None
+	try:
+		subdir = test.dump_dir
+	except:
+		extra_args.append("--dump-uuid")
+		pass
+	rsvndump_dump(subdir)
+
 	rsvndump_load()
-	rsvndump_diff()
+
+	try:
+		fn = test.write_reference_dump
+		rsvndump_diff_ref()
+	except:
+		rsvndump_diff()

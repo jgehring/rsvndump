@@ -13,7 +13,7 @@ def info():
 	return "Sample test"
 
 
-def modify_tree(step):
+def modify_tree(step, logfile):
 	if step < 5:
 		# Do nothing
 		return 1

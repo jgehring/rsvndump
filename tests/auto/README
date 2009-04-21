@@ -1,0 +1,32 @@
+This is a small test suite for rsvndump, implemented in python.
+
+Each test is implemented as a python module, placed in tests/ if it should be
+run automatically using the toplevel 'run_all.sh' script.
+
+A test must at least provide the following functions:
+
+	- info():
+	  Returns a string describing the test
+	- modify_tree(step, logfile): 
+	  Modifies the tree of a Subversion working copy, according to the
+	  given step. Commands like "svn add" can be run using the run
+	  funciton of the run package (import run from run).
+	  This command returns 0 if step is larger than the number of steps
+	  for this specific test, or 1 else.
+
+Additionally, a test can provide the following functions. Please note that
+if these functions are provided, they will be used.
+
+	- dump_dir():
+	  Returns a string describing the path inside the repository
+	  that is going to be dumped. If this function isn't provided,
+	  the complete repositry will be dumped. The --dump-uuid option
+	  be passed to rsvndump only if this function isn't provided
+	- write_reference_dump(dumpfile, logfile):
+	  If this function is provided, "svnadmin dump" will not be invoked.
+	  After using rsvndump, the dump provided by rsvndump will simply be
+	  diffed against the file whose name has been given to this function.
+	- preprocess_dump(dumpfile, logfile):
+	  This is called after the original reference dump has been created
+	  (unless write_reference_dump is preset) to allow the test to modify
+	  the reference dump file
