@@ -195,6 +195,10 @@ static char dump_delta_node(node_baton_t *node)
 			fwrite(buffer, 1, s, opts->output);
 		}
 		free(buffer);
+		
+		/* Close and remove temporary file */
+		fclose(f);
+		unlink(node->filename);
 	}
 
 	fprintf(opts->output, "\n\n");
