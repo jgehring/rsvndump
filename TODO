@@ -8,6 +8,8 @@
 > Remove --outfile option
 > Use deltas in diffs
 > Proper range specification, i.e. like svnadmin's -r START:STOP
+> Incremental dumps:
+  The revision map needs to be fetched prior to dumping then
 > Write more automated tests
 
 
