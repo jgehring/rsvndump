@@ -39,7 +39,7 @@
 /* Static functions                                                          */
 /*---------------------------------------------------------------------------*/
 
-/* Dumps the contents of a node which is the destination of a copy action */
+/* Checks if a node can be dumped as a copy */
 static char node_prepare_copy(node_t *node, dump_options_t *opts, list_t *logs, int local_revnum)
 {
 	/* First, check if the source is reachable, i.e. can be found under

@@ -455,7 +455,7 @@ char dump(dump_options_t *opts)
 		}
 		current = next;
 		if (opts->deltas) {
-			if (dump_delta_revision(opts, &current, i+off)) {
+			if (dump_delta_revision(opts, logs, &current, i+off)) {
 				break;
 			}
 		} else {

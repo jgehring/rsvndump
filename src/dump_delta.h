@@ -28,11 +28,12 @@
 #include <svn_types.h>
 
 #include "dump.h"
+#include "list.h"
 #include "logentry.h"
 
 
 /* Dumps the specified revision using the given dump options */
-extern char dump_delta_revision(dump_options_t *opts, logentry_t *entry, svn_revnum_t local_revnum);
+extern char dump_delta_revision(dump_options_t *opts, list_t *logs, logentry_t *entry, svn_revnum_t local_revnum);
 
 
 #endif

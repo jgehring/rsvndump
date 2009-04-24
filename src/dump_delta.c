@@ -32,7 +32,6 @@
 
 #include "main.h"
 #include "dump_delta.h"
-#include "list.h"
 #include "node.h"
 #include "property.h"
 #include "wsvn.h"
@@ -47,6 +46,8 @@ static char prev_created;
 
 typedef struct {
 	dump_options_t	*opts;
+	list_t		*logs;
+	svn_revnum_t	local_revnum;
 } baton_t;
 
 typedef struct {
@@ -73,6 +74,8 @@ static node_baton_t *dump_delta_node_create(baton_t *baton, apr_pool_t *pool)
 	node_baton_t *node = apr_palloc(pool, sizeof(node_baton_t));
 	node->baton = baton;
 	node->props = list_create(sizeof(property_t));
+	node->copy_from_path = NULL;
+	node->use_copy = 0;
 	node->dumped = 0;
 	return node;
 }
@@ -88,12 +91,75 @@ static void dump_delta_node_free(node_baton_t *node)
 }
 
 
+/* Checks if a node can be dumped as a copy */
+static char dump_delta_node_prepare_copy(node_baton_t *node)
+{
+	dump_options_t *opts = node->baton->opts;
+	list_t *logs = node->baton->logs;
+	svn_revnum_t local_revnum = node->baton->local_revnum;
+
+	/* Sanity check */
+	if (!node->copy_from_path) { 
+		return 0;
+	}
+
+	/* First, check if the source is reachable, i.e. can be found under
+	   the current session root */
+	if (!strncmp(node->copy_from_path, opts->repo_prefix, strlen(opts->repo_prefix))) {
+		svn_revnum_t r, rr = -1;
+		svn_revnum_t mind = LONG_MAX;
+
+		/* If we sync the revision numbers, the copy-from revision is correct */
+		if (opts->keep_revnums) {
+			node->use_copy = 1;
+			return 0;
+		}
+
+		/* This is good news: we already dumped the source. Let's figure
+		   out at which revision */
+
+		/* Find the best matching revision.
+		   This will work, because if we have not dumped the requested
+		   revision itself, the source of the copy has not changed between
+		   the best matching and the requested revision. */
+		for (r = local_revnum-1; r > 0; r--) {
+			/* Yes, the +1 is needed */
+			svn_revnum_t d = (node->copy_from_rev - (((logentry_t *)logs->elements)[r].revision))+1;
+			DEBUG_MSG("dump_delta_node_prepare_copy: req: %ld cur: %ld, local: %ld\n", node->copy_from_rev, (((logentry_t *)logs->elements)[r].revision), r);
+			/* TODO: This can be optimized: Once we notice that the distance to the
+			   requested revision gets bigger, it should be safe to break out of this
+			   loop. */
+			if (d >= 0 && d < mind) {
+				mind = d;
+				rr = r;
+				if (d <= 1) {
+					break;
+				}
+			}
+		}
+
+		node->copy_from_rev = rr;
+		node->use_copy = 1;
+		DEBUG_MSG("dump_delta_node_prepare_copy: using local %ld\n", rr);
+	} else {
+		/* Hm, this is bad. we have to ignore the copy operation and
+		   simulate it by simple dumping it the node as being added.
+		   This will work fine for single files, but directories
+		   must be dumped recursively. */
+		node->action = NA_ADD;
+		node->use_copy = 0;
+	}
+
+	return 0;
+}
+
+
 /* Dumps a node */
 static char dump_delta_node(node_baton_t *node)
 {
 	int i;
 	unsigned long prop_len, content_len;
-	dump_options_t *opts = ((baton_t *)node->baton)->opts;
+	dump_options_t *opts = node->baton->opts;
 	char *path = node->path;
 
 	/* If the node is a directory and no properties have been changed,
@@ -132,13 +198,28 @@ static char dump_delta_node(node_baton_t *node)
 			break;
 	}
 
-	/* Write properties & content if neccessary */
 	if (node->action == NA_DELETE) {
 		fprintf(opts->output, "\n\n");
 		node->dumped = 1;
 		return 0;
 	}
 
+	/* Write copy information */
+	dump_delta_node_prepare_copy(node);
+	if (node->use_copy) {
+		int offset = strlen(opts->repo_prefix);
+		while (*(node->copy_from_path+offset) == '/') {
+			++offset;
+		}
+		fprintf(opts->output, "%s: %ld\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_REV, node->copy_from_rev);
+		if (opts->user_prefix != NULL) {
+			fprintf(opts->output, "%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, opts->user_prefix, node->copy_from_path+offset);
+		} else {
+			fprintf(opts->output, "%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, node->copy_from_path+offset);
+		}
+	}
+
+	/* Write properties & content */
 	prop_len = PROPS_END_LEN;
 	content_len = 0;
 
@@ -253,7 +334,7 @@ static svn_error_t *delete_entry(const char *path, svn_revnum_t revision, void *
 
 static svn_error_t *add_directory(const char *path, void *parent_baton, const char *copyfrom_path, svn_revnum_t copyfrom_revision, apr_pool_t *dir_pool, void **child_baton)
 {
-	DEBUG_MSG("add_directory(%s)\n", path);
+	DEBUG_MSG("add_directory(%s [copy from: %s@%d])\n", path, copyfrom_path ? copyfrom_path : " ", copyfrom_revision);
 	node_baton_t *parent, *node;
 	
 	/* Check if the parent node needs to be dumped */
@@ -266,7 +347,9 @@ static svn_error_t *add_directory(const char *path, void *parent_baton, const ch
 	node->kind = NK_DIRECTORY;
 
 	node->path = apr_pstrdup(dir_pool, path);
-	node->copy_from_path = apr_pstrdup(dir_pool, copyfrom_path);
+	if (copyfrom_path) {
+		node->copy_from_path = apr_pstrdup(dir_pool, copyfrom_path);
+	}
 	node->copy_from_rev = copyfrom_revision;
 	node->action = NA_ADD;
 
@@ -299,7 +382,7 @@ static svn_error_t *open_directory(const char *path, void *parent_baton, svn_rev
 
 static svn_error_t *change_dir_prop(void *dir_baton, const char *name, const svn_string_t *value, apr_pool_t *pool)
 {
-	DEBUG_MSG("change_dir_prop(%s)\n", name);
+//	DEBUG_MSG("change_dir_prop(%s)\n", name);
 
 	if (svn_property_kind(NULL, name) != svn_prop_regular_kind) {
 		return SVN_NO_ERROR;
@@ -341,7 +424,7 @@ static svn_error_t *absent_directory(const char *path, void *parent_baton, apr_p
 
 static svn_error_t *add_file(const char *path, void *parent_baton, const char *copyfrom_path, svn_revnum_t copyfrom_revision, apr_pool_t *file_pool, void **file_baton)
 {
-	DEBUG_MSG("add_directory(%s)\n", path);
+	DEBUG_MSG("add_file(%s [copy from %s@%d])\n", path, copyfrom_path ? copyfrom_path : " ", copyfrom_revision);
 	node_baton_t *parent, *node;
 
 	/* Check if the parent node needs to be dumped */
@@ -354,7 +437,9 @@ static svn_error_t *add_file(const char *path, void *parent_baton, const char *c
 	node->kind = NK_FILE;
 
 	node->path = apr_pstrdup(file_pool, path);
-	node->copy_from_path = apr_pstrdup(file_pool, copyfrom_path);
+	if (copyfrom_path) {
+		node->copy_from_path = apr_pstrdup(file_pool, copyfrom_path);
+	}
 	node->copy_from_rev = copyfrom_revision;
 	node->action = NA_ADD;
 
@@ -403,7 +488,7 @@ static svn_error_t *apply_textdelta(void *file_baton, const char *base_checksum,
 
 static svn_error_t *change_file_prop(void *file_baton, const char *name, const svn_string_t *value, apr_pool_t *pool)
 {
-	DEBUG_MSG("change_file_prop(%s)\n", name);
+//	DEBUG_MSG("change_file_prop(%s)\n", name);
 
 	if (svn_property_kind(NULL, name) != svn_prop_regular_kind) {
 		return SVN_NO_ERROR;
@@ -461,7 +546,7 @@ static svn_error_t *abort_edit(void *edit_baton, apr_pool_t *pool)
 /*---------------------------------------------------------------------------*/
 
 /* Dumps the specified revision using the given dump options */
-char dump_delta_revision(dump_options_t *opts, logentry_t *entry, svn_revnum_t local_revnum)
+char dump_delta_revision(dump_options_t *opts, list_t *logs, logentry_t *entry, svn_revnum_t local_revnum)
 {
 	char ret;
 	int props_length;
@@ -516,6 +601,8 @@ char dump_delta_revision(dump_options_t *opts, logentry_t *entry, svn_revnum_t l
 
 	editor_baton = malloc(sizeof(baton_t));
 	editor_baton->opts = opts;
+	editor_baton->logs = logs;
+	editor_baton->local_revnum = local_revnum;
 
 	if (prev_created == 0) {
 		prev.revision = 0;
