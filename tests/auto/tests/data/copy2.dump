@@ -1,0 +1,76 @@
+SVN-fs-dump-format-version: 2
+
+Revision-number: 0
+Prop-content-length: 11
+Content-length: 11
+
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 117
+Content-length: 117
+
+K 7
+svn:log
+V 16
+ 'commit step 3'
+K 10
+svn:author
+V 5
+jonas
+K 8
+svn:date
+V 27
+2009-04-24T10:16:24.080337Z
+PROPS-END
+
+Node-path: file1
+Node-kind: file
+Node-action: add
+Prop-content-length: 11
+Text-content-length: 7
+Content-length: 18
+
+PROPS-END
+hello2
+
+
+Node-path: file2
+Node-kind: file
+Node-action: add
+Prop-content-length: 11
+Text-content-length: 7
+Content-length: 18
+
+PROPS-END
+hello6
+
+
+Revision-number: 2
+Prop-content-length: 117
+Content-length: 117
+
+K 7
+svn:log
+V 16
+ 'commit step 4'
+K 10
+svn:author
+V 5
+jonas
+K 8
+svn:date
+V 27
+2009-04-24T10:16:26.084977Z
+PROPS-END
+
+Node-path: file1
+Node-kind: file
+Node-action: change
+Text-content-length: 20
+Content-length: 20
+
+hello2
+just copied!
+
+

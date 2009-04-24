@@ -153,14 +153,17 @@ if __name__ == "__main__":
 	try:
 		fn = test.write_reference_dump
 		print ">> Copying reference dump..."
+		dest_dir = dump_dir+"/"+test_id
 		try:
-			fn(dump_dir+"/"+test_id+"/"+"original.dump")
+			os.stat(dest_dir)
 		except:
-			print "!! Failed:", sys.exc_info()[0]
-			raise SystemExit(1)
-	except SystemExit:
-		raise
-	else:
+			os.mkdir(dest_dir)
+#		try:
+		fn(dest_dir+"/"+"original.dump")
+#		except:
+#			print "!! Failed:", sys.exc_info()[0]
+#			raise SystemExit(1)
+	except AttributeError:
 		preproc = None
 		try:
 			preproc = test.preprocess_dump
@@ -171,7 +174,7 @@ if __name__ == "__main__":
 	subdir = None
 	try:
 		subdir = test.dump_dir
-	except:
+	except AttributeError:
 		extra_args.append("--dump-uuid")
 		pass
 	rsvndump_dump(subdir)
@@ -181,5 +184,5 @@ if __name__ == "__main__":
 	try:
 		fn = test.write_reference_dump
 		rsvndump_diff_ref()
-	except:
+	except AttributeError:
 		rsvndump_diff()
