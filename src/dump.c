@@ -84,7 +84,7 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 	stopwatch_t watch = stopwatch_create();
 #endif
 
-	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, "", TRUE, TRUE, TRUE, session->encoded_url, editor, editor_baton, subpool);
+	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, (session->file ? session->file : ""), TRUE, TRUE, TRUE, session->encoded_url, editor, editor_baton, subpool);
 	if (err) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
@@ -236,31 +236,31 @@ char dump(session_t *session, dump_options_t *opts)
 			}
 		} else {
 			/* Check if path is present in given start revision */
-			if (dump_check_path(session, ".", opts->start) == svn_node_none) {
+			if (dump_check_path(session, "", opts->start) == svn_node_none) {
 				fprintf(stderr, _("ERROR: URL '%s' not found in revision %ld\n"), session->url, opts->start);
 				return 1;
 			}
 		}
 	} else {
 		/* Check if path is present in given start revision */
-		if (dump_check_path(session, ".", opts->start) == svn_node_none) {
+		if (dump_check_path(session, "", opts->start) == svn_node_none) {
 			fprintf(stderr, _("ERROR: URL '%s' not found in revision %ld\n"), session->url, opts->start);
 			return 1;
 		}
 		/* Check if path is present in given end revision */
-		if (dump_check_path(session, ".", opts->end) == svn_node_none) {
+		if (dump_check_path(session, "", opts->end) == svn_node_none) {
 			fprintf(stderr, _("ERROR: URL '%s' not found in revision %ld\n"), session->url, opts->end);
 			return 1;
 		}
 	}
 
 	/*
-	 * Check if the root of the dump is a file. It is somewhat dirty
-	 * to check this here, but we don't know the correct revisions
-	 * in session_open()
+	 * Check if we need to reparent the RA session. This is needed if we
+	 * are only dumping the history of a single file. Else, svn_ra_do_diff()
+	 * will nor work.
 	 */
-	if (dump_check_path(session, ".", opts->start) == svn_node_file) {
-		session->prefix_is_file = 1;
+	if (session_check_reparent(session, opts->start)) {
+		return 1;
 	}
 
 	/*

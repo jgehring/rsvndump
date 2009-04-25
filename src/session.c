@@ -223,7 +223,7 @@ session_t session_create()
 	session.encoded_url = NULL;
 	session.root = NULL;
 	session.prefix = NULL;
-	session.prefix_is_file = 0;
+	session.file = 0;
 	session.username = NULL;
 	session.password = NULL;
 	session.flags = 0x00;
@@ -330,5 +330,40 @@ char session_open(session_t *session)
 char session_close(session_t *session)
 {
 	svn_pool_clear(session->pool);
+	return 0;
+}
+
+
+/* Reparents the session if the current root is a file */
+char session_check_reparent(session_t *session, svn_revnum_t rev)
+{
+	svn_error_t *err;
+	svn_node_kind_t kind;
+	apr_pool_t *pool = svn_pool_create(session->pool);
+
+	/* Check if the current root is a file */
+	err = svn_ra_check_path(session->ra, "", rev, &kind, pool);
+	if (err) {
+		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
+		svn_pool_destroy(pool);
+		return 1;
+	}
+
+	if (kind == svn_node_file) {
+		/* Determine the parent directory */
+		const char *new_parent;
+		svn_path_split(session->encoded_url, &new_parent, &session->file, session->pool);
+		/* Reparent the session to the parent repository */
+		err = svn_ra_reparent(session->ra, new_parent, pool);
+		if (err) {
+			svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+			svn_error_clear(err);
+			svn_pool_destroy(pool);
+			return 1;
+		}
+	}
+
+	svn_pool_destroy(pool);
 	return 0;
 }

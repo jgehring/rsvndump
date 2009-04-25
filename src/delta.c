@@ -127,9 +127,6 @@ static char delta_dump_node(de_node_baton_t *node)
 //		return 0;
 //	}
 
-	if (session->prefix_is_file) {
-		path = strrchr(session->encoded_url, '/')+1;
-	}
 	if (opts->prefix != NULL) {
 		printf("%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_PATH, opts->prefix, path);
 	} else {

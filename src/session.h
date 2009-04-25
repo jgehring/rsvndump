@@ -25,6 +25,8 @@
 #define SESSION_H_
 
 
+#include <svn_types.h>
+
 
 /* Flags for the session data */
 enum session_flags {
@@ -39,7 +41,7 @@ typedef struct {
 	const char		*encoded_url;
 	const char		*root;
 	char			*prefix;
-	char			prefix_is_file; /* This is set in dump.c */
+	const char		*file; /* Only set if the target is a file */
 	char			*username;
 	char			*password;
 	int			flags;
@@ -57,6 +59,9 @@ extern char session_open(session_t *session);
 
 /* Closes a session */
 extern char session_close(session_t *session);
+
+/* Reparents the session if the current root is a file */
+extern char session_check_reparent(session_t *session, svn_revnum_t rev);
 
 
 #endif

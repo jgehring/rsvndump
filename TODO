@@ -1,5 +1,4 @@
 == 0.5 branch (deltas) ==
-> svn_ra_do_diff() does _not_ provide copy information!
 
 
 == Schedule for 0.4.5 ==
