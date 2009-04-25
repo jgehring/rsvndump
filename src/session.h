@@ -37,7 +37,7 @@ typedef struct {
 	struct apr_pool_t	*pool;
 	char			*url;
 	const char		*encoded_url;
-	char			*root;
+	const char		*root;
 	char			*prefix;
 	char			*username;
 	char			*password;

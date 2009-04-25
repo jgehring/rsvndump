@@ -305,7 +305,7 @@ char session_open(session_t *session)
 	}
 
 	/* Determine the root (and the prefix) of the URL */
-	char *root;
+	const char *root;
 	if ((err = svn_ra_get_repos_root(session->ra, &root, session->pool))) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
