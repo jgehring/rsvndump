@@ -315,7 +315,6 @@ char session_open(session_t *session)
 	if (!strcmp(session->encoded_url, root)) {
 		session->prefix = apr_pstrdup(session->pool, "");
 	} else {
-		DEBUG_MSG("%s <-> %s\n", session->encoded_url, root);
 		session->prefix = apr_pstrdup(session->pool, session->encoded_url + strlen(root) + 1);
 	}
 

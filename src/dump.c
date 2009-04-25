@@ -237,8 +237,8 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 	svn_error_t *err;
 	apr_pool_t *subpool = svn_pool_create(pool);
 
-	DEBUG_MSG("diffing: %s | %s\n", session->root, session->prefix);
-	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, session->prefix, TRUE, FALSE, TRUE, session->root, editor, editor_baton, subpool);
+	DEBUG_MSG("%s\n", session->encoded_url);
+	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, "", TRUE, TRUE, TRUE, session->encoded_url, editor, editor_baton, subpool);
 	if (err) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
@@ -246,7 +246,7 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 		return 1;
 	}
 
-	err = reporter->set_path(report_baton, "", src, FALSE, NULL, subpool);
+	err = reporter->set_path(report_baton, "", src, TRUE, NULL, subpool);
 	if (err) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
@@ -290,6 +290,26 @@ static char dump_determine_head(session_t *session, svn_revnum_t *rev)
 	*rev = dirent->created_rev;
 	svn_pool_destroy(pool);
 	return 0;
+}
+
+
+/* Checks if a path is present in a given revision */
+static char dump_check_path(session_t *session, const char *path, svn_revnum_t rev)
+{
+	svn_error_t *err;
+	svn_node_kind_t kind;
+	apr_pool_t *pool = svn_pool_create(session->pool);
+
+	err = svn_ra_check_path(session->ra, path, rev, &kind, pool);
+	if (err) {
+		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
+		svn_pool_destroy(pool);
+		return 1;
+	}
+
+	svn_pool_destroy(pool);
+	return (kind == svn_node_none ? 1 : 0);
 }
 
 
@@ -356,8 +376,37 @@ char dump(session_t *session, dump_options_t *opts)
 	svn_revnum_t global_rev, local_rev;
 	int list_idx;
 
+	/* First, determine or check the start and end revision */
+	if (opts->end == -1) {
+		if (dump_determine_head(session, &opts->end)) {
+			return 1;
+		}
+		if (opts->start == 0) {
+			if (log_get_range(session, &opts->start, &opts->end, opts->verbosity)) {
+				return 1;
+			}
+		} else {
+			/* Check if path is present in given start revision */
+			if (dump_check_path(session, ".", opts->start)) {
+				fprintf(stderr, _("ERROR: URL '%s' not found in revision %ld\n"), session->url, opts->start);
+				return 1;
+			}
+		}
+	} else {
+		/* Check if path is present in given start revision */
+		if (dump_check_path(session, ".", opts->start)) {
+			fprintf(stderr, _("ERROR: URL '%s' not found in revision %ld\n"), session->url, opts->start);
+			return 1;
+		}
+		/* Check if path is present in given end revision */
+		if (dump_check_path(session, ".", opts->end)) {
+			fprintf(stderr, _("ERROR: URL '%s' not found in revision %ld\n"), session->url, opts->end);
+			return 1;
+		}
+	}
+
 	/*
-	 * First, decide wether the whole repositry log should be fetched
+	 * Decide wether the whole repositry log should be fetched
 	 * prior to dumping. This is needed if the dump is incremental and
 	 * the start revision is not 0.
 	 */
@@ -375,9 +424,13 @@ char dump(session_t *session, dump_options_t *opts)
 		opts->end = ((log_revision_t *)logs.elements)[logs.size-1].revision;
 	}
 	else if (opts->end == -1) {
-		if (dump_determine_head(session, &opts->end)) {
-			list_free(&logs);
-			return 1;
+	}
+
+	/* Determine start revision if neccessary */
+	if (opts->start == 0) {
+		if (strlen(session->prefix) > 0) {
+			/* There arent' any subdirectories at revision 0 */
+			opts->start = 1;
 		}
 	}
 
