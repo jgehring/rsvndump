@@ -63,7 +63,7 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 {
 	log_receiver_baton_t *data= (log_receiver_baton_t *)baton;
 
-	DEBUG_MSG("log_receiver(): invoked for revision %ld\n", revision);
+//	DEBUG_MSG("log_receiver(): invoked for revision %ld\n", revision);
 
 	data->log->revision = revision;
 	data->log->author = apr_pstrdup(data->pool, author);

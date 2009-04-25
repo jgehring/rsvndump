@@ -21,9 +21,9 @@
  */
 
 
+#include <stdio.h>
 #include <sys/stat.h>
 
-#include <svn_delta.h>
 #include <svn_pools.h>
 #include <svn_props.h>
 #include <svn_ra.h>
@@ -33,20 +33,11 @@
 #include <apr_pools.h>
 
 #include "main.h"
+#include "delta.h"
 #include "list.h"
 #include "log.h"
 
 #include "dump.h"
-
-
-/*---------------------------------------------------------------------------*/
-/* Local data structures                                                     */
-/*---------------------------------------------------------------------------*/
-
-
-/*---------------------------------------------------------------------------*/
-/* Static variables                                                          */
-/*---------------------------------------------------------------------------*/
 
 
 /*---------------------------------------------------------------------------*/
@@ -55,177 +46,29 @@
 
 
 /* Dumps a revision header using the given properties */
-static void dump_revision_header(dump_options_t *opts)
+static void dump_revision_header(log_revision_t *revision, svn_revnum_t local_revnum, dump_options_t *opts)
 {
-#if 0
-	int props_length;
+	int props_length = 0;
 
-	props_length = 0;
-	property_k
-
-	if (opts->keep_revnums) {
-		printf("%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, entry->revision);	
-	} else {
-		printf("%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, local_revnum);	
+	/* Determine length of revision properties */
+	props_length += property_strlen("svn:log", revision->message);
+	props_length += property_strlen("svn:author", revision->author);
+	props_length += property_strlen("svn:date", revision->date);
+	if (props_length > 0) {
+		props_length += PROPS_END_LEN;
 	}
+
+	printf("%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, local_revnum);	
 	printf("%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
 	printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);
-#endif
-}
+	
+	if (props_length > 0) {
+		property_dump("svn:log", revision->message);
+		property_dump("svn:author", revision->author);
+		property_dump("svn:date", revision->date);
 
-
-/* Subversion delta editor callback */
-static svn_error_t *de_set_target_revision(void *edit_baton, svn_revnum_t target_revision, apr_pool_t *pool)
-{
-	/* The revision header has already been dumped, so there's nothing to
-	   do here */
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_open_root(void *edit_baton, svn_revnum_t base_revision, apr_pool_t *dir_pool, void **root_baton)
-{
-	DEBUG_MSG("dump_open_root()\n");
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, void *parent_baton, apr_pool_t *pool)
-{
-	DEBUG_MSG("delete_entry(%s)\n");
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_add_directory(const char *path, void *parent_baton, const char *copyfrom_path, svn_revnum_t copyfrom_revision, apr_pool_t *dir_pool, void **child_baton)
-{
-	DEBUG_MSG("add_directory(%s)\n", path);
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_open_directory(const char *path, void *parent_baton, svn_revnum_t base_revision, apr_pool_t *dir_pool, void **child_baton)
-{
-	DEBUG_MSG("open_directory(%s)\n");
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_change_dir_prop(void *dir_baton, const char *name, const svn_string_t *value, apr_pool_t *pool)
-{
-	DEBUG_MSG("change_dir_prop(%s)\n", name);
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_close_directory(void *dir_baton, apr_pool_t *pool)
-{
-	DEBUG_MSG("close_direcotry()\n");
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_absent_directory(const char *path, void *parent_baton, apr_pool_t *pool)
-{
-	DEBUG_MSG("absent_directory(%s)\n", path);
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_add_file(const char *path, void *parent_baton, const char *copyfrom_path, svn_revnum_t copyfrom_revision, apr_pool_t *file_pool, void **file_baton)
-{
-	DEBUG_MSG("add_file(%s)\n", path);
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnum_t base_revision, apr_pool_t *file_pool, void **file_baton)
-{
-	DEBUG_MSG("open_file(%s)\n", path);
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checksum, apr_pool_t *pool, svn_txdelta_window_handler_t *handler, void **handler_baton)
-{
-	svn_stream_t *stream;
-	DEBUG_MSG("apply_textdelta()\n");
-	svn_stream_for_stdout(&stream, pool);
-	svn_txdelta_to_svndiff(stream, pool, handler, handler_baton);
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_change_file_prop(void *file_baton, const char *name, const svn_string_t *value, apr_pool_t *pool)
-{
-	DEBUG_MSG("change_file_prop()\n");
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, apr_pool_t *pool)
-{
-	DEBUG_MSG("close_file()\n");
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_absent_file(const char *path, void *parent_baton, apr_pool_t *pool)
-{
-	DEBUG_MSG("absent_file(%s)\n", path);
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
-{
-	DEBUG_MSG("close_edit\n");
-	return SVN_NO_ERROR;
-}
-
-
-/* Subversion delta editor callback */
-static svn_error_t *de_abort_edit(void *edit_baton, apr_pool_t *pool)
-{
-	DEBUG_MSG("abort_edit\n");
-	return SVN_NO_ERROR;
-}
-
-
-/* Sets up a delta editor for dumping a revision */
-static void dump_setup_editor(svn_delta_editor_t **editor, apr_pool_t *pool)
-{
-	*editor = svn_delta_default_editor(pool);
-	(*editor)->set_target_revision = de_set_target_revision;
-	(*editor)->open_root = de_open_root;
-	(*editor)->delete_entry = de_delete_entry;
-	(*editor)->add_directory = de_add_directory;
-	(*editor)->open_directory = de_open_directory;
-	(*editor)->add_file = de_add_file;
-	(*editor)->open_file = de_open_file;
-	(*editor)->apply_textdelta = de_apply_textdelta;
-	(*editor)->close_file = de_close_file;
-	(*editor)->close_directory = de_close_directory;
-	(*editor)->change_file_prop = de_change_file_prop;
-	(*editor)->change_dir_prop = de_change_dir_prop;
-	(*editor)->close_edit = de_close_edit;
-	(*editor)->absent_directory = de_absent_directory;
-	(*editor)->absent_file = de_absent_file;
-	(*editor)->abort_edit = de_abort_edit;
+		printf(PROPS_END"\n");
+	}
 }
 
 
@@ -452,12 +295,13 @@ char dump(session_t *session, dump_options_t *opts)
 
 	/* Pre-dumping initialization */
 	global_rev = opts->start;
-	local_rev = 0;
+	local_rev = global_rev == 0 ? 0 : 1;
 	list_idx = 0;
 
 	/* Start dumping */
 	do {
 		svn_delta_editor_t *editor;
+		void *editor_baton;
 		apr_pool_t *revpool = svn_pool_create(session->pool);
 
 		if (logs_fetched == 0) {
@@ -473,9 +317,12 @@ char dump(session_t *session, dump_options_t *opts)
 			++list_idx;
 		}
 
+		/* Dump the revision header */
+		dump_revision_header((log_revision_t *)logs.elements + list_idx, local_rev, opts);
+
 		/* Setup the delta editor and run a diff */
-		dump_setup_editor(&editor, revpool);
-		if (dump_do_diff(session, global_rev, ((log_revision_t *)logs.elements)[list_idx].revision, editor, NULL, revpool)) {
+		delta_setup_editor(opts, &logs, local_rev, &editor, &editor_baton, revpool);
+		if (dump_do_diff(session, global_rev, ((log_revision_t *)logs.elements)[list_idx].revision, editor, editor_baton, revpool)) {
 			list_free(&logs);
 			return 1;
 		}
