@@ -36,6 +36,7 @@
 #include "delta.h"
 #include "list.h"
 #include "log.h"
+#include "utils.h"
 
 #include "dump.h"
 
@@ -79,8 +80,10 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 	void *report_baton;
 	svn_error_t *err;
 	apr_pool_t *subpool = svn_pool_create(pool);
+#ifdef USE_TIMING
+	stopwatch_t watch = stopwatch_create();
+#endif
 
-	DEBUG_MSG("%s\n", session->encoded_url);
 	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, "", TRUE, TRUE, TRUE, session->encoded_url, editor, editor_baton, subpool);
 	if (err) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
@@ -106,6 +109,9 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 	}
 
 	svn_pool_destroy(subpool);
+#ifdef USE_TIMING
+	DEBUG_MSG("dump_do_diff done in %f seconds\n", stopwatch_elapsed(&watch));
+#endif
 	return 0;
 }
 
@@ -137,7 +143,7 @@ static char dump_determine_head(session_t *session, svn_revnum_t *rev)
 
 
 /* Checks if a path is present in a given revision */
-static char dump_check_path(session_t *session, const char *path, svn_revnum_t rev)
+static svn_node_kind_t dump_check_path(session_t *session, const char *path, svn_revnum_t rev)
 {
 	svn_error_t *err;
 	svn_node_kind_t kind;
@@ -148,11 +154,11 @@ static char dump_check_path(session_t *session, const char *path, svn_revnum_t r
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
 		svn_pool_destroy(pool);
-		return 1;
+		return svn_node_none;
 	}
 
 	svn_pool_destroy(pool);
-	return (kind == svn_node_none ? 1 : 0);
+	return kind;
 }
 
 
@@ -230,22 +236,31 @@ char dump(session_t *session, dump_options_t *opts)
 			}
 		} else {
 			/* Check if path is present in given start revision */
-			if (dump_check_path(session, ".", opts->start)) {
+			if (dump_check_path(session, ".", opts->start) == svn_node_none) {
 				fprintf(stderr, _("ERROR: URL '%s' not found in revision %ld\n"), session->url, opts->start);
 				return 1;
 			}
 		}
 	} else {
 		/* Check if path is present in given start revision */
-		if (dump_check_path(session, ".", opts->start)) {
+		if (dump_check_path(session, ".", opts->start) == svn_node_none) {
 			fprintf(stderr, _("ERROR: URL '%s' not found in revision %ld\n"), session->url, opts->start);
 			return 1;
 		}
 		/* Check if path is present in given end revision */
-		if (dump_check_path(session, ".", opts->end)) {
+		if (dump_check_path(session, ".", opts->end) == svn_node_none) {
 			fprintf(stderr, _("ERROR: URL '%s' not found in revision %ld\n"), session->url, opts->end);
 			return 1;
 		}
+	}
+
+	/*
+	 * Check if the root of the dump is a file. It is somewhat dirty
+	 * to check this here, but we don't know the correct revisions
+	 * in session_open()
+	 */
+	if (dump_check_path(session, ".", opts->start) == svn_node_file) {
+		session->prefix_is_file = 1;
 	}
 
 	/*
@@ -321,13 +336,17 @@ char dump(session_t *session, dump_options_t *opts)
 		dump_revision_header((log_revision_t *)logs.elements + list_idx, local_rev, opts);
 
 		/* Setup the delta editor and run a diff */
-		delta_setup_editor(opts, &logs, local_rev, &editor, &editor_baton, revpool);
+		delta_setup_editor(session, opts, &logs, (log_revision_t *)logs.elements + list_idx, local_rev, &editor, &editor_baton, revpool);
 		if (dump_do_diff(session, global_rev, ((log_revision_t *)logs.elements)[list_idx].revision, editor, editor_baton, revpool)) {
 			list_free(&logs);
 			return 1;
 		}
 
-		++global_rev;
+		if (opts->verbosity >= 0) {
+			fprintf(stderr, _("* Dumped revision %d\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
+		}
+
+		global_rev = ((log_revision_t *)logs.elements)[list_idx].revision+1;
 		++local_rev;
 		apr_pool_destroy(revpool);
 	} while (global_rev <= opts->end);

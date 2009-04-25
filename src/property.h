@@ -16,40 +16,20 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * 	
- *      file: utils.h
- *      desc: Miscellaneous utility functions
+ *      file: property.h
+ *      desc: Convenience functions for dumping properties 
  */
 
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef PROPERTY_H_
+#define PROPERTY_H_
 
 
-#include "main.h"
+/* Returns the length of a property */
+extern unsigned int property_strlen(const char *key, const char *value);
 
-
-#ifdef USE_TIMING
-
-/* Structure for time measurement */
-typedef struct {
-	int mds;
-} stopwatch_t;
-
-
-/* Creates a stopwatch with the current time  */
-extern stopwatch_t stopwatch_create();
-
-/* Returns the number of seconds passed */
-extern float stopwatch_elapsed(stopwatch_t *watch);
-
-#endif /* USE_TIMING */
-
-/* Returns a canonicalized path that has been allocated using strdup() */
-extern char *utils_canonicalize_strdup(char *path);
-
-/* Recursively removes the contents of a directory and the directory */
-/* itself it 'rmdir' is non-zero */
-extern void utils_rrmdir(const char *path, char rmdir);
+/* Dumps a property to stdout */
+extern void property_dump(const char *key, const char *value);
 
 
 #endif

@@ -35,11 +35,65 @@
 
 #include "utils.h"
 
+#ifdef USE_TIMING
+
+ #include <time.h>
+ #ifdef WIN32
+  #include <windows.h>
+ #else
+  #include <sys/time.h>
+ #endif
+
+
+/*---------------------------------------------------------------------------*/
+/* Local definitions                                                         */
+/*---------------------------------------------------------------------------*/
+
+
+#define MSECS_PER_HOUR 3600000
+#define MSECS_PER_MIN 60000
+
 
 /*---------------------------------------------------------------------------*/
 /* Global functions                                                          */
 /*---------------------------------------------------------------------------*/
 
+
+/* Starts the watch */
+stopwatch_t stopwatch_create()
+{
+	/* NOTE: This is from the Qt 4.4 sources (QTime) */
+	stopwatch_t watch;
+#ifdef WIN32
+	SYSTEMTIME st;
+	memset(&st, 0, sizeof(SYSTEMTIME));
+	GetLocalTime(&st);
+	watch.mds = MSECS_PER_HOUR * st.wHour + MSECS_PER_MIN * st.wMinute + 1000 * st.wSecond + st.wMilliseconds;
+#else
+	struct timeval tv;
+	time_t ltime;
+	struct tm *t;
+	gettimeofday(&tv, NULL);
+	ltime = tv.tv_sec;
+	t = localtime(&ltime);
+	watch.mds = MSECS_PER_HOUR * t->tm_hour + MSECS_PER_MIN * t->tm_min + 1000 * t->tm_sec + tv.tv_usec / 1000;
+#endif
+	return watch;
+}
+
+
+/* Returns the number of milliseconds passed */
+float stopwatch_elapsed(stopwatch_t *watch)
+{
+	stopwatch_t tw = stopwatch_create();
+	int d = tw.mds - watch->mds;
+	if (d < 0) {	/* passed midnight */
+		d += 86400 * 1000;
+	}
+	return ((float)d)/1000;
+}
+
+#endif /* USE_TIMING */
 
 /* Calls vfprintf on stderr using the given arguments */
 int utils_debug(const char *format, ...)

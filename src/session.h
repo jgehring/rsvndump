@@ -39,6 +39,7 @@ typedef struct {
 	const char		*encoded_url;
 	const char		*root;
 	char			*prefix;
+	char			prefix_is_file; /* This is set in dump.c */
 	char			*username;
 	char			*password;
 	int			flags;

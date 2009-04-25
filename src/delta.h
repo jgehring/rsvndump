@@ -29,10 +29,12 @@
 
 #include "dump.h"
 #include "list.h"
+#include "log.h"
+#include "session.h"
 
 
 /* Sets up a delta editor for dumping a revision */
-extern void delta_setup_editor(dump_options_t *options, list_t *logs, svn_revnum_t local_revnum, svn_delta_editor_t **editor, void **editor_baton, apr_pool_t *pool);
+extern void delta_setup_editor(session_t *session, dump_options_t *options, list_t *logs, log_revision_t *log_revision, svn_revnum_t local_revnum, svn_delta_editor_t **editor, void **editor_baton, apr_pool_t *pool);
 
 
 #endif

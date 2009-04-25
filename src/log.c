@@ -58,6 +58,35 @@ typedef struct {
 /*---------------------------------------------------------------------------*/
 
 
+/* Deep-copy of a APR hash */
+static void log_hash_copy_deep(apr_hash_t *dest, apr_hash_t *src, apr_pool_t *pool)
+{
+	if (src == NULL) {
+		return;
+	}
+	dest = apr_hash_copy(pool, src);
+	apr_hash_index_t *idx;
+	DEBUG_MSG("my changed_paths:\n");
+	for (idx = apr_hash_first(pool, dest); idx; idx = apr_hash_next(idx))
+	{
+		void *key;
+		apr_hash_this(idx, &key, NULL, NULL);
+		DEBUG_MSG("   %s\n", (char *)key);
+	}
+
+//	apr_hash_index_t *hi;
+//	for (hi = apr_hash_first(pool, src); hi; hi = apr_hash_next(src)) {
+//		char *ksrc;
+//		svn_log_changed_path_t *vsrc;
+//		
+//		apr_hash_this(hi, NULL, NULL);
+//
+//		svn_log_changed_path_t *vdest = apr_palloc(pool, sizeof(svn_log_changed_path_t));
+//		memcpy(tmp, a
+//	}
+}
+
+
 /* Callback for svn_ra_get_log() */
 static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_revnum_t revision, const char *author, const char *date, const char *message, apr_pool_t *pool)
 {
@@ -72,8 +101,10 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 	if (changed_paths != NULL) {
 		data->log->changed_paths = apr_hash_copy(data->pool, changed_paths);
 	} else {
-		data->log->changed_paths = NULL;
+		data->log->changed_paths = apr_hash_make(data->pool);
 	}
+
+//	log_hash_copy_deep(data->log->changed_paths, changed_paths, data->pool);
 
 	return SVN_NO_ERROR;
 }

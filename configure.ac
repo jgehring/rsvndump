@@ -46,7 +46,7 @@ AC_CHECK_FUNCS([strdup], ,[AC_LIBOBJ([strdup]) USE_COMPAT="yes"])
 AC_CHECK_FUNCS([getpass],  ,[AC_LIBOBJ([getpass]) USE_COMPAT="yes"])
 AC_CHECK_FUNCS([rmdir], ,[AC_LIBOBJ([rmdir]) USE_COMPAT="yes"])
 AC_CHECK_FUNCS([strnlen], ,[AC_LIBOBJ([strnlen]) USE_COMPAT="yes"])
-AC_CHECK_FUNCS([atexit strtol])
+AC_CHECK_FUNCS([atexit strtol gettimeofday])
 if test "$USE_COMPAT" = "yes"; then
   COMPAT_LIBS="../lib/libcompat.a"
   COMPAT_SUBDIRS="lib"

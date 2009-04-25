@@ -221,6 +221,9 @@ session_t session_create()
 	session.ra = NULL;
 	session.url = NULL;
 	session.encoded_url = NULL;
+	session.root = NULL;
+	session.prefix = NULL;
+	session.prefix_is_file = 0;
 	session.username = NULL;
 	session.password = NULL;
 	session.flags = 0x00;
