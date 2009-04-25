@@ -158,8 +158,8 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 /* Subversion delta editor callback */
 static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checksum, apr_pool_t *pool, svn_txdelta_window_handler_t *handler, void **handler_baton)
 {
-	DEBUG_MSG("apply_textdelta()\n");
 	svn_stream_t *stream;
+	DEBUG_MSG("apply_textdelta()\n");
 	svn_stream_for_stdout(&stream, pool);
 	svn_txdelta_to_svndiff(stream, pool, handler, handler_baton);
 	return SVN_NO_ERROR;

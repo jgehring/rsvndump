@@ -247,6 +247,7 @@ char session_open(session_t *session)
 	svn_client_ctx_t *ctx;
 	svn_auth_provider_object_t *provider;
 	apr_array_header_t *providers;
+	const char *root;
 
 	/* Make sure the URL is properly encoded */
 	session->encoded_url = svn_path_uri_encode(svn_path_canonicalize(session->url, session->pool), session->pool);
@@ -306,7 +307,6 @@ char session_open(session_t *session)
 	}
 
 	/* Determine the root (and the prefix) of the URL */
-	const char *root;
 	if ((err = svn_ra_get_repos_root(session->ra, &root, session->pool))) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
