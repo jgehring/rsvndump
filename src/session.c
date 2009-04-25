@@ -304,6 +304,21 @@ char session_open(session_t *session)
 		return 1;
 	}
 
+	/* Determine the root (and the prefix) of the URL */
+	char *root;
+	if ((err = svn_ra_get_repos_root(session->ra, &root, session->pool))) {
+		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
+		return 1;
+	}
+	session->root = root;
+	if (!strcmp(session->encoded_url, root)) {
+		session->prefix = apr_pstrdup(session->pool, "");
+	} else {
+		DEBUG_MSG("%s <-> %s\n", session->encoded_url, root);
+		session->prefix = apr_pstrdup(session->pool, session->encoded_url + strlen(root) + 1);
+	}
+
 	return 0;
 }
 

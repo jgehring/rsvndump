@@ -102,7 +102,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 /* Subversion delta editor callback */
 static svn_error_t *de_add_directory(const char *path, void *parent_baton, const char *copyfrom_path, svn_revnum_t copyfrom_revision, apr_pool_t *dir_pool, void **child_baton)
 {
-	DEBUG_MSG("add_directory(%s)\n");
+	DEBUG_MSG("add_directory(%s)\n", path);
 	return SVN_NO_ERROR;
 }
 
@@ -158,7 +158,10 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 /* Subversion delta editor callback */
 static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checksum, apr_pool_t *pool, svn_txdelta_window_handler_t *handler, void **handler_baton)
 {
-	DEBUG_MSG("change_file_prop()\n");
+	DEBUG_MSG("apply_textdelta()\n");
+	svn_stream_t *stream;
+	svn_stream_for_stdout(&stream, pool);
+	svn_txdelta_to_svndiff(stream, pool, handler, handler_baton);
 	return SVN_NO_ERROR;
 }
 
@@ -226,6 +229,44 @@ static void dump_setup_editor(svn_delta_editor_t **editor, apr_pool_t *pool)
 }
 
 
+/* Runs a diff against two revisions */
+static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest, const svn_delta_editor_t *editor, void *editor_baton, apr_pool_t *pool)
+{
+	const svn_ra_reporter2_t *reporter;
+	void *report_baton;
+	svn_error_t *err;
+	apr_pool_t *subpool = svn_pool_create(pool);
+
+	DEBUG_MSG("diffing: %s | %s\n", session->root, session->prefix);
+	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, session->prefix, TRUE, FALSE, TRUE, session->root, editor, editor_baton, subpool);
+	if (err) {
+		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
+		svn_pool_destroy(subpool);
+		return 1;
+	}
+
+	err = reporter->set_path(report_baton, "", src, FALSE, NULL, subpool);
+	if (err) {
+		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
+		svn_pool_destroy(subpool);
+		return 1;
+	}
+
+	err = reporter->finish_report(report_baton, subpool);
+	if (err) {
+		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_error_clear(err);
+		svn_pool_destroy(subpool);
+		return 1;
+	}
+
+	svn_pool_destroy(subpool);
+	return 0;
+}
+
+
 /* Determines the HEAD revision of a repository */
 static char dump_determine_head(session_t *session, svn_revnum_t *rev)
 {
@@ -237,6 +278,11 @@ static char dump_determine_head(session_t *session, svn_revnum_t *rev)
 	if (err) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
+		svn_pool_destroy(pool);
+		return 1;
+	}
+	if (dirent == NULL) {
+		fprintf(stderr, _("ERROR: URL '%s' not found in HEAD revision\n"), session->url);
 		svn_pool_destroy(pool);
 		return 1;
 	}
@@ -308,6 +354,7 @@ char dump(session_t *session, dump_options_t *opts)
 	list_t logs;
 	char logs_fetched = 0;
 	svn_revnum_t global_rev, local_rev;
+	int list_idx;
 
 	/*
 	 * First, decide wether the whole repositry log should be fetched
@@ -324,7 +371,10 @@ char dump(session_t *session, dump_options_t *opts)
 	}
 
 	/* Determine end revision if neccessary */
-	if (opts->end == -1) {
+	if (logs_fetched) {
+		opts->end = ((log_revision_t *)logs.elements)[logs.size-1].revision;
+	}
+	else if (opts->end == -1) {
 		if (dump_determine_head(session, &opts->end)) {
 			list_free(&logs);
 			return 1;
@@ -350,9 +400,11 @@ char dump(session_t *session, dump_options_t *opts)
 	/* Pre-dumping initialization */
 	global_rev = opts->start;
 	local_rev = 0;
+	list_idx = 0;
 
 	/* Start dumping */
 	do {
+		svn_delta_editor_t *editor;
 		apr_pool_t *revpool = svn_pool_create(session->pool);
 
 		if (logs_fetched == 0) {
@@ -363,10 +415,20 @@ char dump(session_t *session, dump_options_t *opts)
 
 			}
 			list_append(&logs, &log);
+			list_idx = logs.size-1;
+		} else {
+			++list_idx;
+		}
+
+		/* Setup the delta editor and run a diff */
+		dump_setup_editor(&editor, revpool);
+		if (dump_do_diff(session, global_rev, ((log_revision_t *)logs.elements)[list_idx].revision, editor, NULL, revpool)) {
+			list_free(&logs);
+			return 1;
 		}
 
 		++global_rev;
-
+		++local_rev;
 		apr_pool_destroy(revpool);
 	} while (global_rev <= opts->end);
 
