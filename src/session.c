@@ -23,6 +23,7 @@
 
 #include <svn_auth.h>
 #include <svn_client.h>
+#include <svn_config.h>
 #include <svn_fs.h>
 #include <svn_path.h>
 #include <svn_pools.h>
