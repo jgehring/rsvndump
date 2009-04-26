@@ -53,9 +53,15 @@ static void dump_revision_header(log_revision_t *revision, svn_revnum_t local_re
 	int props_length = 0;
 
 	/* Determine length of revision properties */
-	props_length += property_strlen("svn:log", revision->message);
-	props_length += property_strlen("svn:author", revision->author);
-	props_length += property_strlen("svn:date", revision->date);
+	if (revision->message != NULL) {
+		props_length += property_strlen("svn:log", revision->message);
+	}
+	if (revision->author != NULL) {
+		props_length += property_strlen("svn:author", revision->author);
+	}
+	if (revision->date != NULL) {
+		props_length += property_strlen("svn:date", revision->date);
+	}
 	if (props_length > 0) {
 		props_length += PROPS_END_LEN;
 	}
@@ -65,9 +71,15 @@ static void dump_revision_header(log_revision_t *revision, svn_revnum_t local_re
 	printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);
 	
 	if (props_length > 0) {
-		property_dump("svn:log", revision->message);
-		property_dump("svn:author", revision->author);
-		property_dump("svn:date", revision->date);
+		if (revision->message != NULL) {
+			property_dump("svn:log", revision->message);
+		}
+		if (revision->author != NULL) {
+			property_dump("svn:author", revision->author);
+		}
+		if (revision->date != NULL) {
+			property_dump("svn:date", revision->date);
+		}
 
 		printf(PROPS_END"\n");
 	}
