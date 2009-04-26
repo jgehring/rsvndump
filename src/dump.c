@@ -94,7 +94,7 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 		return 1;
 	}
 
-	err = reporter->set_path(report_baton, "", src, FALSE, NULL, subpool);
+	err = reporter->set_path(report_baton, "", src, (src == dest), NULL, subpool);
 	if (err) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
@@ -319,6 +319,7 @@ char dump(session_t *session, dump_options_t *opts)
 	do {
 		svn_delta_editor_t *editor;
 		void *editor_baton;
+		svn_revnum_t diff_rev;
 		apr_pool_t *revpool = svn_pool_create(session->pool);
 
 		if (logs_fetched == 0) {
@@ -337,9 +338,25 @@ char dump(session_t *session, dump_options_t *opts)
 		/* Dump the revision header */
 		dump_revision_header((log_revision_t *)logs.elements + list_idx, local_rev, opts);
 
+		/* Determine the diff base */
+		diff_rev = global_rev - 1;
+		if (diff_rev < 0) {
+			diff_rev = 0;
+		}
+		if ((strlen(session->prefix) > 0) && diff_rev < opts->start) {
+			/* TODO: This isn't working well with single files
+			 * and a revision range */
+			if (session->file) {
+				diff_rev = opts->end;
+			} else {
+				diff_rev = opts->start;
+			}
+		}
+		DEBUG_MSG("global = %ld, diff = %ld\n", global_rev, diff_rev);
+
 		/* Setup the delta editor and run a diff */
 		delta_setup_editor(session, opts, &logs, (log_revision_t *)logs.elements + list_idx, local_rev, &editor, &editor_baton, revpool);
-		if (dump_do_diff(session, (global_rev > 0 ? global_rev-1 : global_rev), ((log_revision_t *)logs.elements)[list_idx].revision, editor, editor_baton, revpool)) {
+		if (dump_do_diff(session, diff_rev, ((log_revision_t *)logs.elements)[list_idx].revision, editor, editor_baton, revpool)) {
 			list_free(&logs);
 			return 1;
 		}

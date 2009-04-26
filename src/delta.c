@@ -122,6 +122,65 @@ static de_node_baton_t *delta_create_node(de_baton_t *baton, apr_pool_t *pool)
 }
 
 
+/* Checks if a node can be dumped as a copy */
+static char delta_check_copy(de_node_baton_t *node)
+{
+	session_t *session = node->de_baton->session;
+	dump_options_t *opts = node->de_baton->opts;
+	list_t *logs = node->de_baton->logs;
+	svn_revnum_t local_revnum = node->de_baton->local_revnum;
+
+	/* First, check if the source is reachable, i.e. can be found under
+	   the current session root */
+	if (!strcmp(session->prefix, node->copyfrom_path)) {
+		svn_revnum_t r, rr = -1;
+		svn_revnum_t mind = LONG_MAX;
+
+		/* If we sync the revision numbers, the copy-from revision is correct */
+		if (opts->flags & DF_KEEP_REVNUMS) {
+			node->use_copy = 1;
+			return 0;
+		}
+
+		/* This is good news: we already dumped the source. Let's figure
+		   out at which revision */
+
+		/* Find the best matching revision.
+		   This will work, because if we have not dumped the requested
+		   revision itself, the source of the copy has not changed between
+		   the best matching and the requested revision. */
+		for (r = local_revnum-1; r > 0; r--) {
+			/* Yes, the +1 is needed */
+			svn_revnum_t d = (node->copyfrom_revision - (((log_revision_t *)logs->elements)[r].revision))+1;
+			DEBUG_MSG("delta_check_copy: req: %ld cur: %ld, local: %ld\n", node->copyfrom_revision, (((log_revision_t *)logs->elements)[r].revision), r);
+			/* TODO: This can be optimized: Once we notice that the distance to the
+			   requested revision gets bigger, it should be safe to break out of this
+			   loop. */
+			if (d >= 0 && d < mind) {
+				mind = d;
+				rr = r;
+				if (d <= 1) {
+					break;
+				}
+			}
+		}
+
+		node->copyfrom_revision = rr;
+		node->use_copy = 1;
+		DEBUG_MSG("delta_check_copy: using local %ld\n", rr);
+	} else {
+		/* Hm, this is bad. we have to ignore the copy operation and
+		   simulate it by simple dumping it the node as being added.
+		   This will work fine for single files, but directories
+		   must be dumped recursively. */
+		node->action = NA_ADD;
+		node->use_copy = 0;
+	}
+
+	return 0;
+}
+
+
 /* Dumps a node */
 static char delta_dump_node(de_node_baton_t *node)
 {
@@ -172,7 +231,22 @@ static char delta_dump_node(de_node_baton_t *node)
 		return 0;
 	}
 
-	/* TODO: Check for potential copy */
+	/* Check for potential copy */
+	if (node->copyfrom_path != NULL) {
+		delta_check_copy(node);
+		if (node->use_copy) {
+			int offset = strlen(opts->prefix);
+			while (*(node->copyfrom_path+offset) == '/') {
+				++offset;
+			}
+			printf("%s: %ld\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_REV, node->copyfrom_revision);
+			if (opts->prefix != NULL) {
+				printf("%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, opts->prefix, node->copyfrom_path+offset);
+			} else {
+				printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, node->copyfrom_path+offset);
+			}
+		}
+	}
 
 	/* Dump properties & content */
 	prop_len = 0;
@@ -455,25 +529,6 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 }
 
 
-/* Applies a text delta */
-//static svn_error_t *de_window_handler(svn_txdelta_window_t *window, void *baton)
-//{
-//	DEBUG_MSG("here i am, a window handler\n");
-//	de_node_baton_t *node = (de_node_baton_t *)file_baton;
-//	apr_pool_t *pool = node->pool;
-//
-//	if (window == NULL) {
-//		/* End of delta windows: clean up */
-//		return;
-//	}
-//
-//	/* This stuff is mostly taken from */
-//	svn_stream_t *stream;
-//	svn_stream_for_stdout(&stream, pool);
-//	svn_txdelta_to_svndiff(stream, pool, handler, handler_baton);
-//}
-
-
 /* Subversion delta editor callback */
 static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checksum, apr_pool_t *pool, svn_txdelta_window_handler_t *handler, void **handler_baton)
 {
@@ -494,7 +549,6 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 	if (opts->flags & DF_USE_DELTAS) {
 		/* When dumping in delta mode, we just need to save the delta */
 		svn_txdelta_to_svndiff(dest_stream, pool, handler, handler_baton);
-		DEBUG_MSG("wrote delta: %s -> %s\n", node->path, node->filename);
 	} else {
 		/* Else, we need to update our local copy */
 		char *filename = apr_hash_get(delta_hash, node->path, APR_HASH_KEY_STRING);
@@ -505,12 +559,9 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 			src_stream = svn_stream_from_aprfile2(src_file, FALSE, pool);
 		}
 
-		DEBUG_MSG("applying txdelta to %s\n", filename);
-
 		svn_txdelta_apply(src_stream, dest_stream, NULL, node->path, pool, handler, handler_baton);
 		apr_hash_set(delta_hash, apr_pstrdup(delta_pool, node->path), APR_HASH_KEY_STRING, apr_pstrdup(delta_pool, node->filename));
 		node->old_filename = filename;
-		DEBUG_MSG("set file mapping: %s -> %s\n", node->path, node->filename);
 	}
 
 #ifdef USE_TIMING
