@@ -21,6 +21,9 @@
  */
 
 
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <svn_delta.h>
 #include <svn_pools.h>
 #include <svn_repos.h>
@@ -33,6 +36,7 @@
 #include "dump.h"
 #include "list.h"
 #include "log.h"
+#include "property.h"
 #include "session.h"
 #include "utils.h"
 
@@ -66,8 +70,10 @@ enum node_actions {
 /* Node baton */
 typedef struct {
 	de_baton_t		*de_baton;
+	apr_pool_t		*pool;
 	char			*path;
 	char			*filename;
+	char			*old_filename;
 	int			action;
 	svn_node_kind_t		kind;
 	apr_hash_t		*properties;
@@ -105,8 +111,11 @@ static de_node_baton_t *delta_create_node(de_baton_t *baton, apr_pool_t *pool)
 {
 	de_node_baton_t *node = apr_palloc(pool, sizeof(de_node_baton_t));
 	node->de_baton = baton;
+	node->pool = pool;
 	node->properties = apr_hash_make(pool);
 	node->copyfrom_path = NULL;
+	node->filename = NULL;
+	node->old_filename = NULL;
 	node->use_copy = 0;
 	node->dumped = 0;
 	return node;
@@ -116,9 +125,9 @@ static de_node_baton_t *delta_create_node(de_baton_t *baton, apr_pool_t *pool)
 /* Dumps a node */
 static char delta_dump_node(de_node_baton_t *node)
 {
-	session_t *session = node->de_baton->session;
 	dump_options_t *opts = node->de_baton->opts;
 	char *path = node->path;
+	unsigned long prop_len, content_len;
 
 	/* If the node is a directory and no properties have been changed,
 	   we don't need to dump it */
@@ -127,12 +136,113 @@ static char delta_dump_node(de_node_baton_t *node)
 //		return 0;
 //	}
 
+	/* Dump node path */
 	if (opts->prefix != NULL) {
 		printf("%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_PATH, opts->prefix, path);
 	} else {
 		printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_PATH, path);
 	}
 
+	/* Dump node kind */
+	if (node->action != NA_DELETE) {
+		printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_KIND, node->kind == svn_node_file ? "file" : "dir");
+	}
+
+	/* Dump action */
+	printf("%s: ", SVN_REPOS_DUMPFILE_NODE_ACTION ); 
+	switch (node->action) {
+		case NA_CHANGE:
+			printf("change\n"); 
+			break;
+		case NA_ADD:
+			printf("add\n"); 
+			break;
+		case NA_DELETE:
+			printf("delete\n"); 
+			break;
+		case NA_REPLACE:
+			printf("replace\n"); 
+			break;
+	}
+
+	/* If the node has been deleted, we can finish now */
+	if (node->action == NA_DELETE) {
+		printf("\n\n");
+		node->dumped = 1;
+		return 0;
+	}
+
+	/* TODO: Check for potential copy */
+
+	/* Dump properties & content */
+	prop_len = 0;
+	content_len = 0;
+
+	/* Dump property size */
+	apr_hash_index_t *hi;
+	for (hi = apr_hash_first(node->pool, node->properties); hi; hi = apr_hash_next(hi)) {
+		const char *key;
+		char *value;
+		apr_hash_this(hi, (const void **)&key, NULL, (void **)&value);
+		prop_len += property_strlen(key, value);
+	}
+	if ((prop_len > 0) || (node->action = NA_ADD)) {
+		prop_len += PROPS_END_LEN;
+		printf("%s: %lu\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, prop_len);
+	}
+
+	/* Dump content size */
+	if (node->kind == svn_node_file) {
+		struct stat st;
+		if (stat(node->filename, &st)) {
+			DEBUG_MSG("dump_delta_node: FATAL: cannot stat %s\n", node->filename);
+			return 1;
+		}
+		content_len = st.st_size;
+
+		if (opts->flags & DF_USE_DELTAS) {
+			printf("%s: true\n", SVN_REPOS_DUMPFILE_TEXT_DELTA);
+		}
+		printf("%s: %lu\n", SVN_REPOS_DUMPFILE_TEXT_CONTENT_LENGTH, content_len);
+	}
+	printf("%s: %lu\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, (unsigned long)prop_len+content_len);
+
+	/* Dump properties */
+	if ((prop_len > 0) || (node->action = NA_ADD)) {
+		for (hi = apr_hash_first(node->pool, node->properties); hi; hi = apr_hash_next(hi)) {
+			const char *key;
+			char *value;
+			apr_hash_this(hi, (const void **)&key, NULL, (void **)&value);
+			property_dump(key, value);
+		}
+		printf(PROPS_END);
+	}
+
+	/* Dump content */
+	if (node->kind == svn_node_file) {
+		FILE *f;
+		char *buffer = malloc(2049);
+		size_t s;
+
+		f = fopen(node->filename, "rb");
+		if (f == NULL) {
+			fprintf(stderr, _("ERROR: Failed to open %s.\n"), node->filename);
+			free(buffer);
+			return 1;
+		}
+		while ((s = fread(buffer, 1, 2048, f))) {
+			fwrite(buffer, 1, s, stdout);
+		}
+		free(buffer);
+		
+		/* Close and remove temporary file */
+		fclose(f);
+		if (opts->flags & DF_USE_DELTAS) {
+			unlink(node->filename);
+		}
+	}
+
+	printf("\n\n");
 	node->dumped = 1;
 	return 0;
 }
@@ -169,6 +279,8 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 {
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
 	dump_options_t *opts = parent->de_baton->opts;
+	
+	DEBUG_MSG("de_delete_entry(%s@%ld)\n", path, revision);
 
 	/* Check if the parent dump needs to be dumped */
 	if (!parent->dumped) {
@@ -253,7 +365,7 @@ static svn_error_t *de_change_dir_prop(void *dir_baton, const char *name, const 
 		return SVN_NO_ERROR;
 	}
 
-	apr_hash_set(((de_node_baton_t *)dir_baton)->properties, name, APR_HASH_KEY_STRING, value->data);
+	apr_hash_set(((de_node_baton_t *)dir_baton)->properties, apr_pstrdup(pool, name), APR_HASH_KEY_STRING, apr_pstrdup(pool, value->data));
 
 	return SVN_NO_ERROR;
 }
@@ -292,6 +404,8 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		delta_dump_node(parent);
 	}
 
+	DEBUG_MSG("de_add_file(%s)\n", path);
+
 	node = delta_create_node(parent->de_baton, file_pool);
 	node->kind = svn_node_file;
 	node->path = apr_pstrdup(file_pool, path);
@@ -307,6 +421,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 	svn_log_changed_path_t *log = apr_hash_get(node->de_baton->log_revision->changed_paths, hpath, APR_HASH_KEY_STRING);
 	if (log != NULL) {
 		if (log->copyfrom_path != NULL) {
+			DEBUG_MSG("copyfrom_path = %s\n", log->copyfrom_path);
 			node->copyfrom_path = apr_pstrdup(file_pool, log->copyfrom_path);
 		}
 		node->copyfrom_revision = log->copyfrom_rev;
@@ -323,6 +438,8 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
 	de_node_baton_t *node;
 
+	DEBUG_MSG("de_open_file(%s)\n", path);
+
 	/* Check if the parent node needs to be dumped */
 	if (!parent->dumped) {
 		delta_dump_node(parent);
@@ -338,11 +455,30 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 }
 
 
+/* Applies a text delta */
+//static svn_error_t *de_window_handler(svn_txdelta_window_t *window, void *baton)
+//{
+//	DEBUG_MSG("here i am, a window handler\n");
+//	de_node_baton_t *node = (de_node_baton_t *)file_baton;
+//	apr_pool_t *pool = node->pool;
+//
+//	if (window == NULL) {
+//		/* End of delta windows: clean up */
+//		return;
+//	}
+//
+//	/* This stuff is mostly taken from */
+//	svn_stream_t *stream;
+//	svn_stream_for_stdout(&stream, pool);
+//	svn_txdelta_to_svndiff(stream, pool, handler, handler_baton);
+//}
+
+
 /* Subversion delta editor callback */
 static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checksum, apr_pool_t *pool, svn_txdelta_window_handler_t *handler, void **handler_baton)
 {
-	apr_file_t *file;
-	svn_stream_t *stream;
+	apr_file_t *src_file = NULL, *dest_file = NULL;
+	svn_stream_t *src_stream, *dest_stream;
 	de_node_baton_t *node = (de_node_baton_t *)file_baton;
 	dump_options_t *opts = node->de_baton->opts;
 #ifdef USE_TIMING
@@ -352,30 +488,29 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 	/* Create a new temporary file to write to */
 	node->filename = apr_palloc(pool, strlen(opts->temp_dir)+8);
 	sprintf(node->filename, "%s/XXXXXX", opts->temp_dir);
-	apr_file_mktemp(&file, node->filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
-	stream = svn_stream_from_aprfile2(file, FALSE, pool);
+	apr_file_mktemp(&dest_file, node->filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
+	dest_stream = svn_stream_from_aprfile2(dest_file, FALSE, pool);
 
 	if (opts->flags & DF_USE_DELTAS) {
 		/* When dumping in delta mode, we just need to save the delta */
-		svn_txdelta_to_svndiff(stream, pool, handler, handler_baton);
+		svn_txdelta_to_svndiff(dest_stream, pool, handler, handler_baton);
+		DEBUG_MSG("wrote delta: %s -> %s\n", node->path, node->filename);
 	} else {
 		/* Else, we need to update our local copy */
-		svn_stream_t *src;
 		char *filename = apr_hash_get(delta_hash, node->path, APR_HASH_KEY_STRING);
 		if (filename == NULL) {
-			src = svn_stream_empty(pool);
+			src_stream = svn_stream_empty(pool);
 		} else {
-			apr_file_open(&file, filename, APR_READ | APR_WRITE | APR_EXCL, 0600, pool);
-			src = svn_stream_from_aprfile2(file, FALSE, pool);
+			apr_file_open(&src_file, filename, APR_READ | APR_EXCL, 0600, pool);
+			src_stream = svn_stream_from_aprfile2(src_file, FALSE, pool);
 		}
 
-		svn_txdelta_apply(src, stream, NULL, node->path, pool, handler, handler_baton);
-		apr_hash_set(delta_hash, node->path, APR_HASH_KEY_STRING, apr_pstrdup(delta_pool, node->filename));
+		DEBUG_MSG("applying txdelta to %s\n", filename);
 
-		/* We can safely remove the previous file now */
-		if (filename) {
-			unlink(filename);
-		}
+		svn_txdelta_apply(src_stream, dest_stream, NULL, node->path, pool, handler, handler_baton);
+		apr_hash_set(delta_hash, apr_pstrdup(delta_pool, node->path), APR_HASH_KEY_STRING, apr_pstrdup(delta_pool, node->filename));
+		node->old_filename = filename;
+		DEBUG_MSG("set file mapping: %s -> %s\n", node->path, node->filename);
 	}
 
 #ifdef USE_TIMING
@@ -393,7 +528,9 @@ static svn_error_t *de_change_file_prop(void *file_baton, const char *name, cons
 		return SVN_NO_ERROR;
 	}
 
-	apr_hash_set(((de_node_baton_t *)file_baton)->properties, name, APR_HASH_KEY_STRING, value->data);
+	DEBUG_MSG("de_change_file_prop(%s) %s = %s\n", ((de_node_baton_t *)file_baton)->path, name, value->data);
+
+	apr_hash_set(((de_node_baton_t *)file_baton)->properties, apr_pstrdup(pool, name), APR_HASH_KEY_STRING, apr_pstrdup(pool, value->data));
 
 	return SVN_NO_ERROR;
 }
@@ -403,6 +540,11 @@ static svn_error_t *de_change_file_prop(void *file_baton, const char *name, cons
 static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, apr_pool_t *pool)
 {
 	de_node_baton_t *node = (de_node_baton_t *)file_baton;
+
+	/* Remove the old file if neccessary */
+	if (node->old_filename) {
+		unlink(node->old_filename);
+	}
 
 	/* Check if the this node needs to be dumped */
 	if (!node->dumped) {
@@ -434,6 +576,7 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 static svn_error_t *de_abort_edit(void *edit_baton, apr_pool_t *pool)
 {
 	DEBUG_MSG("abort_edit\n");
+//	exit(1);
 	return SVN_NO_ERROR;
 }
 

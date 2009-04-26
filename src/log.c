@@ -58,32 +58,21 @@ typedef struct {
 /*---------------------------------------------------------------------------*/
 
 
-/* Deep-copy of a APR hash */
-static void log_hash_copy_deep(apr_hash_t *dest, apr_hash_t *src, apr_pool_t *pool)
+/* Performs a deep copy of a hash */
+static void log_hash_deep_copy(apr_hash_t *dest, apr_hash_t *src, apr_pool_t *pool)
 {
+	apr_hash_index_t *hi;
 	if (src == NULL) {
 		return;
 	}
-	dest = apr_hash_copy(pool, src);
-	apr_hash_index_t *idx;
-	DEBUG_MSG("my changed_paths:\n");
-	for (idx = apr_hash_first(pool, dest); idx; idx = apr_hash_next(idx))
-	{
-		void *key;
-		apr_hash_this(idx, &key, NULL, NULL);
-		DEBUG_MSG("   %s\n", (char *)key);
+	for (hi = apr_hash_first(pool, dest); hi; hi = apr_hash_next(hi)) {
+		const char *key;
+		svn_log_changed_path_t *svalue, *dvalue;
+		apr_hash_this(hi, (const void **)&key, NULL, (void **)&svalue);
+		dvalue = apr_palloc(pool, sizeof(svn_log_changed_path_t));
+		memcpy(dvalue, svalue, sizeof(svn_log_changed_path_t));
+		apr_hash_set(dest, apr_pstrdup(pool, key), APR_HASH_KEY_STRING, dvalue);
 	}
-
-//	apr_hash_index_t *hi;
-//	for (hi = apr_hash_first(pool, src); hi; hi = apr_hash_next(src)) {
-//		char *ksrc;
-//		svn_log_changed_path_t *vsrc;
-//		
-//		apr_hash_this(hi, NULL, NULL);
-//
-//		svn_log_changed_path_t *vdest = apr_palloc(pool, sizeof(svn_log_changed_path_t));
-//		memcpy(tmp, a
-//	}
 }
 
 
@@ -98,13 +87,9 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 	data->log->author = apr_pstrdup(data->pool, author);
 	data->log->date = apr_pstrdup(data->pool, date);
 	data->log->message = apr_pstrdup(data->pool, message);
-	if (changed_paths != NULL) {
-		data->log->changed_paths = apr_hash_copy(data->pool, changed_paths);
-	} else {
-		data->log->changed_paths = apr_hash_make(data->pool);
-	}
+	data->log->changed_paths = apr_hash_make(data->pool);
 
-//	log_hash_copy_deep(data->log->changed_paths, changed_paths, data->pool);
+	log_hash_deep_copy(data->log->changed_paths, changed_paths, data->pool);
 
 	return SVN_NO_ERROR;
 }

@@ -36,6 +36,7 @@
 #include "delta.h"
 #include "list.h"
 #include "log.h"
+#include "property.h"
 #include "utils.h"
 
 #include "dump.h"
@@ -84,6 +85,7 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 	stopwatch_t watch = stopwatch_create();
 #endif
 
+	DEBUG_MSG("diffing %d against %d\n", dest, src);
 	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, (session->file ? session->file : ""), TRUE, TRUE, TRUE, session->encoded_url, editor, editor_baton, subpool);
 	if (err) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
@@ -92,7 +94,7 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 		return 1;
 	}
 
-	err = reporter->set_path(report_baton, "", src, TRUE, NULL, subpool);
+	err = reporter->set_path(report_baton, "", src, FALSE, NULL, subpool);
 	if (err) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
@@ -337,13 +339,13 @@ char dump(session_t *session, dump_options_t *opts)
 
 		/* Setup the delta editor and run a diff */
 		delta_setup_editor(session, opts, &logs, (log_revision_t *)logs.elements + list_idx, local_rev, &editor, &editor_baton, revpool);
-		if (dump_do_diff(session, global_rev, ((log_revision_t *)logs.elements)[list_idx].revision, editor, editor_baton, revpool)) {
+		if (dump_do_diff(session, (global_rev > 0 ? global_rev-1 : global_rev), ((log_revision_t *)logs.elements)[list_idx].revision, editor, editor_baton, revpool)) {
 			list_free(&logs);
 			return 1;
 		}
 
 		if (opts->verbosity >= 0) {
-			fprintf(stderr, _("* Dumped revision %d\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
+			fprintf(stderr, _("* Dumped revision %ld\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
 		}
 
 		global_rev = ((log_revision_t *)logs.elements)[list_idx].revision+1;
