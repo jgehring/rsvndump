@@ -87,7 +87,7 @@ static void dump_revision_header(log_revision_t *revision, svn_revnum_t local_re
 
 
 /* Runs a diff against two revisions */
-static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest, const svn_delta_editor_t *editor, void *editor_baton, apr_pool_t *pool)
+static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest, char start_empty, const svn_delta_editor_t *editor, void *editor_baton, apr_pool_t *pool)
 {
 	const svn_ra_reporter2_t *reporter;
 	void *report_baton;
@@ -110,7 +110,7 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 		return 1;
 	}
 
-	err = reporter->set_path(report_baton, "", src, (src == dest), NULL, subpool);
+	err = reporter->set_path(report_baton, "", src, start_empty, NULL, subpool);
 	if (err) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
@@ -141,7 +141,7 @@ static char dump_determine_head(session_t *session, svn_revnum_t *rev)
 	svn_dirent_t *dirent;
 	apr_pool_t *pool = svn_pool_create(session->pool);
 
-	err = svn_ra_stat(session->ra, "",  -1, &dirent, session->pool);
+	err = svn_ra_stat(session->ra, "",  *rev, &dirent, session->pool);
 	if (err) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
@@ -243,7 +243,7 @@ char dump(session_t *session, dump_options_t *opts)
 	svn_revnum_t global_rev, local_rev;
 	int list_idx;
 
-	/* First, determine or check the start and end revision */
+	/* Determine the start and end revision */
 	if (opts->end == -1) {
 		if (dump_determine_head(session, &opts->end)) {
 			return 1;
@@ -260,6 +260,9 @@ char dump(session_t *session, dump_options_t *opts)
 			}
 		}
 	} else {
+		if (dump_determine_head(session, &opts->end)) {
+			return 1;
+		}
 		/* Check if path is present in given start revision */
 		if (dump_check_path(session, "", opts->start) == svn_node_none) {
 			fprintf(stderr, _("ERROR: URL '%s' not found in revision %ld\n"), session->url, opts->start);
@@ -298,8 +301,6 @@ char dump(session_t *session, dump_options_t *opts)
 	/* Determine end revision if neccessary */
 	if (logs_fetched) {
 		opts->end = ((log_revision_t *)logs.elements)[logs.size-1].revision;
-	}
-	else if (opts->end == -1) {
 	}
 
 	/* Determine start revision if neccessary */
@@ -364,7 +365,6 @@ char dump(session_t *session, dump_options_t *opts)
 			/* TODO: This isn't working well with single files
 			 * and a revision range */
 			if (session->file) {
-				diff_rev = ((log_revision_t *)logs.elements)[list_idx].revision;
 				diff_rev = opts->end;
 			} else {
 				diff_rev = opts->start;
@@ -377,7 +377,7 @@ char dump(session_t *session, dump_options_t *opts)
 
 		/* Setup the delta editor and run a diff */
 		delta_setup_editor(session, opts, &logs, (log_revision_t *)logs.elements + list_idx, local_rev, &editor, &editor_baton, revpool);
-		if (dump_do_diff(session, diff_rev, ((log_revision_t *)logs.elements)[list_idx].revision, editor, editor_baton, revpool)) {
+		if (dump_do_diff(session, diff_rev, ((log_revision_t *)logs.elements)[list_idx].revision, (diff_rev == opts->start ? 1 : 0), editor, editor_baton, revpool)) {
 			list_free(&logs);
 			return 1;
 		}

@@ -11,11 +11,11 @@
   if this can be fixed
 > Manually output revision 0 if we're dumping a subdirectory
 > Replace APPNAME in svn_handle_errror2 with _("ERROR")
-> Check compilation with svn 1.6, 1.5 and 1.4
 
 > Further validate copy handling and subdirectory dumping
 
 > Rewrite manpage
+> Check compilation with svn 1.6, 1.5 and 1.4
 
 
 == Schedule for 0.4.5 ==
