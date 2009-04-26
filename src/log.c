@@ -42,6 +42,7 @@
 /* A baton for log_receiver() */
 typedef struct {
 	log_revision_t	*log;
+	session_t	*session;
 	apr_pool_t	*pool;
 } log_receiver_baton_t;
 
@@ -49,6 +50,7 @@ typedef struct {
 /* A baton for log_receiver_list() */
 typedef struct {
 	list_t		*list;
+	session_t	*session;
 	apr_pool_t	*pool;
 } log_receiver_list_baton_t;
 
@@ -58,41 +60,10 @@ typedef struct {
 /*---------------------------------------------------------------------------*/
 
 
-/* Performs a deep copy of a hash */
-static void log_hash_deep_copy(apr_hash_t *dest, apr_hash_t *src, apr_pool_t *pool)
-{
-	apr_hash_index_t *hi;
-	if (src == NULL) {
-		return;
-	}
-	for (hi = apr_hash_first(pool, src); hi; hi = apr_hash_next(hi)) {
-		const char *key;
-		svn_log_changed_path_t *svalue, *dvalue;
-		apr_hash_this(hi, (const void **)&key, NULL, (void **)&svalue);
-
-		dvalue = apr_palloc(pool, sizeof(svn_log_changed_path_t));
-		dvalue->action = svalue->action;
-		if (svalue->copyfrom_path != NULL) {
-			dvalue->copyfrom_path = apr_pstrdup(pool, svalue->copyfrom_path);
-		} else {
-			dvalue->copyfrom_path = NULL;
-		}
-		dvalue->copyfrom_rev = svalue->copyfrom_rev;
-
-		apr_hash_set(dest, apr_pstrdup(pool, key), APR_HASH_KEY_STRING, dvalue);
-		DEBUG_MSG("%c %s", dvalue->action, key);
-		if (dvalue->copyfrom_path != NULL) {
-			DEBUG_MSG(" (from %s@%ld)", dvalue->copyfrom_path, dvalue->copyfrom_rev);
-		}
-		DEBUG_MSG("\n");
-	}
-}
-
-
 /* Callback for svn_ra_get_log() */
 static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_revnum_t revision, const char *author, const char *date, const char *message, apr_pool_t *pool)
 {
-	log_receiver_baton_t *data= (log_receiver_baton_t *)baton;
+	log_receiver_baton_t *data = (log_receiver_baton_t *)baton;
 
 //	DEBUG_MSG("log_receiver(): invoked for revision %ld\n", revision);
 
@@ -102,7 +73,41 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 	data->log->message = apr_pstrdup(data->pool, message);
 	data->log->changed_paths = apr_hash_make(data->pool);
 
-	log_hash_deep_copy(data->log->changed_paths, changed_paths, data->pool);
+	/* Deep-copy the changed_paths hash */
+	apr_hash_index_t *hi;
+	if (changed_paths == NULL) {
+		DEBUG_MSG("changed_paths is NULL\n");
+		return SVN_NO_ERROR;
+	}
+	for (hi = apr_hash_first(pool, changed_paths); hi; hi = apr_hash_next(hi)) {
+		const char *key;
+		svn_log_changed_path_t *svalue, *dvalue;
+		apr_hash_this(hi, (const void **)&key, NULL, (void **)&svalue);
+
+		dvalue = apr_palloc(data->pool, sizeof(svn_log_changed_path_t));
+		dvalue->action = svalue->action;
+		if (svalue->copyfrom_path != NULL) {
+			dvalue->copyfrom_path = apr_pstrdup(data->pool, svalue->copyfrom_path);
+		} else {
+			dvalue->copyfrom_path = NULL;
+		}
+		dvalue->copyfrom_rev = svalue->copyfrom_rev;
+
+		/* Strip the prefix (or the leading slash) from the path */
+		if (*data->session->prefix != '\0') {
+			key += strlen(data->session->prefix) + 2;
+		} else {
+			key += 1;
+		}
+		apr_hash_set(data->log->changed_paths, apr_pstrdup(data->pool, key), APR_HASH_KEY_STRING, dvalue);
+
+		/* A little debugging */
+		DEBUG_MSG("%c %s", dvalue->action, key);
+		if (dvalue->copyfrom_path != NULL) {
+			DEBUG_MSG(" (from %s@%ld)", dvalue->copyfrom_path, dvalue->copyfrom_rev);
+		}
+		DEBUG_MSG("\n");
+	}
 
 	return SVN_NO_ERROR;
 }
@@ -116,6 +121,7 @@ static svn_error_t *log_receiver_list(void *baton, apr_hash_t *changed_paths, sv
 	log_receiver_baton_t receiver_baton;
 
 	receiver_baton.log = &log;
+	receiver_baton.session = data->session;
 	receiver_baton.pool = data->pool;
 	log_receiver(&receiver_baton, changed_paths, revision, author, date, message, pool);
 	list_append(data->list, &log);
@@ -145,6 +151,7 @@ char log_get_range(session_t *session, svn_revnum_t *start, svn_revnum_t *end, i
 
 	list = list_create(sizeof(log_revision_t));
 	baton.list = &list;
+	baton.session = session;
 	baton.pool = subpool;
 
 	if (verbosity > 0) {
@@ -187,6 +194,7 @@ char log_fetch(session_t *session, svn_revnum_t rev, svn_revnum_t end, log_revis
 	APR_ARRAY_PUSH(paths, const char *) = svn_path_canonicalize(".", subpool);
 
 	baton.log = log;
+	baton.session = session;
 	baton.pool = pool;
 
 	if ((err = svn_ra_get_log(session->ra, paths, rev, end, 1, TRUE, FALSE, log_receiver, &baton, subpool))) {
@@ -216,6 +224,7 @@ char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, lis
 
 	*list = list_create(sizeof(log_revision_t));
 	baton.list = list;
+	baton.session = session;
 	baton.pool = session->pool;
 
 	if (verbosity > 0) {

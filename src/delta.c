@@ -429,10 +429,7 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 	 * Check for copy. This needs to be done manually, since svn_ra_do_diff
 	 * does not supply any copy information to the delta editor
 	 */
-	char *hpath = apr_palloc(dir_pool, strlen(path)+1);
-	hpath[0] = '/';
-	strcpy(hpath+1, path);
-	svn_log_changed_path_t *log = apr_hash_get(node->de_baton->log_revision->changed_paths, hpath, APR_HASH_KEY_STRING);
+	svn_log_changed_path_t *log = apr_hash_get(node->de_baton->log_revision->changed_paths, path, APR_HASH_KEY_STRING);
 	if (log != NULL) {
 		if (log->copyfrom_path != NULL) {
 			node->copyfrom_path = apr_pstrdup(dir_pool, log->copyfrom_path);
@@ -520,10 +517,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 	node->kind = svn_node_file;
 
 	/* Get corresponding log entry */
-	char *hpath = apr_palloc(file_pool, strlen(path)+1);
-	hpath[0] = '/';
-	strcpy(hpath+1, path);
-	svn_log_changed_path_t *log = apr_hash_get(node->de_baton->log_revision->changed_paths, hpath, APR_HASH_KEY_STRING);
+	svn_log_changed_path_t *log = apr_hash_get(node->de_baton->log_revision->changed_paths, path, APR_HASH_KEY_STRING);
 	
 	/*
 	 * Although this function is named de_add_file, it will also be called
@@ -682,9 +676,8 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 		svn_log_changed_path_t *log;
 		apr_hash_this(hi, (const void **)&path, NULL, (void **)&log);
 		DEBUG_MSG("Checking %s (%c)\n", path, log->action);
-		/* We use path+1 because the ones in changed_paths start with a slash */
-		if (log->action == 'D' && apr_hash_get(de_baton->dumped_entries, path+1, APR_HASH_KEY_STRING) == NULL) {
-			de_node_baton_t *node = delta_create_node_no_parent(path+1, de_baton, pool);
+		if (log->action == 'D' && apr_hash_get(de_baton->dumped_entries, path, APR_HASH_KEY_STRING) == NULL) {
+			de_node_baton_t *node = delta_create_node_no_parent(path, de_baton, pool);
 			node->action = log->action;
 
 			DEBUG_MSG("Post-dumping %s\n", path);
