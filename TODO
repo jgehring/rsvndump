@@ -1,9 +1,9 @@
 == 0.5 branch (deltas) ==
 > Validate copy handling
 > Don't start with an empty revision in dump_do_diff() if --incremental is given
-> Implement --dump-uuid
 > Don't dump the uuid if --incremental is given and we aren't starting at 0
 > Implement --keep-revnums
+> MD5-sums for deltas
 
 
 == Schedule for 0.4.5 ==
@@ -26,5 +26,4 @@
 > File-not-found if invoking rsvndump on a subdirectory with --stop 0
 > Retries if connection is lost
 > Option: don't stop on copy
-> MD-5 sums?
 > Incremental (is hard because revision map is missing)

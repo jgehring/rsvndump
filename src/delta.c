@@ -70,6 +70,7 @@ typedef struct {
 	char			action;
 	svn_node_kind_t		kind;
 	apr_hash_t		*properties;
+	unsigned char		md5sum[33];
 	char			*copyfrom_path;
 	svn_revnum_t		copyfrom_revision;
 	char			use_copy; /* Propagate to children */
@@ -111,6 +112,7 @@ static de_node_baton_t *delta_create_node(de_node_baton_t *parent, apr_pool_t *p
 	node->old_filename = NULL;
 	node->dumped = 0;
 	node->use_copy = parent->use_copy;
+	memset(node->md5sum, 0x00, sizeof(node->md5sum));
 	return node;
 }
 
@@ -310,6 +312,10 @@ static char delta_dump_node(de_node_baton_t *node)
 			printf("%s: true\n", SVN_REPOS_DUMPFILE_TEXT_DELTA);
 		}
 		printf("%s: %lu\n", SVN_REPOS_DUMPFILE_TEXT_CONTENT_LENGTH, content_len);
+
+		if (!(opts->flags & DF_USE_DELTAS) && *node->md5sum != 0x00) {
+			printf("%s: %s\n", SVN_REPOS_DUMPFILE_TEXT_CONTENT_MD5, svn_md5_digest_to_cstring(node->md5sum, node->pool));
+		}
 	}
 	printf("%s: %lu\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, (unsigned long)prop_len+content_len);
 
@@ -605,7 +611,7 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 			src_stream = svn_stream_from_aprfile2(src_file, FALSE, pool);
 		}
 
-		svn_txdelta_apply(src_stream, dest_stream, NULL, node->path, pool, handler, handler_baton);
+		svn_txdelta_apply(src_stream, dest_stream, node->md5sum, node->path, pool, handler, handler_baton);
 		apr_hash_set(delta_hash, apr_pstrdup(delta_pool, node->path), APR_HASH_KEY_STRING, apr_pstrdup(delta_pool, node->filename));
 		node->old_filename = filename;
 	}
