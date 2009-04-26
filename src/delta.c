@@ -292,7 +292,7 @@ static char delta_dump_node(de_node_baton_t *node)
 		apr_hash_this(hi, (const void **)&key, NULL, (void **)&value);
 		prop_len += property_strlen(key, value->data);
 	}
-	if ((prop_len > 0) || (node->action = 'A')) {
+	if ((prop_len > 0) || (node->action == 'A')) {
 		prop_len += PROPS_END_LEN;
 		printf("%s: %lu\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, prop_len);
 	}
@@ -314,7 +314,7 @@ static char delta_dump_node(de_node_baton_t *node)
 	printf("%s: %lu\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, (unsigned long)prop_len+content_len);
 
 	/* Dump properties */
-	if ((prop_len > 0) || (node->action = 'A')) {
+	if ((prop_len > 0) || (node->action == 'A')) {
 		for (hi = apr_hash_first(node->pool, node->properties); hi; hi = apr_hash_next(hi)) {
 			const char *key;
 			svn_string_t *value;
