@@ -131,10 +131,10 @@ static char delta_dump_node(de_node_baton_t *node)
 
 	/* If the node is a directory and no properties have been changed,
 	   we don't need to dump it */
-//	if (node->action != NA_ADD && node->kind == svn_node_dir && node->props.size == 0) {
-//		node->dumped = 1;
-//		return 0;
-//	}
+	if ((node->action != NA_ADD) && (node->kind == svn_node_dir) && (apr_hash_count(node->properties) == 0)) {
+		node->dumped = 1;
+		return 0;
+	}
 
 	/* Dump node path */
 	if (opts->prefix != NULL) {
@@ -501,7 +501,7 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 		if (filename == NULL) {
 			src_stream = svn_stream_empty(pool);
 		} else {
-			apr_file_open(&src_file, filename, APR_READ | APR_EXCL, 0600, pool);
+			apr_file_open(&src_file, filename, APR_READ, 0600, pool);
 			src_stream = svn_stream_from_aprfile2(src_file, FALSE, pool);
 		}
 
