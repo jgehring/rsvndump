@@ -201,6 +201,7 @@ static char delta_dump_node(de_node_baton_t *node)
 	dump_options_t *opts = de_baton->opts;
 	char *path = node->path;
 	unsigned long prop_len, content_len;
+	char dump_content = 0;
 
 	/* If the node is a directory and no properties have been changed,
 	   we don't need to dump it */
@@ -252,6 +253,11 @@ static char delta_dump_node(de_node_baton_t *node)
 		return 0;
 	}
 
+	/* Check if the node content needs to be dumped */
+	if (node->kind == svn_node_file) {
+		dump_content = 1;
+	}
+
 	/* Check for potential copy */
 	if (node->copyfrom_path != NULL) {
 		delta_check_copy(node);
@@ -266,11 +272,11 @@ static char delta_dump_node(de_node_baton_t *node)
 			} else {
 				printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, node->copyfrom_path+offset);
 			}
-
-			/* No further processing needed here */
-			printf("\n\n");
-			delta_mark_node(node);
-			return 0;
+		}
+		
+		/* The node has been copied and the content has not changed */
+		if (node->action == 'A') {
+			dump_content = 0;
 		}
 	}
 
@@ -282,9 +288,9 @@ static char delta_dump_node(de_node_baton_t *node)
 	apr_hash_index_t *hi;
 	for (hi = apr_hash_first(node->pool, node->properties); hi; hi = apr_hash_next(hi)) {
 		const char *key;
-		char *value;
+		svn_string_t *value;
 		apr_hash_this(hi, (const void **)&key, NULL, (void **)&value);
-		prop_len += property_strlen(key, value);
+		prop_len += property_strlen(key, value->data);
 	}
 	if ((prop_len > 0) || (node->action = 'A')) {
 		prop_len += PROPS_END_LEN;
@@ -292,7 +298,7 @@ static char delta_dump_node(de_node_baton_t *node)
 	}
 
 	/* Dump content size */
-	if (node->kind == svn_node_file) {
+	if (dump_content) {
 		struct stat st;
 		if (stat(node->filename, &st)) {
 			DEBUG_MSG("dump_delta_node: FATAL: cannot stat %s\n", node->filename);
@@ -311,15 +317,15 @@ static char delta_dump_node(de_node_baton_t *node)
 	if ((prop_len > 0) || (node->action = 'A')) {
 		for (hi = apr_hash_first(node->pool, node->properties); hi; hi = apr_hash_next(hi)) {
 			const char *key;
-			char *value;
+			svn_string_t *value;
 			apr_hash_this(hi, (const void **)&key, NULL, (void **)&value);
-			property_dump(key, value);
+			property_dump(key, value->data);
 		}
 		printf(PROPS_END);
 	}
 
 	/* Dump content */
-	if (node->kind == svn_node_file) {
+	if (dump_content) {
 		FILE *f;
 		char *buffer = malloc(2049);
 		size_t s;
@@ -458,12 +464,14 @@ static svn_error_t *de_open_directory(const char *path, void *parent_baton, svn_
 /* Subversion delta editor callback */
 static svn_error_t *de_change_dir_prop(void *dir_baton, const char *name, const svn_string_t *value, apr_pool_t *pool)
 {
+	de_node_baton_t *node = (de_node_baton_t *)dir_baton;
+
 	/* We're only interested in regular properties */
 	if (svn_property_kind(NULL, name) != svn_prop_regular_kind) {
 		return SVN_NO_ERROR;
 	}
 
-	apr_hash_set(((de_node_baton_t *)dir_baton)->properties, apr_pstrdup(pool, name), APR_HASH_KEY_STRING, apr_pstrdup(pool, value->data));
+	apr_hash_set(node->properties, apr_pstrdup(node->pool, name), APR_HASH_KEY_STRING, svn_string_dup(value, node->pool));
 
 	return SVN_NO_ERROR;
 }
@@ -612,6 +620,8 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 /* Subversion delta editor callback */
 static svn_error_t *de_change_file_prop(void *file_baton, const char *name, const svn_string_t *value, apr_pool_t *pool)
 {
+	de_node_baton_t *node = (de_node_baton_t *)file_baton;
+
 	/* We're only interested in regular properties */
 	if (svn_property_kind(NULL, name) != svn_prop_regular_kind) {
 		return SVN_NO_ERROR;
@@ -619,7 +629,7 @@ static svn_error_t *de_change_file_prop(void *file_baton, const char *name, cons
 
 	DEBUG_MSG("de_change_file_prop(%s) %s = %s\n", ((de_node_baton_t *)file_baton)->path, name, value->data);
 
-	apr_hash_set(((de_node_baton_t *)file_baton)->properties, apr_pstrdup(pool, name), APR_HASH_KEY_STRING, apr_pstrdup(pool, value->data));
+	apr_hash_set(node->properties, apr_pstrdup(node->pool, name), APR_HASH_KEY_STRING, svn_string_dup(value, node->pool));
 
 	return SVN_NO_ERROR;
 }
