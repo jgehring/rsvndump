@@ -87,5 +87,7 @@
 extern int utils_debug(const char *format, ...);
 #define DEBUG_MSG utils_debug
 
+/* This enables dumping of single files (not working yet) */
+/*#define USE_SINGLEFILE_DUMP*/
 
 #endif

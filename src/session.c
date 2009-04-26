@@ -223,7 +223,9 @@ session_t session_create()
 	session.encoded_url = NULL;
 	session.root = NULL;
 	session.prefix = NULL;
+#ifdef USE_SINGLEFILE_DUMP
 	session.file = 0;
+#endif
 	session.username = NULL;
 	session.password = NULL;
 	session.flags = 0x00;
@@ -351,6 +353,7 @@ char session_check_reparent(session_t *session, svn_revnum_t rev)
 	}
 
 	if (kind == svn_node_file) {
+#ifdef USE_SINGLEFILE_DUMP
 		/* Determine the parent directory */
 		const char *new_parent;
 		svn_path_split(session->encoded_url, &new_parent, &session->file, session->pool);
@@ -362,6 +365,12 @@ char session_check_reparent(session_t *session, svn_revnum_t rev)
 			svn_pool_destroy(pool);
 			return 1;
 		}
+#else
+		/* Sorry, we're unable to dump single files for now */
+		fprintf(stderr, _("ERROR: '%s' refers to a file\n"), session->encoded_url);
+		svn_pool_destroy(pool);
+		return 1;
+#endif
 	}
 
 	svn_pool_destroy(pool);

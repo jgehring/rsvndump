@@ -98,7 +98,11 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 #endif
 
 	DEBUG_MSG("diffing %d against %d\n", dest, src);
+#ifdef USE_SINGLEFILE_DUMP
 	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, (session->file ? session->file : ""), TRUE, TRUE, TRUE, session->encoded_url, editor, editor_baton, subpool);
+#else
+	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, "", TRUE, TRUE, TRUE, session->encoded_url, editor, editor_baton, subpool);
+#endif
 	if (err) {
 		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
 		svn_error_clear(err);
@@ -356,13 +360,18 @@ char dump(session_t *session, dump_options_t *opts)
 			diff_rev = 0;
 		}
 		if ((strlen(session->prefix) > 0) && diff_rev < opts->start) {
+#ifdef USE_SINGLEFILE_DUMP
 			/* TODO: This isn't working well with single files
 			 * and a revision range */
 			if (session->file) {
+				diff_rev = ((log_revision_t *)logs.elements)[list_idx].revision;
 				diff_rev = opts->end;
 			} else {
 				diff_rev = opts->start;
 			}
+#else
+			diff_rev = opts->start;
+#endif
 		}
 		DEBUG_MSG("global = %ld, diff = %ld\n", global_rev, diff_rev);
 

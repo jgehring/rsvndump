@@ -25,6 +25,8 @@
 #define SESSION_H_
 
 
+#include "main.h"
+
 #include <svn_types.h>
 
 
@@ -41,7 +43,9 @@ typedef struct {
 	const char		*encoded_url;
 	const char		*root;
 	char			*prefix;
+#ifdef USE_SINGLEFILE_DUMP
 	const char		*file; /* Only set if the target is a file */
+#endif
 	char			*username;
 	char			*password;
 	int			flags;
