@@ -10,7 +10,7 @@ from run import run
 
 
 def info():
-	return "Copying tests with deletions in the same revision"
+	return "Copying test with deletions in the same revision"
 
 
 def modify_tree(step, logfile):

@@ -1,4 +1,9 @@
 == 0.5 branch (deltas) ==
+> Validate copy handling
+> Don't start with an empty revision in dump_do_diff() if --incremental is given
+> Implement --dump-uuid
+> Don't dump the uuid if --incremental is given and we aren't starting at 0
+> Implement --keep-revnums
 
 
 == Schedule for 0.4.5 ==
