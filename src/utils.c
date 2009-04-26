@@ -98,12 +98,16 @@ float stopwatch_elapsed(stopwatch_t *watch)
 /* Calls vfprintf on stderr using the given arguments */
 int utils_debug(const char *format, ...)
 {
+	(void)format;
+	return 0;
+#ifdef DEBUG
 	int res;
 	va_list argptr;
 	va_start(argptr, format);
 	res = vfprintf(stderr, format, argptr);
 	va_end(argptr);
 	return res;
+#endif
 }
 
 

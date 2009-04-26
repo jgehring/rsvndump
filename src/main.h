@@ -84,12 +84,8 @@
  #undef USE_TIMING
 #endif
 
-#ifdef DEBUG
- extern int utils_debug(const char *format, ...);
- #define DEBUG_MSG utils_debug
-#else
- #define DEBUG_MSG
-#endif /* DEBUG */
+extern int utils_debug(const char *format, ...);
+#define DEBUG_MSG utils_debug
 
 
 #endif
