@@ -507,22 +507,36 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 	node = delta_create_node(parent, file_pool);
 	node->kind = svn_node_file;
 	node->path = apr_pstrdup(file_pool, path);
-	node->action = 'A';
 
-	/*
-	 * Check for copy. This needs to be done manually, since svn_ra_do_diff
-	 * does not supply any copy information to the delta editor
-	 */
+	/* Get corresponding log entry */
 	char *hpath = apr_palloc(file_pool, strlen(path)+1);
 	hpath[0] = '/';
 	strcpy(hpath+1, path);
 	svn_log_changed_path_t *log = apr_hash_get(node->de_baton->log_revision->changed_paths, hpath, APR_HASH_KEY_STRING);
-	if (log != NULL) {
-		if (log->copyfrom_path != NULL) {
-			DEBUG_MSG("copyfrom_path = %s\n", log->copyfrom_path);
-			node->copyfrom_path = apr_pstrdup(file_pool, log->copyfrom_path);
+	
+	/*
+	 * Although this function is named de_add_file, it will also be called
+	 * for nodes that have been copied (or are located in a tree that has
+	 * just been copied). If this is true, we need to ask the log entry
+	 * to determine the correct action.
+	 */
+	if (log == NULL) {
+		/* Fallback */
+		node->action = 'A';
+	} else {
+		node->action = log->action;
+		/*
+		 * Check for copy. This needs to be done manually, since
+		 * svn_ra_do_diff does not supply any copy information to the
+		 * delta editor.
+		 */
+		if (log != NULL) {
+			if (log->copyfrom_path != NULL) {
+				DEBUG_MSG("copyfrom_path = %s\n", log->copyfrom_path);
+				node->copyfrom_path = apr_pstrdup(file_pool, log->copyfrom_path);
+			}
+			node->copyfrom_revision = log->copyfrom_rev;
 		}
-		node->copyfrom_revision = log->copyfrom_rev;
 	}
 
 	*file_baton = node;
