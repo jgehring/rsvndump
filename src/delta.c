@@ -107,17 +107,23 @@ static apr_hash_t *delta_hash = NULL;
 
 
 /* Creates a new node baton */
-static de_node_baton_t *delta_create_node(de_baton_t *baton, apr_pool_t *pool)
+static de_node_baton_t *delta_create_node(de_node_baton_t *parent, apr_pool_t *pool)
 {
 	de_node_baton_t *node = apr_palloc(pool, sizeof(de_node_baton_t));
-	node->de_baton = baton;
+	node->de_baton = parent->de_baton;
 	node->pool = pool;
 	node->properties = apr_hash_make(pool);
 	node->copyfrom_path = NULL;
 	node->filename = NULL;
 	node->old_filename = NULL;
-	node->use_copy = 0;
-	node->dumped = 0;
+	/* We don't need to dump this node if it has been copied */
+	if (parent->use_copy) {
+		node->dumped = 1;
+		node->use_copy = 1;
+	} else {
+		node->dumped = 0;
+		node->use_copy = 0;
+	}
 	return node;
 }
 
@@ -132,7 +138,7 @@ static char delta_check_copy(de_node_baton_t *node)
 
 	/* First, check if the source is reachable, i.e. can be found under
 	   the current session root */
-	if (!strcmp(session->prefix, node->copyfrom_path)) {
+	if (!strncmp(session->prefix, node->copyfrom_path, strlen(session->prefix))) {
 		svn_revnum_t r, rr = -1;
 		svn_revnum_t mind = LONG_MAX;
 
@@ -184,6 +190,7 @@ static char delta_check_copy(de_node_baton_t *node)
 /* Dumps a node */
 static char delta_dump_node(de_node_baton_t *node)
 {
+	session_t *session = node->de_baton->session;
 	dump_options_t *opts = node->de_baton->opts;
 	char *path = node->path;
 	unsigned long prop_len, content_len;
@@ -235,7 +242,7 @@ static char delta_dump_node(de_node_baton_t *node)
 	if (node->copyfrom_path != NULL) {
 		delta_check_copy(node);
 		if (node->use_copy) {
-			int offset = strlen(opts->prefix);
+			int offset = strlen(session->prefix);
 			while (*(node->copyfrom_path+offset) == '/') {
 				++offset;
 			}
@@ -245,6 +252,11 @@ static char delta_dump_node(de_node_baton_t *node)
 			} else {
 				printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, node->copyfrom_path+offset);
 			}
+
+			/* No further processing needed here */
+			printf("\n\n");
+			node->dumped = 1;
+			return 0;
 		}
 	}
 
@@ -334,7 +346,14 @@ static svn_error_t *de_set_target_revision(void *edit_baton, svn_revnum_t target
 /* Subversion delta editor callback */
 static svn_error_t *de_open_root(void *edit_baton, svn_revnum_t base_revision, apr_pool_t *dir_pool, void **root_baton)
 {
-	de_node_baton_t *node = delta_create_node(edit_baton, dir_pool);
+	de_node_baton_t parent;
+	de_node_baton_t *node;
+	
+	/* A little hackish, but there's no parent node yet */
+	parent.de_baton = edit_baton;
+	parent.use_copy = 0;
+	node = delta_create_node(&parent, dir_pool);
+
 	/*
 	 * The revision header has already been dumped, so there's nothing to
 	 * do for the root node
@@ -385,7 +404,7 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 		delta_dump_node(parent);
 	}
 
-	node = delta_create_node(parent->de_baton, dir_pool);
+	node = delta_create_node(parent, dir_pool);
 	node->kind = svn_node_dir;
 	node->path = apr_pstrdup(dir_pool, path);
 	node->action = NA_ADD;
@@ -421,7 +440,7 @@ static svn_error_t *de_open_directory(const char *path, void *parent_baton, svn_
 		delta_dump_node(parent);
 	}
 
-	node = delta_create_node(parent->de_baton, dir_pool);
+	node = delta_create_node(parent, dir_pool);
 	node->kind = svn_node_dir;;
 	node->path = apr_pstrdup(dir_pool, path);
 	node->action = NA_CHANGE;
@@ -480,7 +499,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 
 	DEBUG_MSG("de_add_file(%s)\n", path);
 
-	node = delta_create_node(parent->de_baton, file_pool);
+	node = delta_create_node(parent, file_pool);
 	node->kind = svn_node_file;
 	node->path = apr_pstrdup(file_pool, path);
 	node->action = NA_ADD;
@@ -519,7 +538,7 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 		delta_dump_node(parent);
 	}
 
-	node = delta_create_node(parent->de_baton, file_pool);
+	node = delta_create_node(parent, file_pool);
 	node->kind = svn_node_file;
 	node->path = apr_pstrdup(file_pool, path);
 	node->action = NA_CHANGE;

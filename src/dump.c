@@ -362,7 +362,7 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 
 		if (opts->verbosity >= 0) {
-			fprintf(stderr, _("* Dumped revision %ld\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
+			fprintf(stderr, _("* Dumped revision %ld.\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
 		}
 
 		global_rev = ((log_revision_t *)logs.elements)[list_idx].revision+1;

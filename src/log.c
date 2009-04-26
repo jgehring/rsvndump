@@ -65,13 +65,26 @@ static void log_hash_deep_copy(apr_hash_t *dest, apr_hash_t *src, apr_pool_t *po
 	if (src == NULL) {
 		return;
 	}
-	for (hi = apr_hash_first(pool, dest); hi; hi = apr_hash_next(hi)) {
+	for (hi = apr_hash_first(pool, src); hi; hi = apr_hash_next(hi)) {
 		const char *key;
 		svn_log_changed_path_t *svalue, *dvalue;
 		apr_hash_this(hi, (const void **)&key, NULL, (void **)&svalue);
+
 		dvalue = apr_palloc(pool, sizeof(svn_log_changed_path_t));
-		memcpy(dvalue, svalue, sizeof(svn_log_changed_path_t));
+		dvalue->action = svalue->action;
+		if (svalue->copyfrom_path != NULL) {
+			dvalue->copyfrom_path = apr_pstrdup(pool, svalue->copyfrom_path);
+		} else {
+			dvalue->copyfrom_path = NULL;
+		}
+		dvalue->copyfrom_rev = svalue->copyfrom_rev;
+
 		apr_hash_set(dest, apr_pstrdup(pool, key), APR_HASH_KEY_STRING, dvalue);
+		DEBUG_MSG("%c %s", dvalue->action, key);
+		if (dvalue->copyfrom_path != NULL) {
+			DEBUG_MSG(" (from %s@%ld)", dvalue->copyfrom_path, dvalue->copyfrom_rev);
+		}
+		DEBUG_MSG("\n");
 	}
 }
 
