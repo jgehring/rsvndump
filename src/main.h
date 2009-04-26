@@ -77,7 +77,7 @@
 
 /* Helper definitions */
 #define PROPS_END "PROPS-END\n"
-#define PROPS_END_LEN (sizeof(PROPS_END))
+#define PROPS_END_LEN (sizeof(PROPS_END)-1)
 
 /* Other features, some used for debugging */
 #if defined(USE_TIMING) && !defined(HAVE_GETTIMEOFDAY)
