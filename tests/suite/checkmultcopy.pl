@@ -81,7 +81,7 @@ print " done\n";
 
 # Dump
 print "> Running rsvndump ...";
-system "$pwd/rsvndump -o dump @args '$repo_host/$repo_name' 2>> '$log_file'";
+system "$pwd/rsvndump @args '$repo_host/$repo_name' > dump 2>> '$log_file'";
 if ($? != 0) {
 	exit 1;
 }

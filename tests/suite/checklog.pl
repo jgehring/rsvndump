@@ -61,7 +61,7 @@ print " done\n";
 
 # Dump and compare log messages
 print "> Running rsvndump ...";
-system "$pwd/rsvndump -o dump @args '$repo_host/$repo_name' 2>> '$log_file'";
+system "$pwd/rsvndump @args '$repo_host/$repo_name' > dump 2>> '$log_file'";
 print " done\n";
 print "> Comparing log messages ...";
 $temp_repo = "logtest_temp";
