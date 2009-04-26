@@ -38,12 +38,16 @@ unsigned int property_strlen(const char *key, const char *value)
 {
 	unsigned int len, keylen, vallen;
 	char *buffer;
-	if ((key == NULL) || (value == NULL)) {
+	if (key == NULL) {
 		return 0;
 	}
 	len = 0;
 	keylen = strlen(key);
-	vallen = strlen(value);
+	if (value == NULL) {
+		vallen = 0;
+	} else {
+		vallen = strlen(value);
+	}
 	buffer = malloc(16 + (keylen < vallen ? vallen : keylen));
 	sprintf(buffer, "K %d\n", keylen);
 	len += strlen(buffer);
@@ -51,8 +55,10 @@ unsigned int property_strlen(const char *key, const char *value)
 	len += strlen(buffer);
 	sprintf(buffer, "V %d\n", vallen);
 	len += strlen(buffer);
-	sprintf(buffer, "%s\n", value);
-	len += strlen(buffer);
+	if (value != NULL) {
+		sprintf(buffer, "%s\n", value);
+		len += strlen(buffer);
+	}
 	free(buffer);
 	return len;
 }
@@ -61,11 +67,15 @@ unsigned int property_strlen(const char *key, const char *value)
 /* Dumps a property to stdout */
 void property_dump(const char *key, const char *value)
 {
-	if ((key == NULL) || (value == NULL)) {
+	if (key == NULL) {
 		return;
 	}
 	printf("K %d\n", strlen(key));
 	printf("%s\n", key);
-	printf("V %d\n", strlen(value));
-	printf("%s\n", value);
+	if (value != NULL) {
+		printf("V %d\n", strlen(value));
+		printf("%s\n", value);
+	} else {
+		printf("V 0\n\n");
+	}
 }
