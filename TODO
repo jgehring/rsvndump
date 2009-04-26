@@ -1,9 +1,17 @@
 == 0.5 branch (deltas) ==
-> Validate copy handling
+> It seems the copyfrom-revision is sometimes too large (+1)
+> Don't dump node contents if it is a copy and has not changed (we need
+  to keep track of the MD5-sums for this)
 > Don't start with an empty revision in dump_do_diff() if --incremental is given
 > Don't dump the uuid if --incremental is given and we aren't starting at 0
 > Implement --keep-revnums
 > MD5-sums for deltas
+> In close_edit, delete the temporary files for nodes that have been deleted
+> The svn:merginfo property will sometimes be dumped too early (-1). Not sure
+  if this can be fixed
+> Manually output revision 0 if we're dumping a subdirectory
+
+> Further validate copy handling and subdirectory dumping
 
 
 == Schedule for 0.4.5 ==

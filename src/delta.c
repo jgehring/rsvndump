@@ -74,6 +74,7 @@ typedef struct {
 	char			*copyfrom_path;
 	svn_revnum_t		copyfrom_revision;
 	char			use_copy; /* Propagate to children */
+	char			applied_delta;
 	char			dumped;
 } de_node_baton_t;
 
@@ -101,29 +102,34 @@ static apr_hash_t *delta_hash = NULL;
 
 
 /* Creates a new node baton */
-static de_node_baton_t *delta_create_node(de_node_baton_t *parent, apr_pool_t *pool)
+static de_node_baton_t *delta_create_node(const char *path, de_node_baton_t *parent, apr_pool_t *pool)
 {
 	de_node_baton_t *node = apr_palloc(pool, sizeof(de_node_baton_t));
+	node->path = apr_pstrdup(pool, path);
 	node->de_baton = parent->de_baton;
 	node->pool = pool;
 	node->properties = apr_hash_make(pool);
-	node->copyfrom_path = NULL;
 	node->filename = NULL;
 	node->old_filename = NULL;
-	node->dumped = 0;
 	node->use_copy = parent->use_copy;
+	node->copyfrom_path = NULL;
+	node->applied_delta = 0;
+	node->dumped = 0;
 	memset(node->md5sum, 0x00, sizeof(node->md5sum));
+
 	return node;
 }
 
 
 /* Creates a new node baton without a parent */
-static de_node_baton_t *delta_create_node_no_parent(de_baton_t *de_baton, apr_pool_t *pool)
+static de_node_baton_t *delta_create_node_no_parent(const char *path, de_baton_t *de_baton, apr_pool_t *pool)
 {
 	de_node_baton_t parent;
+	parent.path = NULL;
 	parent.de_baton = de_baton;
+	parent.copyfrom_path = NULL;
 	parent.use_copy = 0;
-	return delta_create_node(&parent, pool);
+	return delta_create_node(path, &parent, pool);
 }
 
 
@@ -256,7 +262,7 @@ static char delta_dump_node(de_node_baton_t *node)
 	}
 
 	/* Check if the node content needs to be dumped */
-	if (node->kind == svn_node_file) {
+	if (node->kind == svn_node_file && node->applied_delta) {
 		dump_content = 1;
 	}
 
@@ -274,11 +280,6 @@ static char delta_dump_node(de_node_baton_t *node)
 			} else {
 				printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, node->copyfrom_path+offset);
 			}
-		}
-		
-		/* The node has been copied and the content has not changed */
-		if (node->action == 'A') {
-			dump_content = 0;
 		}
 	}
 
@@ -372,7 +373,7 @@ static svn_error_t *de_set_target_revision(void *edit_baton, svn_revnum_t target
 static svn_error_t *de_open_root(void *edit_baton, svn_revnum_t base_revision, apr_pool_t *dir_pool, void **root_baton)
 {
 	de_node_baton_t *node;	
-	node = delta_create_node_no_parent((de_baton_t *)edit_baton, dir_pool);
+	node = delta_create_node_no_parent("", (de_baton_t *)edit_baton, dir_pool);
 
 	/*
 	 * The revision header has already been dumped, so there's nothing to
@@ -401,8 +402,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 	}
 
 	/* We can dump this entry directly */
-	node = delta_create_node(parent, pool);
-	node->path = apr_pstrdup(pool, path);
+	node = delta_create_node(path, parent, pool);
 	node->action = 'D';
 	delta_dump_node(node);
 
@@ -421,9 +421,8 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 		delta_dump_node(parent);
 	}
 
-	node = delta_create_node(parent, dir_pool);
+	node = delta_create_node(path, parent, dir_pool);
 	node->kind = svn_node_dir;
-	node->path = apr_pstrdup(dir_pool, path);
 	node->action = 'A';
 
 	/*
@@ -457,9 +456,8 @@ static svn_error_t *de_open_directory(const char *path, void *parent_baton, svn_
 		delta_dump_node(parent);
 	}
 
-	node = delta_create_node(parent, dir_pool);
+	node = delta_create_node(path, parent, dir_pool);
 	node->kind = svn_node_dir;;
-	node->path = apr_pstrdup(dir_pool, path);
 	node->action = 'M';
 
 	*child_baton = node;
@@ -518,9 +516,8 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 
 	DEBUG_MSG("de_add_file(%s)\n", path);
 
-	node = delta_create_node(parent, file_pool);
+	node = delta_create_node(path, parent, file_pool);
 	node->kind = svn_node_file;
-	node->path = apr_pstrdup(file_pool, path);
 
 	/* Get corresponding log entry */
 	char *hpath = apr_palloc(file_pool, strlen(path)+1);
@@ -544,11 +541,9 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		 * svn_ra_do_diff does not supply any copy information to the
 		 * delta editor.
 		 */
-		if (log != NULL) {
-			if (log->copyfrom_path != NULL) {
-				DEBUG_MSG("copyfrom_path = %s\n", log->copyfrom_path);
-				node->copyfrom_path = apr_pstrdup(file_pool, log->copyfrom_path);
-			}
+		if (log->copyfrom_path != NULL) {
+			DEBUG_MSG("copyfrom_path = %s\n", log->copyfrom_path);
+			node->copyfrom_path = apr_pstrdup(file_pool, log->copyfrom_path);
 			node->copyfrom_revision = log->copyfrom_rev;
 		}
 	}
@@ -571,9 +566,8 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 		delta_dump_node(parent);
 	}
 
-	node = delta_create_node(parent, file_pool);
+	node = delta_create_node(path, parent, file_pool);
 	node->kind = svn_node_file;
-	node->path = apr_pstrdup(file_pool, path);
 	node->action = 'M';
 
 	*file_baton = node;
@@ -591,6 +585,7 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 #ifdef USE_TIMING
 	stopwatch_t watch = stopwatch_create();
 #endif
+	DEBUG_MSG("de_apply_textdelta(%s)\n", node->path);
 
 	/* Create a new temporary file to write to */
 	node->filename = apr_palloc(pool, strlen(opts->temp_dir)+8);
@@ -614,7 +609,11 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 		svn_txdelta_apply(src_stream, dest_stream, node->md5sum, node->path, pool, handler, handler_baton);
 		apr_hash_set(delta_hash, apr_pstrdup(delta_pool, node->path), APR_HASH_KEY_STRING, apr_pstrdup(delta_pool, node->filename));
 		node->old_filename = filename;
+
+		DEBUG_MSG("applied delta: %s -> %s\n", filename, node->filename);
 	}
+
+	node->applied_delta = 1;
 
 #ifdef USE_TIMING
 	tm_de_apply_textdelta += stopwatch_elapsed(&watch);
@@ -685,8 +684,7 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 		DEBUG_MSG("Checking %s (%c)\n", path, log->action);
 		/* We use path+1 because the ones in changed_paths start with a slash */
 		if (log->action == 'D' && apr_hash_get(de_baton->dumped_entries, path+1, APR_HASH_KEY_STRING) == NULL) {
-			de_node_baton_t *node = delta_create_node_no_parent(de_baton, pool);
-			node->path = apr_pstrdup(pool, path+1);
+			de_node_baton_t *node = delta_create_node_no_parent(path+1, de_baton, pool);
 			node->action = log->action;
 
 			DEBUG_MSG("Post-dumping %s\n", path);

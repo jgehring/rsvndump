@@ -255,7 +255,7 @@ int main(int argc, char **argv)
 		session_close(&session);
 	}
 
-	/* Clean up working copy */
+	/* Clean up temporary directory */
 	utils_rrmdir(opts.temp_dir, dir_created);
 
 	session_free(&session);
