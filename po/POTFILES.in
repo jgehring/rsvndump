@@ -1,10 +1,9 @@
 # List of source files which contain translatable strings.
+src/delta.c
 src/dump.c
 src/list.c
-src/logentry.c
+src/log.c
 src/main.c
-src/node.c
 src/property.c
+src/session.c
 src/utils.c
-src/whash.c
-src/wsvn.c

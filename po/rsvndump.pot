@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: rsvndump 0.4.4-1\n"
+"Project-Id-Version: rsvndump 0.5\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-04-15 23:00+0200\n"
+"POT-Creation-Date: 2009-04-26 21:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,164 +16,115 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/dump.c:95
+#: src/delta.c:315
 #, c-format
-msgid "* Dumping revision %ld ... 0%%\n"
+msgid "ERROR: Failed to open %s.\n"
 msgstr ""
 
-#: src/dump.c:97
+#: src/dump.c:136
 #, c-format
-msgid "* Dumping revision %ld (local: %ld) ... 0%%\n"
+msgid "ERROR: URL '%s' not found in HEAD revision\n"
 msgstr ""
 
-#: src/dump.c:139
+#: src/dump.c:242 src/dump.c:249 src/dump.c:254
 #, c-format
-msgid "ERROR: Out of memory.\n"
+msgid "ERROR: URL '%s' not found in revision %ld\n"
 msgstr ""
 
-#: src/dump.c:179 src/dump.c:204
-#, c-format
-msgid "* Dumping revision %ld ... %d%%\n"
-msgstr ""
-
-#: src/dump.c:181 src/dump.c:206
-#, c-format
-msgid "* Dumping revision %ld (local: %ld) ... %d%%\n"
-msgstr ""
-
-#: src/dump.c:234
+#: src/dump.c:365
 #, c-format
 msgid "* Dumped revision %ld.\n"
 msgstr ""
 
-#: src/dump.c:236
+#: src/log.c:151
 #, c-format
-msgid "* Dumped revision %ld (local %ld).\n"
+msgid "Determining start end end revision... "
 msgstr ""
 
-#: src/dump.c:270
+#: src/log.c:164 src/log.c:237
 #, c-format
-msgid "* Padded revision %ld.\n"
+msgid "done\n"
 msgstr ""
 
-#: src/dump.c:360
+#: src/log.c:222
 #, c-format
-msgid ""
-"ERROR: Connection could not be established / Subversion library could not be "
-"initialized.\n"
+msgid "Fetching logs... "
 msgstr ""
 
-#: src/dump.c:368
-#, c-format
-msgid "ERROR: Unable to fetch repository information.\n"
-msgstr ""
-
-#: src/dump.c:380
-#, c-format
-msgid ""
-"Sorry, '--dump-uuid' can only be used when dumping a repository root and "
-"without using a user prefix.\n"
-msgstr ""
-
-#: src/dump.c:395
-#, c-format
-msgid "NOTE: Switched to online mode because the url refers to a file.\n"
-msgstr ""
-
-#: src/dump.c:404
-#, c-format
-msgid "NOTE: Switched to online mode for performance reasons.\n"
-msgstr ""
-
-#: src/dump.c:420
-#, c-format
-msgid "ERROR: Unable to fetch repository log info.\n"
-msgstr ""
-
-#: src/main.c:56
+#: src/main.c:57
 #, c-format
 msgid "USAGE:"
 msgstr ""
 
-#: src/main.c:58
+#: src/main.c:59
 #, c-format
 msgid ""
 "[options] <url>\n"
 "\n"
 msgstr ""
 
-#: src/main.c:59
+#: src/main.c:60
 #, c-format
 msgid "Valid options:\n"
 msgstr ""
 
-#: src/main.c:60
+#: src/main.c:61
 #, c-format
 msgid "    -h [--help]               print a nice help screen\n"
 msgstr ""
 
-#: src/main.c:61
+#: src/main.c:62
 #, c-format
 msgid "    --version                 print the program name and version\n"
 msgstr ""
 
-#: src/main.c:62
+#: src/main.c:63
 #, c-format
 msgid "    -q [--quiet]              be quiet\n"
 msgstr ""
 
-#: src/main.c:63
+#: src/main.c:64
 #, c-format
 msgid "    -v [--verbose]            print extra progress\n"
 msgstr ""
 
-#: src/main.c:64
+#: src/main.c:65
 #, c-format
 msgid "    -u [--username] arg       username\n"
 msgstr ""
 
-#: src/main.c:65
+#: src/main.c:66
 #, c-format
 msgid "    -p [--password] arg       password\n"
 msgstr ""
 
-#: src/main.c:66
+#: src/main.c:67
 #, c-format
-msgid ""
-"    -o [--outfile] arg        write data to file arg\n"
-"                              if not specified, print to stdout\n"
+msgid "    -r [--revision] arg       specify revision number (or X:Y range)\n"
 msgstr ""
 
 #: src/main.c:68
 #, c-format
-msgid ""
-"    -d [--download-dir] arg   directory for working copy\n"
-"                              if not specified, create a temporary "
-"directory\n"
+msgid "    --deltas                  use deltas in dump output\n"
+msgstr ""
+
+#: src/main.c:69
+#, c-format
+msgid "    --incremental             dump incrementally\n"
 msgstr ""
 
 #: src/main.c:70
 #, c-format
-msgid "    --online                  don't use a working copy for dumping\n"
-msgstr ""
-
-#: src/main.c:71
-#, c-format
 msgid "    --no-check-certificate    don't validate SSL certificates\n"
 msgstr ""
 
-#: src/main.c:72
-#, c-format
-msgid "    --stop arg                stop after dumping revision arg\n"
-msgstr ""
-
-#: src/main.c:73
+#: src/main.c:71
 #, c-format
 msgid ""
 "    --prefix arg              prepend arg to the path that is being dumped\n"
 msgstr ""
 
-#: src/main.c:74
+#: src/main.c:72
 #, c-format
 msgid ""
 "    --keep-revnums            keep the dumped revision numbers in sync with\n"
@@ -181,108 +132,95 @@ msgid ""
 "                              padding\n"
 msgstr ""
 
-#: src/main.c:77
+#: src/main.c:75
 #, c-format
 msgid "    --dump-uuid               include the repository uuid in the dump\n"
 msgstr ""
 
-#: src/main.c:79
-#, c-format
-msgid "    --deltas                  use deltas in dump output\n"
-msgstr ""
-
-#: src/main.c:175
-#, c-format
-msgid "ERROR: Unable to open output file.\n"
-msgstr ""
-
 #: src/main.c:183
 #, c-format
-msgid "ERROR: '%s' is either not a directory or does not exist.\n"
+msgid "ERROR: invalid revision range '%s'\n"
 msgstr ""
 
-#: src/main.c:193
+#: src/main.c:209
 #, c-format
 msgid "ERROR: multiple URLs detected.\n"
 msgstr ""
 
-#: src/main.c:199
+#: src/main.c:216
 #, c-format
 msgid "ERROR: Unkown argument or malformed url '%s'.\n"
 msgstr ""
 
-#: src/main.c:200
+#: src/main.c:217
 #, c-format
 msgid "Type %s --help for usage information.\n"
 msgstr ""
 
-#: src/main.c:225
+#: src/main.c:245
 #, c-format
 msgid "ERROR: Unable to create download directory.\n"
 msgstr ""
 
-#: src/node.c:330
-#, c-format
-msgid "ERROR: Failed to open %s.\n"
-msgstr ""
-
-#: src/wsvn.c:138
+#: src/session.c:108
 msgid "Username: "
 msgstr ""
 
-#: src/wsvn.c:143
+#: src/session.c:113
 #, c-format
 msgid "Password for '%s': "
 msgstr ""
 
-#: src/wsvn.c:147
+#: src/session.c:117
 msgid "Password: "
 msgstr ""
 
 #. TRANSLATORS: This is the key used for accepting a certificate temporarily.
 #. * Every other key is used to reject the certificate.
-#: src/wsvn.c:162
+#: src/session.c:133
 msgid "t"
 msgstr ""
 
-#: src/wsvn.c:166 src/wsvn.c:175 src/wsvn.c:183 src/wsvn.c:191 src/wsvn.c:199
+#: src/session.c:137 src/session.c:146 src/session.c:154 src/session.c:162
+#: src/session.c:170
 #, c-format
 msgid "WARNING: Validating server certificate for '%s' failed:\n"
 msgstr ""
 
-#: src/wsvn.c:168 src/wsvn.c:177 src/wsvn.c:185 src/wsvn.c:193 src/wsvn.c:201
+#: src/session.c:139 src/session.c:148 src/session.c:156 src/session.c:164
+#: src/session.c:172
 #, c-format
 msgid "Error validating server certificate for '%s':\n"
 msgstr ""
 
-#: src/wsvn.c:170
+#: src/session.c:141
 #, c-format
 msgid ""
 " - The certificate is not issued by a trusted authority. Use the\n"
 "   fingerprint to validate the certificate manually!\n"
 msgstr ""
 
-#: src/wsvn.c:179
+#: src/session.c:150
 #, c-format
 msgid " - The certificate hostname does not match.\n"
 msgstr ""
 
-#: src/wsvn.c:187
+#: src/session.c:158
 #, c-format
 msgid " - The certificate is not yet valid.\n"
 msgstr ""
 
-#: src/wsvn.c:195
+#: src/session.c:166
 #, c-format
 msgid " - The certificate has expired.\n"
 msgstr ""
 
-#: src/wsvn.c:203
+#: src/session.c:174
 #, c-format
 msgid " - The certificate has an unknown error.\n"
 msgstr ""
 
-#: src/wsvn.c:206
+#: src/session.c:177
 #, c-format
 msgid ""
 "Certificate information:\n"
@@ -292,7 +230,7 @@ msgid ""
 " - Fingerprint: %s\n"
 msgstr ""
 
-#: src/wsvn.c:224
+#: src/session.c:195
 #, c-format
 msgid "(R)eject or accept (t)emporarily? "
 msgstr ""
