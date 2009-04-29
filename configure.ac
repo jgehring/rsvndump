@@ -74,7 +74,7 @@ AC_CHECK_LIB([svn_fs-1], [svn_fs_initialize], ,[AC_MSG_ERROR([Neccessary Subvers
 AC_CHECK_LIB([svn_client-1], [svn_client_open_ra_session], ,[AC_MSG_ERROR([Neccessary Subversion libraries are missing])], [-L$SVN_PREFIX/lib]) 
 AC_CHECK_LIB([svn_ra-1], [svn_ra_initialize], ,[AC_MSG_ERROR([Neccessary Subversion libraries are missing])], [-L$SVN_PREFIX/lib]) 
 AC_CHECK_LIB([svn_subr-1], [svn_auth_open], ,[AC_MSG_ERROR([Neccessary Subversion libraries are missing])], [-L$SVN_PREFIX/lib])
-AC_CHECK_LIB([svn_wc-1], [svn_wc_ensure_adm2], ,[AC_MSG_ERROR([Neccessary Subversion libraries are missing])], [-L$SVN_PREFIX/lib])
+AC_CHECK_LIB([svn_delta-1], [svn_txdelta_apply], ,[AC_MSG_ERROR([Neccessary Subversion libraries are missing])], [-L$SVN_PREFIX/lib])
 
 AC_CONFIG_FILES([Makefile])
 if test "$USE_COMPAT" = "yes"; then
