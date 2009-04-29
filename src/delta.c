@@ -42,6 +42,11 @@
 
 #include "delta.h"
 
+/* This is for compabibility for Subverison 1.4 */
+#if (SVN_VER_MAJOR==1) && (SVN_VER_MINOR==4)
+ #define SVN_REPOS_DUMPFILE_TEXT_CONTENT_MD5 SVN_REPOS_DUMPFILE_TEXT_CONTENT_CHECKSUM
+#endif
+
 
 /*---------------------------------------------------------------------------*/
 /* Local data structures                                                     */
