@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include <svn_delta.h>
+#include <svn_md5.h>
 #include <svn_pools.h>
 #include <svn_repos.h>
 #include <svn_props.h>
@@ -362,6 +363,7 @@ static char delta_dump_node(de_node_baton_t *node)
 
 	printf("\n\n");
 	delta_mark_node(node);
+	return 0;
 }
 
 
