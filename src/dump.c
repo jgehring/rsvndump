@@ -97,7 +97,7 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 	stopwatch_t watch = stopwatch_create();
 #endif
 
-	DEBUG_MSG("diffing %d against %d\n", dest, src);
+	DEBUG_MSG("diffing %d against %d (start_empty = %d)\n", dest, src, (int)start_empty);
 #ifdef USE_SINGLEFILE_DUMP
 	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, (session->file ? session->file : ""), TRUE, TRUE, TRUE, session->encoded_url, editor, editor_baton, subpool);
 #else
@@ -240,7 +240,7 @@ char dump(session_t *session, dump_options_t *opts)
 {
 	list_t logs;
 	char logs_fetched = 0;
-	svn_revnum_t global_rev, local_rev;
+	svn_revnum_t global_rev, local_rev = -1;
 	int list_idx;
 
 	/* Determine the start and end revision */
@@ -290,28 +290,31 @@ char dump(session_t *session, dump_options_t *opts)
 	 * the start revision is not 0.
 	 */
 	if ((opts->flags & DF_INCREMENTAL) && (opts->start != 0)) {
-		if (log_fetch_all(session, opts->start, opts->end, &logs, opts->verbosity)) {
+		if (log_fetch_all(session, 0, opts->end, &logs, opts->verbosity)) {
 			return 1;
 		}
+		/* Set local revision number */
+		local_rev = 0;
+		while ((local_rev < logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
+			++local_rev;
+		}
+		opts->start = ((log_revision_t *)logs.elements)[local_rev].revision;
 		logs_fetched = 1;
 	} else {
 		logs = list_create(sizeof(log_revision_t));
 	}
 
 	/* Write dumpfile header */
-	printf("%s: ", SVN_REPOS_DUMPFILE_MAGIC_HEADER); 
-	if (opts->flags & DF_USE_DELTAS) {
-		printf("3\n\n");
-	} else {
-		printf("2\n\n");
-	}
-	if ((opts->flags & DF_DUMP_UUID) && (!(opts->flags & DF_INCREMENTAL) || opts->start == 0)) {
-		const char *uuid;
-		if (dump_fetch_uuid(session, &uuid)) {
-			list_free(&logs);
-			return 1;
+	if (!(opts->flags & DF_INCREMENTAL) || (opts->start == 0)) {
+		printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER, 3); 
+		if ((opts->flags & DF_DUMP_UUID)) {
+			const char *uuid;
+			if (dump_fetch_uuid(session, &uuid)) {
+				list_free(&logs);
+				return 1;
+			}
+			printf("UUID: %s\n\n", uuid);
 		}
-		printf("UUID: %s\n\n", uuid);
 	}
 
 	/* Determine end revision if neccessary */
@@ -334,8 +337,12 @@ char dump(session_t *session, dump_options_t *opts)
 
 	/* Pre-dumping initialization */
 	global_rev = opts->start;
-	local_rev = global_rev == 0 ? 0 : 1;
-	list_idx = 0;
+	if (local_rev < 0) {
+		local_rev = global_rev == 0 ? 0 : 1;
+		list_idx = 0;
+	} else {
+		list_idx = local_rev-1;
+	}
 
 	/* Start dumping */
 	do {
@@ -365,7 +372,7 @@ char dump(session_t *session, dump_options_t *opts)
 		if (diff_rev < 0) {
 			diff_rev = 0;
 		}
-		if ((strlen(session->prefix) > 0) && diff_rev < opts->start) {
+		if (/*(strlen(session->prefix) > 0) &&*/ diff_rev < opts->start) {
 #ifdef USE_SINGLEFILE_DUMP
 			/* TODO: This isn't working well with single files
 			 * and a revision range */
@@ -378,7 +385,7 @@ char dump(session_t *session, dump_options_t *opts)
 			diff_rev = opts->start;
 #endif
 		}
-		DEBUG_MSG("global = %ld, diff = %ld\n", global_rev, diff_rev);
+		DEBUG_MSG("global = %ld, diff = %ld, start = %ld\n", global_rev, diff_rev, opts->start);
 
 		/* Setup the delta editor and run a diff */
 		delta_setup_editor(session, opts, &logs, (log_revision_t *)logs.elements + list_idx, local_rev, &editor, &editor_baton, revpool);
