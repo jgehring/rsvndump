@@ -38,16 +38,20 @@ close(in);
 
 
 # Run normal, non-incremental dump
-system("../src/rsvndump $args $url > .dumps/normal") == 0 || die $!;
+print(">> Preforming normal dump... ");
+system("../src/rsvndump $args $url > .dumps/normal 2> .dumps/normal.log") == 0 || die $!;
+print("done\n");
 
 
 # Run incremental dumps
+print(">> Preforming normal dump... ");
 my $start = 0;
 my $end = $steps;
-while (system("../src/rsvndump --incremental -r $start:$end $args $url >> .dumps/incremental") == 0) {
+while (system("../src/rsvndump --incremental -r $start:$end $args $url >> .dumps/incremental 2>> .dumps/incremental.log") == 0) {
 	$start = $end+1;
 	$end += $steps;
 	if ($end > $head) {
 		$end = $head;
 	}
 }
+print("done\n");
