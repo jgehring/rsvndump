@@ -239,7 +239,7 @@ void dump_options_free(dump_options_t *opts)
 char dump(session_t *session, dump_options_t *opts)
 {
 	list_t logs;
-	char logs_fetched = 0;
+	char logs_fetched = 0, ret = 0;
 	svn_revnum_t global_rev, local_rev = -1;
 	int list_idx;
 
@@ -354,8 +354,8 @@ char dump(session_t *session, dump_options_t *opts)
 		if (logs_fetched == 0) {
 			log_revision_t log;
 			if (log_fetch(session, global_rev, opts->end, &log, revpool)) {
-				list_free(&logs);
-				return 1;
+				ret = 1;
+				break;
 
 			}
 			list_append(&logs, &log);
@@ -390,8 +390,8 @@ char dump(session_t *session, dump_options_t *opts)
 		/* Setup the delta editor and run a diff */
 		delta_setup_editor(session, opts, &logs, (log_revision_t *)logs.elements + list_idx, local_rev, &editor, &editor_baton, revpool);
 		if (dump_do_diff(session, diff_rev, ((log_revision_t *)logs.elements)[list_idx].revision, (diff_rev == opts->start ? 1 : 0), editor, editor_baton, revpool)) {
-			list_free(&logs);
-			return 1;
+			ret = 1;
+			break;
 		}
 
 		if (opts->verbosity >= 0) {
@@ -403,5 +403,6 @@ char dump(session_t *session, dump_options_t *opts)
 		apr_pool_destroy(revpool);
 	} while (global_rev <= opts->end);
 
-	return 0;
+	list_free(&logs);
+	return ret;
 }
