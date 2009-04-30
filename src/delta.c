@@ -217,6 +217,12 @@ static char delta_dump_node(de_node_baton_t *node)
 	unsigned long prop_len, content_len;
 	char dump_content = 0;
 
+	/* Check if this is a dry run */
+	if (opts->flags & DF_DRY_RUN) {
+		node->dumped = 1;
+		return 0;
+	}
+
 	/* If the node is a directory and no properties have been changed,
 	   we don't need to dump it */
 	if ((node->action != 'A') && (node->kind == svn_node_dir) && (apr_hash_count(node->properties) == 0)) {

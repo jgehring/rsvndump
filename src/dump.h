@@ -39,7 +39,8 @@ enum dump_flags {
 	DF_DUMP_UUID = 0x01,
 	DF_USE_DELTAS = 0x02,
 	DF_KEEP_REVNUMS = 0x04,
-	DF_INCREMENTAL = 0x08
+	DF_INCREMENTAL = 0x08,
+	DF_DRY_RUN = 0x10
 };
 
 /* Data structure to bundle information related to the dumping process */

@@ -134,8 +134,8 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 }
 
 
-/* Determines the HEAD revision of a repository */
-static char dump_determine_head(session_t *session, svn_revnum_t *rev)
+/* Determines the correct end revision of a repository */
+static char dump_determine_end(session_t *session, svn_revnum_t *rev)
 {
 	svn_error_t *err;
 	svn_dirent_t *dirent;
@@ -240,40 +240,31 @@ char dump(session_t *session, dump_options_t *opts)
 {
 	list_t logs;
 	char logs_fetched = 0, ret = 0;
+	char start_mid = 0;
 	svn_revnum_t global_rev, local_rev = -1;
 	int list_idx;
+	
+	if ((opts->flags & DF_INCREMENTAL) && (opts->start != 0)) {
+		start_mid = 1;
+	}
 
-	/* Determine the start and end revision */
-	if (opts->end == -1) {
-		if (dump_determine_head(session, &opts->end)) {
+	/* Determine the correct revision range */
+	DEBUG_MSG("initial range: %ld:%ld\n", opts->start, opts->end);
+	if (dump_determine_end(session, &opts->end)) {
+		return 1;
+	}
+	if ((opts->start == 0) && (strlen(session->prefix) > 0)) {
+		if (log_get_range(session, &opts->start, &opts->end, opts->verbosity)) {
 			return 1;
-		}
-		if (opts->start == 0) {
-			if (log_get_range(session, &opts->start, &opts->end, opts->verbosity)) {
-				return 1;
-			}
-		} else {
-			/* Check if path is present in given start revision */
-			if (dump_check_path(session, "", opts->start) == svn_node_none) {
-				fprintf(stderr, _("ERROR: URL '%s' not found in revision %ld\n"), session->url, opts->start);
-				return 1;
-			}
 		}
 	} else {
-		if (dump_determine_head(session, &opts->end)) {
-			return 1;
-		}
 		/* Check if path is present in given start revision */
 		if (dump_check_path(session, "", opts->start) == svn_node_none) {
 			fprintf(stderr, _("ERROR: URL '%s' not found in revision %ld\n"), session->url, opts->start);
 			return 1;
 		}
-		/* Check if path is present in given end revision */
-		if (dump_check_path(session, "", opts->end) == svn_node_none) {
-			fprintf(stderr, _("ERROR: URL '%s' not found in revision %ld\n"), session->url, opts->end);
-			return 1;
-		}
 	}
+	DEBUG_MSG("adjusted range: %ld:%ld\n", opts->start, opts->end);
 
 	/*
 	 * Check if we need to reparent the RA session. This is needed if we
@@ -289,23 +280,28 @@ char dump(session_t *session, dump_options_t *opts)
 	 * prior to dumping. This is needed if the dump is incremental and
 	 * the start revision is not 0.
 	 */
-	if ((opts->flags & DF_INCREMENTAL) && (opts->start != 0)) {
+	if (start_mid) {
+		/* The first revision is a dry run if we don't use delta mode.
+		   This is because we need to get the data of the previous
+		   revision first */
+		opts->flags |= DF_DRY_RUN;
+
 		if (log_fetch_all(session, 0, opts->end, &logs, opts->verbosity)) {
 			return 1;
 		}
+		logs_fetched = 1;
+
 		/* Set local revision number */
 		local_rev = 0;
 		while ((local_rev < logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
 			++local_rev;
 		}
+		--local_rev;
 		opts->start = ((log_revision_t *)logs.elements)[local_rev].revision;
-		logs_fetched = 1;
 	} else {
 		logs = list_create(sizeof(log_revision_t));
-	}
 
-	/* Write dumpfile header */
-	if (!(opts->flags & DF_INCREMENTAL) || (opts->start == 0)) {
+		/* Write dumpfile header */
 		printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER, 3); 
 		if ((opts->flags & DF_DUMP_UUID)) {
 			const char *uuid;
@@ -322,7 +318,7 @@ char dump(session_t *session, dump_options_t *opts)
 		opts->end = ((log_revision_t *)logs.elements)[logs.size-1].revision;
 	}
 
-	/* Determine start revision if neccessary */
+	/* TODO: opts->start might already be adjusted! */
 	if (opts->start == 0) {
 		if (strlen(session->prefix) > 0) {
 			/* There arent' any subdirectories at revision 0, so let's
@@ -337,11 +333,15 @@ char dump(session_t *session, dump_options_t *opts)
 
 	/* Pre-dumping initialization */
 	global_rev = opts->start;
-	if (local_rev < 0) {
+	if (!start_mid) {
 		local_rev = global_rev == 0 ? 0 : 1;
 		list_idx = 0;
 	} else {
 		list_idx = local_rev-1;
+		if (strlen(session->prefix)) {
+			/* Adjustment for missing revision 0 */
+			++local_rev;
+		}
 	}
 
 	/* Start dumping */
@@ -365,7 +365,9 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 
 		/* Dump the revision header */
-		dump_revision_header((log_revision_t *)logs.elements + list_idx, local_rev, opts);
+		if (!(opts->flags & DF_DRY_RUN)) {
+			dump_revision_header((log_revision_t *)logs.elements + list_idx, local_rev, opts);
+		}
 
 		/* Determine the diff base */
 		diff_rev = global_rev - 1;
@@ -389,17 +391,22 @@ char dump(session_t *session, dump_options_t *opts)
 
 		/* Setup the delta editor and run a diff */
 		delta_setup_editor(session, opts, &logs, (log_revision_t *)logs.elements + list_idx, local_rev, &editor, &editor_baton, revpool);
-		if (dump_do_diff(session, diff_rev, ((log_revision_t *)logs.elements)[list_idx].revision, (diff_rev == opts->start ? 1 : 0), editor, editor_baton, revpool)) {
+		if (dump_do_diff(session, diff_rev, ((log_revision_t *)logs.elements)[list_idx].revision, (global_rev == opts->start ? 1 : 0), editor, editor_baton, revpool)) {
 			ret = 1;
 			break;
 		}
 
-		if (opts->verbosity >= 0) {
-			fprintf(stderr, _("* Dumped revision %ld.\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
+		if (opts->verbosity >= 0 && !(opts->flags & DF_DRY_RUN)) {
+			fprintf(stderr, _("* Dumped revision %ld (local %ld).\n"), ((log_revision_t *)logs.elements)[list_idx].revision, local_rev);
 		}
 
 		global_rev = ((log_revision_t *)logs.elements)[list_idx].revision+1;
 		++local_rev;
+
+		/* Make sure no other revisions then the first one
+		   are dumped dry */
+		opts->flags &= ~DF_DRY_RUN;
+
 		apr_pool_destroy(revpool);
 	} while (global_rev <= opts->end);
 
