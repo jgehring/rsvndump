@@ -298,6 +298,22 @@ char dump(session_t *session, dump_options_t *opts)
 		logs = list_create(sizeof(log_revision_t));
 	}
 
+	/* Write dumpfile header */
+	printf("%s: ", SVN_REPOS_DUMPFILE_MAGIC_HEADER); 
+	if (opts->flags & DF_USE_DELTAS) {
+		printf("3\n\n");
+	} else {
+		printf("2\n\n");
+	}
+	if ((opts->flags & DF_DUMP_UUID) && (!(opts->flags & DF_INCREMENTAL) || opts->start == 0)) {
+		const char *uuid;
+		if (dump_fetch_uuid(session, &uuid)) {
+			list_free(&logs);
+			return 1;
+		}
+		printf("UUID: %s\n\n", uuid);
+	}
+
 	/* Determine end revision if neccessary */
 	if (logs_fetched) {
 		opts->end = ((log_revision_t *)logs.elements)[logs.size-1].revision;
@@ -306,25 +322,14 @@ char dump(session_t *session, dump_options_t *opts)
 	/* Determine start revision if neccessary */
 	if (opts->start == 0) {
 		if (strlen(session->prefix) > 0) {
-			/* There arent' any subdirectories at revision 0 */
+			/* There arent' any subdirectories at revision 0, so let's
+			   write a default start revision */
+			printf("%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, 0);	
+			printf("%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, PROPS_END_LEN);
+			printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, PROPS_END_LEN);
+			printf(PROPS_END"\n");
 			opts->start = 1;
 		}
-	}
-
-	/* Write dumpfile header */
-	printf("%s: ", SVN_REPOS_DUMPFILE_MAGIC_HEADER); 
-	if (opts->flags & DF_USE_DELTAS) {
-		printf("3\n\n");
-	} else {
-		printf("2\n\n");
-	}
-	if (opts->flags & DF_DUMP_UUID) {
-		const char *uuid;
-		if (dump_fetch_uuid(session, &uuid)) {
-			list_free(&logs);
-			return 1;
-		}
-		printf("UUID: %s\n\n", uuid);
 	}
 
 	/* Pre-dumping initialization */
