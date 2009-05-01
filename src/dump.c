@@ -281,11 +281,6 @@ char dump(session_t *session, dump_options_t *opts)
 	 * the start revision is not 0.
 	 */
 	if (start_mid) {
-		/* The first revision is a dry run if we don't use delta mode.
-		   This is because we need to get the data of the previous
-		   revision first */
-		opts->flags |= DF_DRY_RUN;
-
 		if (log_fetch_all(session, 0, opts->end, &logs, opts->verbosity)) {
 			return 1;
 		}
@@ -296,7 +291,14 @@ char dump(session_t *session, dump_options_t *opts)
 		while ((local_rev < logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
 			++local_rev;
 		}
-		--local_rev;
+
+		/* The first revision is a dry run if we don't use delta mode.
+		   This is because we need to get the data of the previous
+		   revision first */
+		if (!(opts->flags & DF_USE_DELTAS)) {
+			opts->flags |= DF_DRY_RUN;
+			--local_rev;
+		}
 		opts->start = ((log_revision_t *)logs.elements)[local_rev].revision;
 	} else {
 		logs = list_create(sizeof(log_revision_t));
@@ -349,6 +351,7 @@ char dump(session_t *session, dump_options_t *opts)
 		svn_delta_editor_t *editor;
 		void *editor_baton;
 		svn_revnum_t diff_rev;
+		char start_empty;
 		apr_pool_t *revpool = svn_pool_create(session->pool);
 
 		if (logs_fetched == 0) {
@@ -389,9 +392,24 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 		DEBUG_MSG("global = %ld, diff = %ld, start = %ld\n", global_rev, diff_rev, opts->start);
 
+		/* Determine whether to start with an empty revision */
+		if (opts->flags & DF_USE_DELTAS) {
+			if (local_rev == 1) {
+				start_empty = 1;
+			} else {
+				start_empty = 0;
+			}
+		} else {
+			if (global_rev == opts->start) {
+				start_empty = 1;
+			} else {
+				start_empty = 0;
+			}
+		}
+
 		/* Setup the delta editor and run a diff */
 		delta_setup_editor(session, opts, &logs, (log_revision_t *)logs.elements + list_idx, local_rev, &editor, &editor_baton, revpool);
-		if (dump_do_diff(session, diff_rev, ((log_revision_t *)logs.elements)[list_idx].revision, (global_rev == opts->start ? 1 : 0), editor, editor_baton, revpool)) {
+		if (dump_do_diff(session, diff_rev, ((log_revision_t *)logs.elements)[list_idx].revision, start_empty, editor, editor_baton, revpool)) {
 			ret = 1;
 			break;
 		}
