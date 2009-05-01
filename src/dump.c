@@ -240,7 +240,7 @@ char dump(session_t *session, dump_options_t *opts)
 {
 	list_t logs;
 	char logs_fetched = 0, ret = 0;
-	char start_mid = 0;
+	char start_mid = 0, show_local_rev = 1;
 	svn_revnum_t global_rev, local_rev = -1;
 	int list_idx;
 	
@@ -346,6 +346,10 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 	}
 
+	if ((opts->flags & DF_KEEP_REVNUMS) || (strlen(session->prefix) == 0)) {
+		show_local_rev = 0;
+	}
+
 	/* Start dumping */
 	do {
 		svn_delta_editor_t *editor;
@@ -415,7 +419,11 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 
 		if (opts->verbosity >= 0 && !(opts->flags & DF_DRY_RUN)) {
-			fprintf(stderr, _("* Dumped revision %ld (local %ld).\n"), ((log_revision_t *)logs.elements)[list_idx].revision, local_rev);
+			if (show_local_rev) {
+				fprintf(stderr, _("* Dumped revision %ld (local %ld).\n"), ((log_revision_t *)logs.elements)[list_idx].revision, local_rev);
+			} else {
+				fprintf(stderr, _("* Dumped revision %ld.\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
+			}
 		}
 
 		global_rev = ((log_revision_t *)logs.elements)[list_idx].revision+1;
