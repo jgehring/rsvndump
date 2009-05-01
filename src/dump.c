@@ -66,7 +66,7 @@ static void dump_revision_header(log_revision_t *revision, svn_revnum_t local_re
 		props_length += PROPS_END_LEN;
 	}
 
-	printf("%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, local_revnum);	
+	printf("%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, local_revnum);
 	printf("%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
 	printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);
 	
@@ -83,6 +83,24 @@ static void dump_revision_header(log_revision_t *revision, svn_revnum_t local_re
 
 		printf(PROPS_END"\n");
 	}
+}
+
+
+/* Dumps an empty revision for padding the given number */
+static void dump_padding_revision(svn_revnum_t rev)
+{
+	int props_length = 0;
+	const char *message = "This is an empty revision for padding.";
+
+	props_length += property_strlen("svn:log", message);
+	props_length += PROPS_END_LEN;
+
+	printf("%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, rev);
+	printf("%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
+	printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);
+
+	property_dump("svn:log", message);
+	printf(PROPS_END"\n");
 }
 
 
@@ -340,7 +358,9 @@ char dump(session_t *session, dump_options_t *opts)
 		list_idx = 0;
 	} else {
 		list_idx = local_rev-1;
-		if (strlen(session->prefix)) {
+		if (opts->flags & DF_KEEP_REVNUMS) {
+			local_rev = opts->start;
+		} else if (strlen(session->prefix)) {
 			/* Adjustment for missing revision 0 */
 			++local_rev;
 		}
@@ -369,6 +389,17 @@ char dump(session_t *session, dump_options_t *opts)
 			list_idx = logs.size-1;
 		} else {
 			++list_idx;
+		}
+
+		if ((opts->flags & DF_KEEP_REVNUMS) && !(opts->flags & DF_DRY_RUN)) {
+			/* Padd with empty revisions if neccessary */
+			while (local_rev < ((log_revision_t *)logs.elements)[list_idx].revision) {
+				dump_padding_revision(local_rev);
+				if (opts->verbosity >= 0) {
+					fprintf(stderr, _("* Padded revision %ld.\n"), local_rev);
+				}
+				++local_rev;
+			}
 		}
 
 		/* Dump the revision header */
