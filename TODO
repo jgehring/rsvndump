@@ -1,7 +1,4 @@
 == 0.5 branch (deltas) ==
-> --incremental does not start correctly... maybe we need to record the previous stuff as well,
-  but just don't dump it? Alternatevily, we could fetch everything from the previous revision
-  if we aren't in delta mode
 > It seems the copyfrom-revision is sometimes too large (+1)
 > Don't dump node contents if it is a copy and has not changed (we need
   to keep track of the MD5-sums for this)
@@ -12,6 +9,8 @@
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
 > Replace APPNAME in svn_handle_errror2 with _("ERROR")
+> When cloning the changed_paths hash in log_receiver, we can ignore paths that don't
+  start with a '/'
 
 > Further validate copy handling and subdirectory dumping
 

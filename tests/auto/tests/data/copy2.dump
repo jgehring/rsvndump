@@ -1,14 +1,8 @@
-SVN-fs-dump-format-version: 2
-
-Revision-number: 0
-Prop-content-length: 11
-Content-length: 11
-
-PROPS-END
+SVN-fs-dump-format-version: 3
 
 Revision-number: 1
-Prop-content-length: 117
-Content-length: 117
+Prop-content-length: 116
+Content-length: 116
 
 K 7
 svn:log
@@ -21,15 +15,16 @@ jonas
 K 8
 svn:date
 V 27
-2009-04-24T10:16:24.080337Z
+2009-05-01T19:00:36.085309Z
 PROPS-END
 
 Node-path: file1
 Node-kind: file
 Node-action: add
-Prop-content-length: 11
+Prop-content-length: 10
 Text-content-length: 7
-Content-length: 18
+Text-content-md5: a10edbbb8f28f8e98ee6b649ea2556f4
+Content-length: 17
 
 PROPS-END
 hello2
@@ -38,17 +33,18 @@ hello2
 Node-path: file2
 Node-kind: file
 Node-action: add
-Prop-content-length: 11
+Prop-content-length: 10
 Text-content-length: 7
-Content-length: 18
+Text-content-md5: 9d538cf20822d21ada90251884b19869
+Content-length: 17
 
 PROPS-END
 hello6
 
 
 Revision-number: 2
-Prop-content-length: 117
-Content-length: 117
+Prop-content-length: 116
+Content-length: 116
 
 K 7
 svn:log
@@ -61,7 +57,7 @@ jonas
 K 8
 svn:date
 V 27
-2009-04-24T10:16:26.084977Z
+2009-05-01T19:00:38.085465Z
 PROPS-END
 
 Node-path: file1
