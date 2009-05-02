@@ -156,7 +156,19 @@ static char delta_check_copy(de_node_baton_t *node)
 	list_t *logs = node->de_baton->logs;
 	svn_revnum_t local_revnum = node->de_baton->local_revnum;
 
-	/* First, check if the source is reachable, i.e. can be found under
+	/* Sanity check */
+	if (node->copyfrom_path == NULL) {
+		node->use_copy = 0;
+		return 0;
+	}
+
+	/* Check if we can use the information we already have */
+	if ((strlen(session->prefix) == 0) && (opts->start == 0)) {
+		node->use_copy = 1;
+		return 0;
+	}
+
+	/* Check if the source is reachable, i.e. can be found under
 	   the current session root */
 	if (!strncmp(session->prefix, node->copyfrom_path, strlen(session->prefix))) {
 		svn_revnum_t r, rr = -1;
@@ -250,9 +262,7 @@ static char delta_dump_node(de_node_baton_t *node)
 	}
 
 	/* Check for potential copy. This is neede here because it might change the action above */
-	if (node->copyfrom_path != NULL) {
-		delta_check_copy(node);
-	}
+	delta_check_copy(node);
 
 	/* Dump action */
 	printf("%s: ", SVN_REPOS_DUMPFILE_NODE_ACTION ); 
@@ -284,7 +294,7 @@ static char delta_dump_node(de_node_baton_t *node)
 	}
 
 	/* Output copy information if neccessary */
-	if ((node->copyfrom_path != NULL) && node->use_copy) {
+	if (node->use_copy) {
 		int offset = strlen(session->prefix);
 		while (*(node->copyfrom_path+offset) == '/') {
 			++offset;

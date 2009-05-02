@@ -1,5 +1,6 @@
 == 0.5 branch (deltas) ==
-> It seems the copyfrom-revision is sometimes too large (+1)
+> It seems the copyfrom-revision is sometimes too large (+1). This is problematic
+  with replace-actions. See copy_replace test.
 > Don't dump node contents if it is a copy and has not changed (we need
   to keep track of the MD5-sums for this)
 > MD5-sums for deltas
@@ -8,6 +9,7 @@
 > Replace APPNAME in svn_handle_errror2 with _("ERROR")
 > When cloning the changed_paths hash in log_receiver, we can ignore paths that don't
   start with a '/'
+> --dump-uuid as default?
 
 > Further validate copy handling and subdirectory dumping
 
