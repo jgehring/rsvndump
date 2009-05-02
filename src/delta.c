@@ -249,6 +249,11 @@ static char delta_dump_node(de_node_baton_t *node)
 		printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_KIND, node->kind == svn_node_file ? "file" : "dir");
 	}
 
+	/* Check for potential copy. This is neede here because it might change the action above */
+	if (node->copyfrom_path != NULL) {
+		delta_check_copy(node);
+	}
+
 	/* Dump action */
 	printf("%s: ", SVN_REPOS_DUMPFILE_NODE_ACTION ); 
 	switch (node->action) {
@@ -278,20 +283,17 @@ static char delta_dump_node(de_node_baton_t *node)
 		dump_content = 1;
 	}
 
-	/* Check for potential copy */
-	if (node->copyfrom_path != NULL) {
-		delta_check_copy(node);
-		if (node->use_copy) {
-			int offset = strlen(session->prefix);
-			while (*(node->copyfrom_path+offset) == '/') {
-				++offset;
-			}
-			printf("%s: %ld\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_REV, node->copyfrom_revision);
-			if (opts->prefix != NULL) {
-				printf("%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, opts->prefix, node->copyfrom_path+offset);
-			} else {
-				printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, node->copyfrom_path+offset);
-			}
+	/* Output copy information if neccessary */
+	if ((node->copyfrom_path != NULL) && node->use_copy) {
+		int offset = strlen(session->prefix);
+		while (*(node->copyfrom_path+offset) == '/') {
+			++offset;
+		}
+		printf("%s: %ld\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_REV, node->copyfrom_revision);
+		if (opts->prefix != NULL) {
+			printf("%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, opts->prefix, node->copyfrom_path+offset);
+		} else {
+			printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, node->copyfrom_path+offset);
 		}
 	}
 
