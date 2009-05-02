@@ -237,7 +237,7 @@ static char delta_dump_node(de_node_baton_t *node)
 
 	/* If the node is a directory and no properties have been changed,
 	   we don't need to dump it */
-	if ((node->action != 'A') && (node->kind == svn_node_dir) && (apr_hash_count(node->properties) == 0)) {
+	if ((node->action == 'M') && (node->kind == svn_node_dir) && (apr_hash_count(node->properties) == 0)) {
 		node->dumped = 1;
 		return 0;
 	}
@@ -443,6 +443,7 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 {
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
 	de_node_baton_t *node;
+	svn_log_changed_path_t *log;
 
 	/* Check if the parent node needs to be dumped */
 	if (!parent->dumped) {
@@ -451,18 +452,30 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 
 	node = delta_create_node(path, parent, dir_pool);
 	node->kind = svn_node_dir;
-	node->action = 'A';
+
+	log = apr_hash_get(node->de_baton->log_revision->changed_paths, path, APR_HASH_KEY_STRING);
 
 	/*
-	 * Check for copy. This needs to be done manually, since svn_ra_do_diff
-	 * does not supply any copy information to the delta editor
+	 * Although this function is named de_add_directory, it will also be called
+	 * for nodes that have been copied (or are located in a tree that has
+	 * just been copied). If this is true, we need to ask the log entry
+	 * to determine the correct action.
 	 */
-	svn_log_changed_path_t *log = apr_hash_get(node->de_baton->log_revision->changed_paths, path, APR_HASH_KEY_STRING);
-	if (log != NULL) {
+	if (log == NULL) {
+		/* Fallback */
+		node->action = 'A';
+	} else {
+		node->action = log->action;
+		/*
+		 * Check for copy. This needs to be done manually, since
+		 * svn_ra_do_diff does not supply any copy information to the
+		 * delta editor.
+		 */
 		if (log->copyfrom_path != NULL) {
+			DEBUG_MSG("copyfrom_path = %s\n", log->copyfrom_path);
 			node->copyfrom_path = apr_pstrdup(dir_pool, log->copyfrom_path);
+			node->copyfrom_revision = log->copyfrom_rev;
 		}
-		node->copyfrom_revision = log->copyfrom_rev;
 	}
 
 	*child_baton = node;
@@ -533,6 +546,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 {
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
 	de_node_baton_t *node;
+	svn_log_changed_path_t *log;
 
 	/* Check if the parent node needs to be dumped */
 	if (!parent->dumped) {
@@ -545,7 +559,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 	node->kind = svn_node_file;
 
 	/* Get corresponding log entry */
-	svn_log_changed_path_t *log = apr_hash_get(node->de_baton->log_revision->changed_paths, path, APR_HASH_KEY_STRING);
+	log = apr_hash_get(node->de_baton->log_revision->changed_paths, path, APR_HASH_KEY_STRING);
 	
 	/*
 	 * Although this function is named de_add_file, it will also be called
