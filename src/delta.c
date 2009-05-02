@@ -317,6 +317,9 @@ static char delta_dump_node(de_node_baton_t *node)
 		struct stat st;
 		if (stat(node->filename, &st)) {
 			DEBUG_MSG("dump_delta_node: FATAL: cannot stat %s\n", node->filename);
+#if DEBUG
+			exit(1);
+#endif
 			return 1;
 		}
 		content_len = st.st_size;
@@ -689,12 +692,21 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 		svn_log_changed_path_t *log;
 		apr_hash_this(hi, (const void **)&path, NULL, (void **)&log);
 		DEBUG_MSG("Checking %s (%c)\n", path, log->action);
-		if (log->action == 'D' && apr_hash_get(de_baton->dumped_entries, path, APR_HASH_KEY_STRING) == NULL) {
-			de_node_baton_t *node = delta_create_node_no_parent(path, de_baton, pool);
-			node->action = log->action;
+		if (log->action == 'D') {
+			/* We can unlink the temporary file now */
+			char *filename = apr_hash_get(delta_hash, path, APR_HASH_KEY_STRING);
+			if (filename) {
+				unlink(filename);
+				apr_hash_set(delta_hash, path, APR_HASH_KEY_STRING, NULL);
+			}
+			
+			if (apr_hash_get(de_baton->dumped_entries, path, APR_HASH_KEY_STRING) == NULL) {
+				de_node_baton_t *node = delta_create_node_no_parent(path, de_baton, pool);
+				node->action = log->action;
 
-			DEBUG_MSG("Post-dumping %s\n", path);
-			delta_dump_node(node);
+				DEBUG_MSG("Post-dumping %s\n", path);
+				delta_dump_node(node);
+			}
 		}
 	}
 
