@@ -295,8 +295,7 @@ char dump(session_t *session, dump_options_t *opts)
 
 	/*
 	 * Decide wether the whole repositry log should be fetched
-	 * prior to dumping. This is needed if the dump is incremental and
-	 * the start revision is not 0.
+	 * prior to dumping. 
 	 */
 	if (start_mid) {
 		if (log_fetch_all(session, 0, opts->end, &logs, opts->verbosity)) {
@@ -338,15 +337,14 @@ char dump(session_t *session, dump_options_t *opts)
 		opts->end = ((log_revision_t *)logs.elements)[logs.size-1].revision;
 	}
 
-	/* TODO: opts->start might already be adjusted! */
-	if (opts->start == 0) {
-		if (strlen(session->prefix) > 0) {
-			/* There arent' any subdirectories at revision 0, so let's
-			   write a default start revision */
-			printf("%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, 0);	
-			printf("%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, PROPS_END_LEN);
-			printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, PROPS_END_LEN);
-			printf(PROPS_END"\n");
+	if (!start_mid && (strlen(session->prefix) > 0)) {
+		/* There arent' any subdirectories at revision 0, so let's
+		   write a default start revision */
+		printf("%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, 0);	
+		printf("%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, PROPS_END_LEN);
+		printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, PROPS_END_LEN);
+		printf(PROPS_END"\n");
+		if (opts->start == 0) {
 			opts->start = 1;
 		}
 	}
