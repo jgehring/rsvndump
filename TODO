@@ -2,9 +2,7 @@
 > It seems the copyfrom-revision is sometimes too large (+1)
 > Don't dump node contents if it is a copy and has not changed (we need
   to keep track of the MD5-sums for this)
-> Don't start with an empty revision in dump_do_diff() if --incremental is given
 > MD5-sums for deltas
-> In close_edit, delete the temporary files for nodes that have been deleted
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
 > Replace APPNAME in svn_handle_errror2 with _("ERROR")
@@ -13,6 +11,7 @@
 
 > Further validate copy handling and subdirectory dumping
 
+> Add --no-stop-on-copy
 > Rewrite manpage
 > Check compilation with svn 1.6, 1.5 and 1.4
 
