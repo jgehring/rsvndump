@@ -18,6 +18,7 @@ wc_dir = "work/wc"
 dump_dir = "work/dumps"
 log_dir = "work/logs"
 test_id = ""
+post_update = "no"
 extra_args = []
 
 
@@ -73,7 +74,8 @@ def setup_repos(name, modify):
 	step = 0
 	while modify(step, old_dir+"/"+log_dir+"/"+test_id):
 		run("svn", "commit", "-m 'commit step "+str(step)+"'", output=old_dir+"/"+log_dir+"/"+test_id)
-#		run("svn", "up", output=old_dir+"/"+log_dir+"/"+test_id)
+		if post_update == "yes":
+			run("svn", "up", output=old_dir+"/"+log_dir+"/"+test_id)
 		step += 1
 	os.chdir(old_dir)
 
@@ -142,7 +144,10 @@ if __name__ == "__main__":
 		print("USAGE: runtest.py <test> [extra_args]")
 		raise SystemExit(1)
 	for i in range(2, len(sys.argv)):
-		extra_args.append(sys.argv[i])
+		if sys.argv[i] == "--post-update":
+			post_update = "yes"
+		else:
+			extra_args.append(sys.argv[i])
 
 	if sys.argv[1].endswith(".py"):
 		sys.argv[1] = sys.argv[1][:-3]
