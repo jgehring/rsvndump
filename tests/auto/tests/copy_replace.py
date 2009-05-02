@@ -10,7 +10,7 @@ from run import run
 
 
 def info():
-	return "Copying test with deletions in the same revision"
+	return "Copying test with replacement in the same revision"
 
 
 def modify_tree(step, logfile):
@@ -38,11 +38,15 @@ def modify_tree(step, logfile):
 		run("svn", "add", "dir1/sdir1/file2", output=logfile)
 		return 1
 	elif step == 3:
-		run("svn", "cp", "dir1", "dir2", output=logfile)
-		run("svn", "rm", "dir2/sdir1", output=logfile)
-		run("svn", "rm", "dir2/sdir2/file1", output=logfile)
+		os.chdir("dir1/sdir1");
+		f = open("file1",'a')
+		print >>f, 'hello7'
 		return 1
 	elif step == 4:
+		os.chdir("../..");
+		run("svn", "cp", "dir1", "dir2", output=logfile)
+		return 1
+	elif step == 5:
 		f = open("dir2/sdir2/file2",'a')
 		print >>f, "just copied!"
 		return 1
