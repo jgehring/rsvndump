@@ -73,7 +73,7 @@ def setup_repos(name, modify):
 	step = 0
 	while modify(step, old_dir+"/"+log_dir+"/"+test_id):
 		run("svn", "commit", "-m 'commit step "+str(step)+"'", output=old_dir+"/"+log_dir+"/"+test_id)
-		run("svn", "up", output=old_dir+"/"+log_dir+"/"+test_id)
+#		run("svn", "up", output=old_dir+"/"+log_dir+"/"+test_id)
 		step += 1
 	os.chdir(old_dir)
 
