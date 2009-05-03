@@ -330,23 +330,16 @@ char dump(session_t *session, dump_options_t *opts)
 			}
 			printf("UUID: %s\n\n", uuid);
 		}
+
+		/* There arent' any subdirectories at revision 0 */
+		if ((strlen(session->prefix) > 0) && opts->start == 0) {
+			opts->start = 1;
+		}
 	}
 
 	/* Determine end revision if neccessary */
 	if (logs_fetched) {
 		opts->end = ((log_revision_t *)logs.elements)[logs.size-1].revision;
-	}
-
-	if (!start_mid && (strlen(session->prefix) > 0)) {
-		/* There arent' any subdirectories at revision 0, so let's
-		   write a default start revision */
-		printf("%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, 0);	
-		printf("%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, PROPS_END_LEN);
-		printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, PROPS_END_LEN);
-		printf(PROPS_END"\n");
-		if (opts->start == 0) {
-			opts->start = 1;
-		}
 	}
 
 	/* Pre-dumping initialization */

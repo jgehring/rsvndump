@@ -13,7 +13,6 @@
   start with a '/'
 > --dump-uuid as default?
 > Don't allow --keep-revnums if not root or prefix
-> Don't copy revision 0 manually (svnadmin doesn't do it, too)
 > Make the '-r'-specifier more like svnadmin (maybe)
 > Correct SSL certificate handling (i.e., offer option to accept permanetly)
 
