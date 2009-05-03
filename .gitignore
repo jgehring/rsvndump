@@ -18,3 +18,5 @@ depcomp
 install-sh
 missing
 stamp-*
+doc/rsvndump.xml
+doc/rsvndump.1
