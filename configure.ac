@@ -14,6 +14,7 @@ sinclude(build/find_svn.m4)
 sinclude(build/rsvndump-conf.m4)
 
 # Optional features
+USE_MAN="no"
 AC_ARG_ENABLE(man, [  --enable-man            generate the man page], USE_MAN="yes", USE_MAN="no")
 
 # Checks for programs.
@@ -85,6 +86,8 @@ if test "$USE_COMPAT" = "yes"; then
 fi
 AC_CONFIG_FILES([src/Makefile po/Makefile.in])
 if test "$USE_MAN" = "yes"; then
+  DOC_SUBDIRS="doc"
+  AC_SUBST([DOC_SUBDIRS])
   AC_CONFIG_FILES([doc/Makefile])
 fi
 AC_OUTPUT
