@@ -38,6 +38,7 @@ def modify_tree(step, logfile):
 		run("svn", "add", "dir1/sdir1/file2", output=logfile)
 		return 1
 	elif step == 3:
+		run("svn", "up", output=logfile)
 		run("svn", "rm", "dir1/sdir1", output=logfile)
 		return 1
 	elif step == 4:
