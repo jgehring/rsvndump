@@ -521,6 +521,11 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 			node->copyfrom_path = apr_pstrdup(dir_pool, log->copyfrom_path);
 			node->copyfrom_revision = log->copyfrom_rev;
 		}
+		/*
+		 * If the node is preset in the log, we must not use the copy
+		 * information of the parent node
+		 */
+		node->use_copy = 0;
 	}
 
 	*child_baton = node;
@@ -627,6 +632,11 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 			node->copyfrom_path = apr_pstrdup(file_pool, log->copyfrom_path);
 			node->copyfrom_revision = log->copyfrom_rev;
 		}
+		/*
+		 * If the node is preset in the log, we must not use the copy
+		 * information of the parent node
+		 */
+		node->use_copy = 0;
 	}
 
 	*file_baton = node;
