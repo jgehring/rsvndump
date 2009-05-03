@@ -12,16 +12,23 @@ imported into a new subversion repository.
 
 REQUIREMENTS
 ============
-rsvndump depends on Subversion, which depends on the Apache Portable Runtinme.
-Therefore, to build rsvndump from source, the development and runtime files
-(headers and libraries) of both libraries must be present on the system.
+rsvndump depends on Subversion (>= 1.4), which depends on the Apache Portable
+Runtinme. Therefore, to build rsvndump from source, the development and
+runtime files (headers and libraries) of both libraries must be present on the
+system.
 
 
 USAGE
 =====
-For usage information, please refer to the man page shipped with this package.
-Less detailed usage information can also be retrieved by passing the '--help'
-argument to the program
+Basic usage information can be retrieved by passing the '--help' argument to
+the program.
+More detailed information is included in the man page. To generate and install
+it, pass '--enable-man' to the configure script. Please note that you will
+need asciidoc ( http://www.methods.co.nz/asciidoc/ ) and xmlto
+( https://fedorahosted.org/xmlto/ ) for generating the man page from the
+asciidoc source.
+An HTML-version of the man page can also be found online at
+http://saubue.boolsoft.org/projects/rsvndump/manpage.html
 
 
 CREDITS

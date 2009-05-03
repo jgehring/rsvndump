@@ -1,5 +1,4 @@
-SUBDIRS = po $(COMPAT_SUBDIRS) src
-dist_man_MANS = man/rsvndump.1
+SUBDIRS = po $(COMPAT_SUBDIRS) src doc
 
 EXTRA_DIST = config.rpath autogen.sh lib
 
