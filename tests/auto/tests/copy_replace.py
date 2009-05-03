@@ -32,7 +32,6 @@ def modify_tree(step, logfile):
 		f = open("dir1/sdir1/file2",'w')
 		print >>f, 'hello6'
 		run("svn", "add", "dir1/sdir1/file2", output=logfile)
-		run("svn", "up", output=logfile)
 		return 1
 	elif step == 2:
 		os.chdir("dir1/sdir1")
@@ -41,6 +40,7 @@ def modify_tree(step, logfile):
 		return 1
 	elif step == 3:
 		os.chdir("../..")
+		run("svn", "up", output=logfile)
 		run("svn", "cp", "dir1", "dir2", output=logfile)
 		return 1
 	elif step == 4:
