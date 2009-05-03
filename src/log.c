@@ -161,7 +161,7 @@ char log_get_range(session_t *session, svn_revnum_t *start, svn_revnum_t *end, i
 		if (verbosity > 0) {
 			fprintf(stderr, "\n");
 		}
-		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		list_free(&list);
 		svn_pool_destroy(subpool);
@@ -198,7 +198,7 @@ char log_fetch(session_t *session, svn_revnum_t rev, svn_revnum_t end, log_revis
 	baton.pool = pool;
 
 	if ((err = svn_ra_get_log(session->ra, paths, rev, end, 1, TRUE, FALSE, log_receiver, &baton, subpool))) {
-		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		svn_pool_destroy(subpool);
 		return 1;
@@ -235,7 +235,7 @@ char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, lis
 		if (verbosity > 0) {
 			fprintf(stderr, "\n");
 		}
-		svn_handle_error2(err, stderr, FALSE, APPNAME": ");
+		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
 		list_free(list);
 		svn_error_clear(err);
 		svn_pool_destroy(pool);

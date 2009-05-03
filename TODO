@@ -3,11 +3,11 @@
   with replace-actions. See copy_replace test.
 > Don't dump node contents if it is a copy and has not changed (we need
   to keep track of the MD5-sums for this)
+> Add a test for --prefix
 > MD5-sums for deltas
 > Specify MD5 for copy source on copying
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
-> Replace APPNAME in svn_handle_errror2 with _("ERROR")
 > When cloning the changed_paths hash in log_receiver, we can ignore paths that don't
   start with a '/'
 > --dump-uuid as default?
@@ -15,7 +15,9 @@
 > Further validate copy handling and subdirectory dumping
 
 > Add --no-stop-on-copy
-> Rewrite manpage
+> Rewrite manpage:
+  - Add notes about the resulting revision numbers, using example combinations of
+    subdirectories, --keep-revnums, -r X:Y and --incremental
 > Check compilation with svn 1.6, 1.5 and 1.4
 
 
