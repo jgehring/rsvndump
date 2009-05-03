@@ -2,9 +2,8 @@
 
 for i in tests/*.py;
 do
-	./runtest.py "${i}" $@
+	./runtest.py "${i}" --brief $@
 	if [ "$?" != "0" ]; then
 		exit 1
 	fi
-	echo 
 done

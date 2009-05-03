@@ -29,24 +29,21 @@ def modify_tree(step, logfile):
 		run("svn", "add", "dir1", output=logfile)
 		return 1
 	elif step == 1:
-		f = open("dir1/sdir2/file2",'a')
-		print >>f, 'hello5'
-		return 1
-	elif step == 2:
 		f = open("dir1/sdir1/file2",'w')
 		print >>f, 'hello6'
 		run("svn", "add", "dir1/sdir1/file2", output=logfile)
+		run("svn", "up", output=logfile)
 		return 1
-	elif step == 3:
-		os.chdir("dir1/sdir1");
+	elif step == 2:
+		os.chdir("dir1/sdir1")
 		f = open("file1",'a')
 		print >>f, 'hello7'
 		return 1
-	elif step == 4:
-		os.chdir("../..");
+	elif step == 3:
+		os.chdir("../..")
 		run("svn", "cp", "dir1", "dir2", output=logfile)
 		return 1
-	elif step == 5:
+	elif step == 4:
 		f = open("dir2/sdir2/file2",'a')
 		print >>f, "just copied!"
 		return 1

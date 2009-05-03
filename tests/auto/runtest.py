@@ -19,7 +19,9 @@ dump_dir = "work/dumps"
 log_dir = "work/logs"
 test_id = ""
 post_update = "no"
+brief = "no"
 extra_args = []
+valid= "no"
 
 
 def setup_repos(name, modify):
@@ -60,8 +62,9 @@ def setup_repos(name, modify):
 		test_id = name+"_"+str(num)
 		current_repos = repos_dir+"/"+test_id
 	os.mkdir(current_repos)
-	print("** ID: '"+test_id+"'")
-	print(">> Creating repository...")
+	if brief != "yes":
+		print("** ID: '"+test_id+"'")
+		print(">> Creating repository...")
 	os.system("svnadmin create "+current_repos)
 	current_repos = os.getcwd()+"/"+current_repos
 	old_dir = os.getcwd()
@@ -70,7 +73,8 @@ def setup_repos(name, modify):
 	os.chdir(test_id)
 	
 	# Run committer
-	print(">> Committing...")
+	if brief != "yes":
+		print(">> Committing...")
 	step = 0
 	while modify(step, old_dir+"/"+log_dir+"/"+test_id):
 		run("svn", "commit", "-m 'commit step "+str(step)+"'", output=old_dir+"/"+log_dir+"/"+test_id)
@@ -81,7 +85,8 @@ def setup_repos(name, modify):
 
 
 def dump_repos(preproc = None):
-	print(">> Creating reference dump...")
+	if brief != "yes":
+		print(">> Creating reference dump...")
 	dest_dir = dump_dir+"/"+test_id
 	try:
 		os.stat(dest_dir)
@@ -93,7 +98,8 @@ def dump_repos(preproc = None):
 
 
 def rsvndump_dump(subdir = None):
-	print(">> Running rsvndump...")
+	if brief != "yes":
+		print(">> Running rsvndump...")
 	dest_dir = dump_dir+"/"+test_id
 	try:
 		os.stat(dest_dir)
@@ -114,50 +120,65 @@ def rsvndump_dump(subdir = None):
 
 
 def rsvndump_load():
-	print(">> Importing dumpfile...")
+	if brief != "yes":
+		print(">> Importing dumpfile...")
 	repos = repos_dir+"/"+test_id+".tmp"
 	run("svnadmin", "create", repos)
 	run("svnadmin", "load", repos, input=dump_dir+"/"+test_id+"/rsvndump.dump", output=log_dir+"/"+test_id)
 
 
 def rsvndump_diff():
-	print ">> Validating...",
+	global valid
+	if brief != "yes":
+		print ">> Validating...",
 	run("svnadmin", "dump", repos_dir+"/"+test_id+".tmp", output=dump_dir+"/"+test_id+"/"+"validate.dump", error=log_dir+"/"+test_id)
 	try:
 		run("diff", "-Naur", dump_dir+"/"+test_id+"/original.dump", dump_dir+"/"+test_id+"/validate.dump", output=log_dir+"/"+test_id+".diff")
-		print(" ok")
+		if brief != "yes":
+			print(" ok")
+		valid = "yes"
 	except:
-		print(" failed. See "+log_dir+"/"+test_id+".diff for details")
+		if brief != "yes":
+			print(" failed. See "+log_dir+"/"+test_id+".diff for details")
 
 def rsvndump_diff_ref():
-	print ">> Validating..."
+	global valid
+	if brief != "yes":
+		print ">> Validating..."
 	try:
 		run("diff", "-Naur", dump_dir+"/"+test_id+"/original.dump", dump_dir+"/"+test_id+"/rsvndump.dump", output=log_dir+"/"+test_id+".diff")
-		print(" ok")
+		if brief != "yes":
+			print(" ok")
+		valid = "yes"
 	except:
-		print(" failed. See "+log_dir+"/"+test_id+".diff for details")
+		if brief != "yes":
+			print(" failed. See "+log_dir+"/"+test_id+".diff for details")
 
 
 # Program entry point
 if __name__ == "__main__":
 	if len(sys.argv) < 2:
-		print("USAGE: runtest.py <test> [extra_args]")
+		print("USAGE: runtest.py <test> [--brief|--post-update] [extra_args]")
 		raise SystemExit(1)
 	for i in range(2, len(sys.argv)):
 		if sys.argv[i] == "--post-update":
 			post_update = "yes"
+		elif sys.argv[i] == "--brief":
+			brief = "yes"
 		else:
 			extra_args.append(sys.argv[i])
 
 	if sys.argv[1].endswith(".py"):
 		sys.argv[1] = sys.argv[1][:-3]
 	test = __import__(sys.argv[1], None, None, [''])
-	print("** Starting test '"+test.info()+"'")
+	if brief != "yes":
+		print("** Starting test '"+test.info()+"'")
 	setup_repos(sys.argv[1], test.modify_tree)
 
 	try:
 		fn = test.write_reference_dump
-		print ">> Copying reference dump..."
+		if brief != "yes":
+			print ">> Copying reference dump..."
 		dest_dir = dump_dir+"/"+test_id
 		try:
 			os.stat(dest_dir)
@@ -191,3 +212,9 @@ if __name__ == "__main__":
 		rsvndump_diff_ref()
 	except AttributeError:
 		rsvndump_diff()
+
+	if brief == "yes":
+		if valid == "yes":
+			print("OK:       "+test.info()+" (ID: "+test_id+")") 
+		else:
+			print("FAILED:   "+test.info()+" (ID: "+test_id+")") 
