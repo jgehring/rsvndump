@@ -3,6 +3,7 @@
   with replace-actions. See copy_replace test.
 > Don't dump node contents if it is a copy and has not changed (we need
   to keep track of the MD5-sums for this)
+> Test --prefix
 > Add a test for --prefix
 > MD5-sums for deltas
 > Specify MD5 for copy source on copying
@@ -18,25 +19,18 @@
 
 > Further validate copy handling and subdirectory dumping
 
-> Add --no-stop-on-copy
 > Rewrite manpage:
   - Add notes about the resulting revision numbers, using example combinations of
     subdirectories, --keep-revnums, -r X:Y and --incremental
 > Check compilation with svn 1.6, 1.5 and 1.4
 
 
-== Schedule for 0.4.5 ==
-> Replace commands that are deprecated in Subversion 1.6.1
-> Output help on missing arguments, i.e. s.th. like "rsvndump --stop"
-
-
-== Schedule for 0.5.1 ==
+== Schedule for 0.5.X ==
+> Add --no-stop-on-copy option
 > Re-implement dumping of single files?
+> Output help on missing arguments, i.e. s.th. like "rsvndump --stop"
 
 
 == Someday ==
 > Dump user prefix in first revision, even with --keep-revnums
-> File-not-found if invoking rsvndump on a subdirectory with --stop 0
 > Retries if connection is lost
-> Option: don't stop on copy
-> Incremental (is hard because revision map is missing)
