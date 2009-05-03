@@ -295,7 +295,7 @@ char dump(session_t *session, dump_options_t *opts)
 
 	/*
 	 * Decide wether the whole repositry log should be fetched
-	 * prior to dumping. 
+	 * prior to dumping.
 	 */
 	if (start_mid) {
 		if (log_fetch_all(session, 0, opts->end, &logs, opts->verbosity)) {
@@ -321,7 +321,7 @@ char dump(session_t *session, dump_options_t *opts)
 		logs = list_create(sizeof(log_revision_t));
 
 		/* Write dumpfile header */
-		printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER, 3); 
+		printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER, 3);
 		if ((opts->flags & DF_DUMP_UUID)) {
 			const char *uuid;
 			if (dump_fetch_uuid(session, &uuid)) {

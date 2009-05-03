@@ -47,7 +47,7 @@
  #endif
  #ifndef HAVE_STRDUP
   extern char *strdup(const char *s);
- #endif 
+ #endif
  #ifndef HAVE_GETPASS
   extern char *getpass(const char *prompt);
  #endif
@@ -57,7 +57,7 @@
  #ifndef HAVE_STRNLEN
   extern size_t strnlen(const char *string, size_t maxlen);
  #endif
- 
+
  /* Internationalization */
  #if ENABLE_NLS
   #include "../lib/gettext.h"

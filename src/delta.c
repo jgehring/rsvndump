@@ -303,16 +303,16 @@ static char delta_dump_node(de_node_baton_t *node)
 	printf("%s: ", SVN_REPOS_DUMPFILE_NODE_ACTION);
 	switch (node->action) {
 		case 'M':
-			printf("change\n"); 
+			printf("change\n");
 			break;
 		case 'A':
-			printf("add\n"); 
+			printf("add\n");
 			break;
 		case 'D':
-			printf("delete\n"); 
+			printf("delete\n");
 			break;
 		case 'R':
-			printf("replace\n"); 
+			printf("replace\n");
 			break;
 	}
 

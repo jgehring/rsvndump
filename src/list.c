@@ -68,7 +68,7 @@ list_t *list_append(list_t *l, void *element)
 		if (l->elements == NULL) {
 			return NULL;
 		}
-		memcpy(l->elements, t, l->elsize * (l->max >> 1)); 
+		memcpy(l->elements, t, l->elsize * (l->max >> 1));
 		free(t);
 	}
 	memcpy((char *)l->elements + (l->elsize * l->size), element, l->elsize);

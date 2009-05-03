@@ -17,7 +17,7 @@
  *
  * 	
  *      file: property.c
- *      desc: Convenience functions for dumping properties 
+ *      desc: Convenience functions for dumping properties
  */
 
 
