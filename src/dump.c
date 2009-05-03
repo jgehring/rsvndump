@@ -247,9 +247,6 @@ void dump_options_free(dump_options_t *opts)
 	if (opts->temp_dir != NULL) {
 		free(opts->temp_dir);
 	}
-	if (opts->prefix != NULL) {
-		free(opts->prefix);
-	}
 }
 
 
@@ -261,6 +258,12 @@ char dump(session_t *session, dump_options_t *opts)
 	char start_mid = 0, show_local_rev = 1;
 	svn_revnum_t global_rev, local_rev = -1;
 	int list_idx;
+
+	/* Some sanity checks first */
+	if ((opts->flags & DF_DUMP_UUID) && ((opts->prefix != NULL) || (strlen(session->prefix) > 0))) {
+		fprintf(stderr, _("Sorry, '--dump-uuid' can only be used when dumping a repository root and without using a user prefix.\n"));
+		return 1;
+	}
 	
 	if ((opts->flags & DF_INCREMENTAL) && (opts->start != 0)) {
 		start_mid = 1;

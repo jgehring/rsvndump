@@ -3,7 +3,8 @@
   with replace-actions. See copy_replace test.
 > Don't dump node contents if it is a copy and has not changed (we need
   to keep track of the MD5-sums for this)
-> Test --prefix
+> Implement prefix directory creation
+> Allocate opts->temp_dir inside the session pool
 > Add a test for --prefix
 > MD5-sums for deltas
 > Specify MD5 for copy source on copying
@@ -12,7 +13,6 @@
 > When cloning the changed_paths hash in log_receiver, we can ignore paths that don't
   start with a '/'
 > --dump-uuid as default?
-> Don't allow --keep-revnums if not root or prefix
 > Make the '-r'-specifier more like svnadmin (maybe)
 > Correct SSL certificate handling (i.e., offer option to accept permanetly)
 
