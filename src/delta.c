@@ -107,6 +107,10 @@ static apr_hash_t *delta_hash = NULL;
 /*---------------------------------------------------------------------------*/
 
 
+/* Prototypes */
+static char delta_dump_node(de_node_baton_t *node);
+
+
 /* Creates a new node baton */
 static de_node_baton_t *delta_create_node(const char *path, de_node_baton_t *parent, apr_pool_t *pool)
 {
@@ -219,6 +223,33 @@ static char delta_check_copy(de_node_baton_t *node)
 }
 
 
+/* Dumps a node that has a 'replace' action */
+static char delta_dump_replace(de_node_baton_t *node)
+{
+	de_baton_t *de_baton = node->de_baton;
+	dump_options_t *opts = de_baton->opts;
+	char *path = node->path;
+
+	/*
+	 * A replacement implies deleting and adding the node
+	 */
+
+	/* Dump the deletion */
+	if (opts->prefix != NULL) {
+		printf("%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_PATH, opts->prefix, path);
+	} else {
+		printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_PATH, path);
+	}
+	printf("%s: delete\n", SVN_REPOS_DUMPFILE_NODE_ACTION);
+	printf("\n\n");
+
+	/* Don't use the copy information of the parent */
+	node->use_copy = 0;
+	node->action = 'A';
+	return delta_dump_node(node);
+}
+
+
 /* Dumps a node */
 static char delta_dump_node(de_node_baton_t *node)
 {
@@ -249,6 +280,13 @@ static char delta_dump_node(de_node_baton_t *node)
 		return 0;
 	}
 
+	/* Check for potential copy. This is neede here because it might change the action. */
+	delta_check_copy(node);
+	if (node->action == 'R') {
+		/* Special handling for replacements */
+		return delta_dump_replace(node);
+	}
+
 	/* Dump node path */
 	if (opts->prefix != NULL) {
 		printf("%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_PATH, opts->prefix, path);
@@ -261,11 +299,8 @@ static char delta_dump_node(de_node_baton_t *node)
 		printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_KIND, node->kind == svn_node_file ? "file" : "dir");
 	}
 
-	/* Check for potential copy. This is neede here because it might change the action above */
-	delta_check_copy(node);
-
 	/* Dump action */
-	printf("%s: ", SVN_REPOS_DUMPFILE_NODE_ACTION ); 
+	printf("%s: ", SVN_REPOS_DUMPFILE_NODE_ACTION);
 	switch (node->action) {
 		case 'M':
 			printf("change\n"); 
@@ -304,6 +339,16 @@ static char delta_dump_node(de_node_baton_t *node)
 			printf("%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, opts->prefix, node->copyfrom_path+offset);
 		} else {
 			printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, node->copyfrom_path+offset);
+		}
+		
+		/* Maybe we don't need to dump the properties and text */
+		if (node->action == 'A') {
+			printf("\n\n");
+			if (opts->flags & DF_USE_DELTAS) {
+				unlink(node->filename);
+			}
+			delta_mark_node(node);
+			return 0;
 		}
 	}
 

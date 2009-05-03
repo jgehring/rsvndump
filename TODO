@@ -4,6 +4,7 @@
 > Don't dump node contents if it is a copy and has not changed (we need
   to keep track of the MD5-sums for this)
 > MD5-sums for deltas
+> Specify MD5 for copy source on copying
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
 > Replace APPNAME in svn_handle_errror2 with _("ERROR")
