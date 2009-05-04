@@ -1,5 +1,8 @@
 rsvndump(1)
 ===========
+:man source:	rsvndump
+:man version:	{version}
+:man manual:	User commands
 
 NAME
 ----
@@ -106,7 +109,7 @@ sequential, so they will differ from the original ones.
 
 The following flags change this behaviour:
 
-The *--keep-revnums* flag padds revisions that did not change the subdirectory
+- The *--keep-revnums* flag padds revisions that did not change the subdirectory
 with empty revisions. They don't have an author or date property, but contain
 the log message "This is an empty revision for padding.".
 
@@ -137,6 +140,11 @@ been added to the repository.
 EXIT STATUS
 -----------
 0 on success, 1 on failure. Any error messages will be printed to 'stderr'.
+
+
+SEE ALSO
+--------
+*svn*(1), *svnadmin*(1), *svndumpfilter*(1)
 
 
 COPYING
