@@ -3,7 +3,6 @@
   with replace-actions. See copy_replace test.
 > Don't dump node contents if it is a copy and has not changed (we need
   to keep track of the MD5-sums for this)
-> Implement prefix directory creation
 > Allocate opts->temp_dir inside the session pool
 > Add a test for --prefix
 > MD5-sums for deltas
