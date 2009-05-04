@@ -29,58 +29,60 @@ OPTIONS
 -------
 *-h*::
 *--help*::
-	Print a nice help screen
+Print a nice help screen
 
 *-q*::
 *--quiet*::
-	Don't print any progress
+Don't print any progress
 
 *-v*::
 *--verbose*::
-	Print detailed progress
+Print detailed progress
 
 *-u*::
 *--username* 'username'::
-	Username for repository authentication.
-	If not specified and the repository does not provide anonymous access,
-	the policy is to try your username first and finally ask for a
-	username on 'stdin'.
+Username for repository authentication.
+If not specified and the repository does not provide anonymous access,
+the policy is to try your username first and finally ask for a
+username on 'stdin'.
 
 *-p*::
 *--password* 'password'::
-	Password for repository authentication.
-	If not specified and the repository does not provide anonymous access,
-	the password will be prompted on 'stdin'.
+Password for repository authentication.
+If not specified and the repository does not provide anonymous access,
+the password will be prompted on 'stdin'.
 
 *-r*::
 *--revision* 'X' or 'X:Y'::
-	Specifiy the revision (or revision range) that should be dumped. 'X'
-	and 'Y' can either be a number or "HEAD".
-	The default revision range is "0:HEAD", i.e. the complete revision
-	history.
+Specifiy the revision (or revision range) that should be dumped. 'X'
+and 'Y' can either be a number or "HEAD".
+The default revision range is "0:HEAD", i.e. the complete revision
+history.
 
 *--deltas*::
-	Use text deltas instead of full texts in dump output
+Use text deltas instead of full texts in dump output
 
 *--incremental*::
-	Create incremental output, suitable for concatenation. This results 
-	in a dump that does not contain a dumpfile header and no full base
-	revision if the revision range does not start at 0.
+Create incremental output, suitable for concatenation. This results 
+in a dump that does not contain a dumpfile header and no full base
+revision if the revision range does not start at 0.
 
 *--prefix* 'prefix'::
-	Prepend a given prefix to every node which is dumped. The first
-	revision dumped will also contain the paths neccessary to create the
-	prefix.
-	Please note that is assumed that prefix is really just a prefix
-	string, with directories seperated by "/". Therefore you need to
-	append a "/" at the end of the string to make it a directory.
-	For example, a prefix of *myrepo/old_* might result in the following
-	layout:
-
-	myrepo
-	 |- *old_*branches
-	 |- *old_*tags
-	 |- *old_*trunk
+Prepend a given prefix to every node which is dumped. The first
+revision dumped will also contain the paths neccessary to create the
+prefix.
++
+Please note that is assumed that prefix is really just a prefix
+string, with directories seperated by "/". Therefore you need to
+append a "/" at the end of the string to make it a directory.
+For example, a prefix of *myrepo/old_* might result in the following
+layout:
+----
+myrepo 
+ |- old_branches
+ |- old_tags
+ |- old_trunk
+----
 
 *--keep-revnums*::
 	Keep the revision numbers in the output in sync with the repository.
@@ -90,6 +92,7 @@ OPTIONS
 	Include the UUID of the repository in the dump output.
 	Please note that this is only allowed if you are dumping the root
 	of a repository without any additional prefix.
+
 
 
 REVISION NUMBERS
@@ -133,14 +136,10 @@ been added to the repository.
 
 EXIT STATUS
 -----------
-0 on success, 1 on failure. An error message will be printed to 'stderr'.
-
-
-AUTHOR
-------
-Jonas Gehring <jonas.gehring@boolsoft.org>
+0 on success, 1 on failure. Any error messages will be printed to 'stderr'.
 
 
 COPYING
 -------
-Copyright (C) 2008-2009 by Jonas Gehring.
+Copyright (C) 2008-2009 Jonas Gehring <\jonas.gehring@boolsoft.org>.
+Released under the GNU General Public License.
