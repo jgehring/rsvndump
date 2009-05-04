@@ -113,7 +113,7 @@ static void dump_create_user_prefix(dump_options_t *opts, apr_pool_t *pool)
 		return;
 	}
 
-	new_prefix = apr_palloc(pool, strlen(opts->prefix)+1);
+	new_prefix = apr_pcalloc(pool, strlen(opts->prefix)+1);
 	s = e = opts->prefix;
 	while ((e = strchr(s, '/')) != NULL) {
 		/* Skip leading slashes */
