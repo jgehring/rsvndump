@@ -45,7 +45,8 @@
 static void print_version()
 {
 	printf(APPNAME" "APPVERSION"\n");
-	printf("Copyright (C) 2008-2009 by "APPAUTHOR"\n");
+	printf("Copyright (C) 2008-2009 "APPAUTHOR"\n");
+	printf("Released under the GNU General Public License.\n");
 }
 
 
