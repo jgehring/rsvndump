@@ -367,7 +367,7 @@ char session_check_reparent(session_t *session, svn_revnum_t rev)
 		}
 #else
 		/* Sorry, we're unable to dump single files for now */
-		fprintf(stderr, _("ERROR: '%s' refers to a file\n"), session->encoded_url);
+		fprintf(stderr, _("ERROR: '%s' refers to a file.\n"), session->encoded_url);
 		svn_pool_destroy(pool);
 		return 1;
 #endif
