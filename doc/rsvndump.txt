@@ -4,6 +4,7 @@ rsvndump(1)
 :man version:	{version}
 :man manual:	User commands
 
+
 NAME
 ----
 rsvndump - Dumps a remote Subversion repository
@@ -11,7 +12,7 @@ rsvndump - Dumps a remote Subversion repository
 
 SYNOPSIS
 --------
-*rsvndump* [options] 'url'
+*rsvndump* ['options'] 'url'
 
 
 DESCRIPTION

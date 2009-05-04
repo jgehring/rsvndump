@@ -3,7 +3,7 @@
 #	Web page distribution script for rsvndump
 #	written by Jonas Gehring <jonas.gehring@boolsoft.org>
 #
-#	Usage: ./makeweb <root>
+#	Usage: ./makeweb <root> <version>
 #	root is the root directory of the rsvndump source 
 #	distribution (trunk)
 #
@@ -13,9 +13,11 @@ PROG="rsvndump"
 
 # Validate arguments
 if [ -z "$1" ]; then 
-	echo 
-	echo "USAGE: $0 <root>"
-	echo 
+	echo "USAGE: $0 <root> <version>"
+	exit 1
+fi
+if [ -z "$2" ]; then 
+	echo "USAGE: $0 <root> <version>"
 	exit 1
 fi
 
@@ -30,7 +32,8 @@ cp "${ROOT}/README" web/README
 cp "${ROOT}/ChangeLog" web/ChangeLog
 
 # Create dynamic content
-rman -f html "${ROOT}/man/${PROG}.1" > web/manpage.html 2> /dev/null
+#rman -f html "${ROOT}/man/${PROG}.1" > web/manpage.html 2> /dev/null
+asciidoc -a "version=${2}" -a toc -d manpage -o web/manpage.html ${ROOT}/doc/${PROG}.txt 
 
 # Scramble email address
 for i in web/*;
