@@ -104,6 +104,40 @@ static void dump_padding_revision(svn_revnum_t rev)
 }
 
 
+/* Creates (and possibly cleans up) the user prefix path.
+   The new prefix will be allocated in the given pool. */
+static void dump_create_user_prefix(dump_options_t *opts, apr_pool_t *pool)
+{
+	char *new_prefix, *s, *e;
+	if (opts->prefix == NULL) {
+		return;
+	}
+
+	new_prefix = apr_palloc(pool, strlen(opts->prefix)+1);
+	s = e = opts->prefix;
+	while ((e = strchr(s, '/')) != NULL) {
+		/* Skip leading slashes */
+		if (e - s < 1) {
+			++s;
+			continue;
+		}
+
+		/* Append to new prefix and dump */
+		strncat(new_prefix, s, e - s);
+
+		printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_PATH, new_prefix);
+		printf("%s: dir\n", SVN_REPOS_DUMPFILE_NODE_KIND);
+		printf("%s: add\n\n", SVN_REPOS_DUMPFILE_NODE_ACTION);
+
+		strcat(new_prefix, "/");
+		s = e + 1;
+	}
+
+	strcat(new_prefix, s);
+	opts->prefix = new_prefix;
+}
+
+
 /* Runs a diff against two revisions */
 static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest, char start_empty, const svn_delta_editor_t *editor, void *editor_baton, apr_pool_t *pool)
 {
@@ -399,6 +433,11 @@ char dump(session_t *session, dump_options_t *opts)
 		/* Dump the revision header */
 		if (!(opts->flags & DF_DRY_RUN)) {
 			dump_revision_header((log_revision_t *)logs.elements + list_idx, local_rev, opts);
+
+			/* The first revision also sets up the user prefix */
+			if (local_rev == 1) {
+				dump_create_user_prefix(opts, session->pool);
+			}
 		}
 
 		/* Determine the diff base */
