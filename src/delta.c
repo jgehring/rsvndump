@@ -774,11 +774,13 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 		apr_hash_this(hi, (const void **)&path, NULL, (void **)&log);
 		DEBUG_MSG("Checking %s (%c)\n", path, log->action);
 		if (log->action == 'D') {
-			/* We can unlink the temporary file now */
-			char *filename = apr_hash_get(delta_hash, path, APR_HASH_KEY_STRING);
-			if (filename) {
-				unlink(filename);
-				apr_hash_set(delta_hash, path, APR_HASH_KEY_STRING, NULL);
+			/* We can unlink a possible temporary file now */
+			if (!(de_baton->opts->flags & DF_USE_DELTAS)) {
+				char *filename = apr_hash_get(delta_hash, path, APR_HASH_KEY_STRING);
+				if (filename) {
+					unlink(filename);
+					apr_hash_set(delta_hash, path, APR_HASH_KEY_STRING, NULL);
+				}
 			}
 			
 			if (apr_hash_get(de_baton->dumped_entries, path, APR_HASH_KEY_STRING) == NULL) {
