@@ -27,6 +27,14 @@ def run(*args, **misc):
 	subprocess.check_call(args, **redirections)
 
 
+# Returns the tests data dir
+def data_dir():
+	return test.cwd+"/"+test.tests_dir+"/data"
+
+# Returns the name of a test
+def name(id):
+	return test.name(id)
+
 # Setups a repository, utilizing the repository cache
 def setup_repos(id, setup_fn):
 	logfile = test.log(id)
@@ -60,6 +68,17 @@ def dump_rsvndump(id, args):
 	return dump
 
 
+# Dumps the subdirectory using rsvndump and returns the dumpfile path
+def dump_rsvndump_sub(id, path, args):
+	logfile = test.log(id)
+	f = open(logfile, "a+")
+	print >>f, "\n*** dump_rsvndump ("+str(id)+")\n"
+
+	dump = test.dumps(id)+"/rsvndump.dump"
+	run("../../src/rsvndump", "file://"+test.repo(id)+"/"+path, extra_args = tuple(args), output = dump, error = logfile)
+	return dump
+
+
 # Loads the specified dumpfile into a temporary repository and dumps it
 def dump_reload(id, dumpfile):
 	logfile = test.log(id)
@@ -73,6 +92,11 @@ def dump_reload(id, dumpfile):
 	dump = test.dumps(id)+"/validate.dump"
 	run("svnadmin", "dump", tmp, output = dump, error = logfile)
 	return dump
+
+
+# Creates a temporary file and returns a reference to it
+def mktemp(id):
+	return test.mktemp(id)
 
 
 # Diffs two files, returning True if they are equal

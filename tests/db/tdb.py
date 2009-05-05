@@ -46,11 +46,13 @@ def runtests(tests, args):
 		if not tid:
 			continue
 		try:
-			if test.run(t, tid, args):
-				print("PASS   : "+test.info(t)+" [ID: "+tid+"]");
+			targs = list(args)
+			if test.run(t, tid, targs):
+				print("OK     : "+test.info(t)+" [ID: "+tid+"]");
 			else:
 				print("FAIL   : "+test.info(t)+" [ID: "+tid+"]");
 		except:
+			print("EXCEPTION while running test with ID: "+tid);
 			raise
 			return 1
 	return 0

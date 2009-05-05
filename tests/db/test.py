@@ -127,6 +127,10 @@ def wc(tid):
 def mkdtemp(tid):
 	return tempfile.mkdtemp("", cwd+"/"+tmp_dir+"/"+tid)
 
+# Returns a temporary file for a given test ID
+def mktemp(tid):
+	return tempfile.mktemp("", cwd+"/"+tmp_dir+"/"+tid)
+
 
 # Runs a test
 def run(test, tid, args):

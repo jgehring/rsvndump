@@ -10,7 +10,7 @@ import test_api
 
 
 def info():
-	return "Simple test"
+	return "Property test"
 
 
 def setup(step, log):
@@ -18,14 +18,21 @@ def setup(step, log):
 		os.mkdir("dir1")
 		f = open("dir1/file1","w")
 		print >>f, "hello1"
-		print >>f, "hello2"
-		f = open("dir1/file2","w")
-		print >>f, "hello3"
 		test_api.run("svn", "add", "dir1", output = log)
 		return True
 	elif step == 1:
-		f = open("dir1/file2","w")
-		print >>f, "hello4"
+		test_api.run("svn", "propset", "copyright", "(c) ME", "dir1/file1", output = log)
+		test_api.run("svn", "propset", "license", "public domain", "dir1/file1", output = log)
+		test_api.run("svn", "propset", "bla", "blubb", "dir1/file1", output = log)
+		return True
+	elif step == 2:
+		test_api.run("svn", "up", output = log)
+		test_api.run("svn", "propset", "svn:ignore", "*.o", "dir1", output = log)
+		return True
+	elif step == 3:
+		os.mkdir("dir2")
+		test_api.run("svn", "add", "dir2", output = log)
+		test_api.run("svn", "propset", "svn:externals", "ext/test    svn://slug/rsvndump/trunk/src", "dir2", output = log)
 		return True
 	else:
 		return False

@@ -10,22 +10,37 @@ import test_api
 
 
 def info():
-	return "Simple test"
+	return "Copying test with modifcations in the same revision"
 
 
 def setup(step, log):
 	if step == 0:
 		os.mkdir("dir1")
+		os.mkdir("dir1/sdir1")
+		os.mkdir("dir1/sdir2")
 		f = open("dir1/file1","w")
 		print >>f, "hello1"
+		f = open("dir1/sdir1/file1","w")
 		print >>f, "hello2"
-		f = open("dir1/file2","w")
+		f = open("dir1/sdir2/file1","w")
 		print >>f, "hello3"
+		f = open("dir1/sdir2/file2","w")
+		print >>f, "hello4"
 		test_api.run("svn", "add", "dir1", output = log)
 		return True
 	elif step == 1:
-		f = open("dir1/file2","w")
-		print >>f, "hello4"
+		f = open("dir1/sdir1/file2","w")
+		print >>f, "hello6"
+		test_api.run("svn", "add", "dir1/sdir1/file2", output = log)
+		return True
+	elif step == 2:
+		test_api.run("svn", "cp", "dir1", "dir2", output = log)
+		f = open("dir2/sdir2/file1","a")
+		print >>f, "just modified!"
+		return True
+	elif step == 3:
+		f = open("dir2/sdir2/file2","a")
+		print >>f, "just copied!"
 		return True
 	else:
 		return False

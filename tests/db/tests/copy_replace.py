@@ -1,6 +1,6 @@
-#!/usr/bin/env python
 #
-#	rsvndump test suite
+#	Test database for rsvndump
+#	written by Jonas Gehring
 #
 
 
@@ -10,7 +10,7 @@ import test_api
 
 
 def info():
-	return "Simple deletion test"
+	return "Copying test with replacement in the same revision"
 
 
 def setup(step, log):
@@ -26,30 +26,30 @@ def setup(step, log):
 		print >>f, "hello3"
 		f = open("dir1/sdir2/file2","w")
 		print >>f, "hello4"
-		test_api.run("svn", "add", "dir1", output=log)
-		return 1
+		test_api.run("svn", "add", "dir1", output = log)
+		return True
 	elif step == 1:
-		f = open("dir1/sdir2/file2","a")
-		print >>f, "hello5"
-		return 1
-	elif step == 2:
 		f = open("dir1/sdir1/file2","w")
 		print >>f, "hello6"
-		test_api.run("svn", "add", "dir1/sdir1/file2", output=log)
-		return 1
+		test_api.run("svn", "add", "dir1/sdir1/file2", output = log)
+		return True
+	elif step == 2:
+		os.chdir("dir1/sdir1")
+		f = open("file1","a")
+		print >>f, "hello7"
+		return True
 	elif step == 3:
-		test_api.run("svn", "up", output=log)
-		test_api.run("svn", "rm", "dir1/sdir1", output=log)
-		return 1
+		os.chdir("../..")
+		test_api.run("svn", "up", output = log)
+		test_api.run("svn", "cp", "dir1", "dir2", output = log)
+		return True
 	elif step == 4:
-		test_api.run("svn", "rm", "dir1/sdir2/file1", output=log)
-		return 1
-	elif step == 5:
-		f = open("dir1/sdir2/file2","a")
-		print >>f, "still there!"
-		return 1
+		f = open("dir2/sdir2/file2","a")
+		print >>f, "just copied!"
+		return True
 	else:
-		return 0
+		return False
+
 
 # Runs the test
 def run(id, args = []):
