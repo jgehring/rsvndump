@@ -461,18 +461,10 @@ char dump(session_t *session, dump_options_t *opts)
 		DEBUG_MSG("global = %ld, diff = %ld, start = %ld\n", global_rev, diff_rev, opts->start);
 
 		/* Determine whether to start with an empty revision */
-		if (opts->flags & DF_USE_DELTAS) {
-			if (local_rev == 1) {
-				start_empty = 1;
-			} else {
-				start_empty = 0;
-			}
+		if ((global_rev == opts->start) && !(opts->flags & DF_INCREMENTAL)) {
+			start_empty = 1;
 		} else {
-			if (global_rev == opts->start) {
-				start_empty = 1;
-			} else {
-				start_empty = 0;
-			}
+			start_empty = 0;
 		}
 
 		/* Setup the delta editor and run a diff */

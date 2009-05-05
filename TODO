@@ -9,8 +9,6 @@
 > Specify MD5 for copy source on copying
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
-> When cloning the changed_paths hash in log_receiver, we can ignore paths that don't
-  start with a '/'
 > --dump-uuid as default?
 > Make the '-r'-specifier more like svnadmin (maybe)
 > Correct SSL certificate handling (i.e., offer option to accept permanetly)
