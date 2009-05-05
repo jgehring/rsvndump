@@ -4,7 +4,7 @@
 #
 
 
-import os, shutil, tempfile
+import os, shutil, sys, tempfile
 
 
 # Globals
@@ -18,15 +18,31 @@ dirs = [wc_dir, repo_dir, log_dir, dump_dir, tmp_dir]
 cwd = str(os.getcwd())
 
 
+def load(test):
+	sys.path.insert(0, os.getcwd())
+	sys.path.insert(0, os.getcwd()+"/"+tests_dir)
+	module = None
+	try:
+		module = __import__(test, None, None, [''])
+	except:
+		del sys.path[0]
+		del sys.path[0]
+		raise
+	del sys.path[0]
+	del sys.path[0]
+	return module
+
+
 # Checks if a module is a valid test
 def check_test(test):
 	try:
-		module = __import__(tests_dir+"/"+test, None, None, [''])
+		module = load(test)
 		if not hasattr(module, "info"):
 			return False
-		if not hasattr(module, "setup"):
+		if not hasattr(module, "run"):
 			return False
 	except:
+		raise
 		return False
 	return True
 
@@ -43,7 +59,7 @@ def all_tests():
 
 # Returns the test's info string 
 def info(test):
-	module = __import__(tests_dir+"/"+test, None, None, [''])
+	module = load(test)
 	return module.info()
 
 
@@ -116,7 +132,7 @@ def mkdtemp(tid):
 def run(test, tid, args):
 	module = None
 	try:
-		module = __import__(tests_dir+"/"+test, None, None, [''])
+		module = load(test)
 	except:
 		print("ERROR: No such test: "+test)
 		raise
