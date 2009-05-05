@@ -60,6 +60,8 @@ def run(id, args = []):
 	vdump_path = test_api.data_dir()+"/"+test_api.name(id)+".dump"
 	if "--deltas" in args:
 		vdump_path += ".deltas"
+	if "--keep-revnums" in args:
+		vdump_path += ".keep_revnums"
 
 	# We need to strip the date property from the dumpfile generated
 	# by rsvndump in order to validate it properly

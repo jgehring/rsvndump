@@ -72,10 +72,29 @@ def dump_rsvndump(id, args):
 def dump_rsvndump_sub(id, path, args):
 	logfile = test.log(id)
 	f = open(logfile, "a+")
-	print >>f, "\n*** dump_rsvndump ("+str(id)+")\n"
+	print >>f, "\n*** dump_rsvndump_sub ("+str(id)+")\n"
 
 	dump = test.dumps(id)+"/rsvndump.dump"
 	run("../../src/rsvndump", "file://"+test.repo(id)+"/"+path, extra_args = tuple(args), output = dump, error = logfile)
+	return dump
+
+
+# Dumps the reopsitory incremental using rsvndump and returns the dumpfile path
+def dump_rsvndump_incremental(id, stepsize, args):
+	logfile = test.log(id)
+	f = open(logfile, "a+")
+	print >>f, "\n*** dump_rsvndump_incremental ("+str(id)+")\n"
+
+	dump = test.dumps(id)+"/rsvndump.dump"
+	start = 0
+	end = stepsize
+	while True:
+		try:
+			run("../../src/rsvndump", "file://"+test.repo(id), "--incremental", "--revision", str(start)+":"+str(end), extra_args = tuple(args), output = dump, error = logfile)
+			start = end+1
+			end = start+stepsize
+		except:
+			break
 	return dump
 
 
