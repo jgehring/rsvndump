@@ -167,14 +167,15 @@ static char delta_check_copy(de_node_baton_t *node)
 	}
 
 	/* Check if we can use the information we already have */
-	if ((strlen(session->prefix) == 0) && (opts->start == 0)) {
+	if ((strlen(session->prefix) == 0) && ((opts->start == 0) || (opts->flags & DF_INCREMENTAL))) {
 		node->use_copy = 1;
 		return 0;
 	}
 
 	/* Check if the source is reachable, i.e. can be found under
-	   the current session root */
-	if (!strncmp(session->prefix, node->copyfrom_path, strlen(session->prefix))) {
+	   the current session root and the target revision is within
+	   the selected revision range */
+	if (((opts->flags & DF_INCREMENTAL) || (opts->start <= node->copyfrom_revision)) && !strncmp(session->prefix, node->copyfrom_path, strlen(session->prefix))) {
 		svn_revnum_t r, rr = -1;
 		svn_revnum_t mind = LONG_MAX;
 
@@ -184,8 +185,7 @@ static char delta_check_copy(de_node_baton_t *node)
 			return 0;
 		}
 
-		/* This is good news: we already dumped the source. Let's figure
-		   out at which revision */
+		DEBUG_MSG("local_revnum = %ld\n", local_revnum);
 
 		/* Find the best matching revision.
 		   This will work, because if we have not dumped the requested
@@ -207,9 +207,15 @@ static char delta_check_copy(de_node_baton_t *node)
 			}
 		}
 
-		node->copyfrom_revision = rr;
-		node->use_copy = 1;
-		DEBUG_MSG("delta_check_copy: using local %ld\n", rr);
+		if (r > 0) {
+			node->copyfrom_revision = rr;
+			node->use_copy = 1;
+			DEBUG_MSG("delta_check_copy: using local %ld\n", rr);
+		} else {
+			node->action = 'A';
+			node->use_copy = 0;
+			DEBUG_MSG("delta_check_copy: no matching revision found\n");
+		}
 	} else {
 		/* Hm, this is bad. we have to ignore the copy operation and
 		   simulate it by simple dumping it the node as being added.

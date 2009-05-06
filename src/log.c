@@ -91,7 +91,11 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 		dvalue = apr_palloc(data->pool, sizeof(svn_log_changed_path_t));
 		dvalue->action = svalue->action;
 		if (svalue->copyfrom_path != NULL) {
-			dvalue->copyfrom_path = apr_pstrdup(data->pool, svalue->copyfrom_path);
+			if (*svalue->copyfrom_path == '/') {
+				dvalue->copyfrom_path = apr_pstrdup(data->pool, svalue->copyfrom_path + 1);
+			} else {
+				dvalue->copyfrom_path = apr_pstrdup(data->pool, svalue->copyfrom_path);
+			}
 		} else {
 			dvalue->copyfrom_path = NULL;
 		}
