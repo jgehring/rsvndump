@@ -119,6 +119,10 @@ static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 				return 1;
 			}
 		}
+
+		if (*start > *end) {
+			return 1;
+		}
 	}
 
 	if ((errno == EINVAL) || (errno == ERANGE)) {
