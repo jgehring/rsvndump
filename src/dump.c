@@ -461,7 +461,7 @@ char dump(session_t *session, dump_options_t *opts)
 		DEBUG_MSG("global = %ld, diff = %ld, start = %ld\n", global_rev, diff_rev, opts->start);
 
 		/* Determine whether to start with an empty revision */
-		if ((global_rev == opts->start) && !(opts->flags & DF_INCREMENTAL)) {
+		if ((global_rev == opts->start) && (!(opts->flags & DF_INCREMENTAL) || !(opts->flags & DF_USE_DELTAS))) {
 			start_empty = 1;
 		} else {
 			start_empty = 0;
