@@ -394,7 +394,7 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 	}
 
-	if ((opts->flags & DF_KEEP_REVNUMS) || (strlen(session->prefix) == 0)) {
+	if ((opts->flags & DF_KEEP_REVNUMS) || ((strlen(session->prefix) == 0) && (opts->start == 0))) {
 		show_local_rev = 0;
 	}
 
