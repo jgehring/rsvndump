@@ -68,7 +68,8 @@ static void print_usage()
 	printf(_("    -r [--revision] arg       specify revision number (or X:Y range)\n"));
 	printf(_("    --deltas                  use deltas in dump output\n"));
 	printf(_("    --incremental             dump incrementally\n"));
-	printf(_("    --no-check-certificate    don't validate SSL certificates\n"));
+	printf(_("    --no-auth-cache           do not cache authentication tokens\n"));
+	printf(_("    --non-interactive         do no interactive prompting\n"));
 	printf(_("    --prefix arg              prepend arg to the path that is being dumped\n"));
 	printf(_("    --keep-revnums            keep the dumped revision numbers in sync with\n" \
 	         "                              the repository by using empty revisions for\n" \
@@ -173,8 +174,10 @@ int main(int argc, char **argv)
 			opts.verbosity = -1;
 		} else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")) {
 			opts.verbosity = 1;
-		} else if (!strcmp(argv[i], "--no-check-certificate")) {
-			session.flags |= SF_NO_CHECK_CERTIFICATE;
+		} else if (!strcmp(argv[i], "--no-auth-cache")) {
+			session.flags |= SF_NO_AUTH_CACHE;
+		} else if (!strcmp(argv[i], "--non-interactive")) {
+			session.flags |= SF_NON_INTERACTIVE;
 		} else if (!strcmp(argv[i], "--keep-revnums")) {
 			opts.flags |= DF_KEEP_REVNUMS;
 		} else if (!strcmp(argv[i], "--dump-uuid")) {

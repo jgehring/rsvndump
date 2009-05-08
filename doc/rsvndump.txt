@@ -71,6 +71,13 @@ Create incremental output, suitable for concatenation. This results
 in a dump that does not contain a dumpfile header and no full base
 revision if the revision range does not start at 0.
 
+*--no-auth-cache*::
+Don't cache the authentication tokens provided by the user, e.g. username and
+password, or manual SSL certificate validation.
+
+*--non-interactive*::
+Instead of prompting, the program will exit with an error.
+
 *--prefix* 'prefix'::
 Prepend a given prefix to every node which is dumped. The first
 revision dumped will also contain the paths neccessary to create the
