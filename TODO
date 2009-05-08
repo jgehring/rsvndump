@@ -10,7 +10,6 @@
   if this can be fixed
 > --dump-uuid as default?
 > Make the '-r'-specifier more like svnadmin (maybe)
-> Correct SSL certificate handling (i.e., offer option to accept permanetly)
 
 > Further validate copy handling and subdirectory dumping
 

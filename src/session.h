@@ -32,7 +32,9 @@
 
 /* Flags for the session data */
 enum session_flags {
-	SF_NO_CHECK_CERTIFICATE = 0x01
+	SF_NO_CHECK_CERTIFICATE = 0x01,
+	SF_NON_INTERACTIVE = 0x02,
+	SF_NO_AUTH_CACHE = 0x04
 };
 
 /* Session data */
