@@ -346,13 +346,11 @@ char dump(session_t *session, dump_options_t *opts)
 			++local_rev;
 		}
 
-		/* The first revision is a dry run if we don't use delta mode.
+		/* The first revision is a dry ru.n
 		   This is because we need to get the data of the previous
 		   revision first */
-		if (!(opts->flags & DF_USE_DELTAS)) {
-			opts->flags |= DF_DRY_RUN;
-			--local_rev;
-		}
+		opts->flags |= DF_DRY_RUN;
+		--local_rev;
 		opts->start = ((log_revision_t *)logs.elements)[local_rev].revision;
 	} else {
 		logs = list_create(sizeof(log_revision_t));

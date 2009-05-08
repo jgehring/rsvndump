@@ -1,6 +1,4 @@
 == 0.5 branch (deltas) ==
-> In delta mode, copies won't get dumped at all, at least not in the incremental
-  test
 > It seems the copyfrom-revision is sometimes too large (+1). This is problematic
   with replace-actions. See copy_replace test.
 > Don't dump node contents if it is a copy and has not changed (we need
