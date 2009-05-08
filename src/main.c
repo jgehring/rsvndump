@@ -240,10 +240,10 @@ int main(int argc, char **argv)
 		if (tdir != NULL) {
 			char *tmp = malloc(strlen(tdir)+strlen(APPNAME)+8);
 			sprintf(tmp, "%s/%sXXXXXX", tdir, APPNAME);
-			opts.temp_dir = utils_canonicalize_strdup(tmp);
+			opts.temp_dir = utils_canonicalize_pstrdup(session.pool, tmp);
 			free(tmp);
 		} else {
-			opts.temp_dir = utils_canonicalize_strdup("/tmp/"APPNAME"XXXXXX");
+			opts.temp_dir = utils_canonicalize_pstrdup(session.pool, "/tmp/"APPNAME"XXXXXX");
 		}
 		opts.temp_dir = mkdtemp(opts.temp_dir);
 		if (opts.temp_dir == NULL) {

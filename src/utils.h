@@ -45,7 +45,7 @@ extern float stopwatch_elapsed(stopwatch_t *watch);
 #endif /* USE_TIMING */
 
 /* Returns a canonicalized path that has been allocated using strdup() */
-extern char *utils_canonicalize_strdup(char *path);
+extern char *utils_canonicalize_pstrdup(struct apr_pool_t *pool, char *path);
 
 /* Recursively removes the contents of a directory and the directory */
 /* itself it 'rmdir' is non-zero */

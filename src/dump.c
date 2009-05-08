@@ -278,9 +278,7 @@ dump_options_t dump_options_create()
 /* Frees a dump_options_t object */
 void dump_options_free(dump_options_t *opts)
 {
-	if (opts->temp_dir != NULL) {
-		free(opts->temp_dir);
-	}
+	/* Nothing to do here */
 }
 
 

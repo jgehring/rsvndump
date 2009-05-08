@@ -112,14 +112,13 @@ int utils_debug(const char *format, ...)
 }
 
 
-/* Returns a canonicalized path that has been allocated using strdup() */
-char *utils_canonicalize_strdup(char *path)
+/* Returns a canonicalized path that has been allocated in the given pool */
+char *utils_canonicalize_pstrdup(struct apr_pool_t *pool, char *path)
 {
-	apr_pool_t *pool = svn_pool_create(NULL);
-	const char *e = svn_path_canonicalize(path, pool);
-	char *ed = strdup(e);
-	svn_pool_clear(pool);
-	svn_pool_destroy(pool);
+	apr_pool_t *subpool = svn_pool_create((apr_pool_t *)pool);
+	const char *e = svn_path_canonicalize(path, subpool);
+	char *ed = apr_pstrdup(pool, e);
+	svn_pool_destroy(subpool);
 	return ed;
 }
 
