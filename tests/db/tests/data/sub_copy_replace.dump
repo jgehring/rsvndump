@@ -1,0 +1,194 @@
+SVN-fs-dump-format-version: 3
+
+Revision-number: 1
+Prop-content-length: 113
+Content-length: 113
+
+K 7
+svn:log
+V 13
+commit step 0
+K 10
+svn:author
+V 5
+jonas
+K 8
+svn:date
+V 27
+PROPS-END
+
+Node-path: file1
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 7
+Text-content-md5: b52731692f35498bba7e4660142129d2
+Content-length: 17
+
+PROPS-END
+hello1
+
+
+Node-path: sdir1
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: sdir1/file1
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 7
+Text-content-md5: a10edbbb8f28f8e98ee6b649ea2556f4
+Content-length: 17
+
+PROPS-END
+hello2
+
+
+Node-path: sdir2
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: sdir2/file1
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 7
+Text-content-md5: c50b33076305131cf486d8c599f3eb0d
+Content-length: 17
+
+PROPS-END
+hello3
+
+
+Node-path: sdir2/file2
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 7
+Text-content-md5: d144b8af3d8f991bf90ed26d4ac2fc93
+Content-length: 17
+
+PROPS-END
+hello4
+
+
+Revision-number: 2
+Prop-content-length: 113
+Content-length: 113
+
+K 7
+svn:log
+V 13
+commit step 1
+K 10
+svn:author
+V 5
+jonas
+K 8
+svn:date
+V 27
+PROPS-END
+
+Node-path: sdir1/file2
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 7
+Text-content-md5: 9d538cf20822d21ada90251884b19869
+Content-length: 17
+
+PROPS-END
+hello6
+
+
+Revision-number: 3
+Prop-content-length: 113
+Content-length: 113
+
+K 7
+svn:log
+V 13
+commit step 2
+K 10
+svn:author
+V 5
+jonas
+K 8
+svn:date
+V 27
+PROPS-END
+
+Node-path: sdir1/file1
+Node-kind: file
+Node-action: change
+Text-content-length: 14
+Text-content-md5: e72ba3dc245c0fc0352b11c4e3f3d68d
+Content-length: 14
+
+hello2
+hello7
+
+
+Revision-number: 4
+Prop-content-length: 113
+Content-length: 113
+
+K 7
+svn:log
+V 13
+commit step 3
+K 10
+svn:author
+V 5
+jonas
+K 8
+svn:date
+V 27
+PROPS-END
+
+Node-path: sdir3
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: sdir2
+
+
+Revision-number: 5
+Prop-content-length: 113
+Content-length: 113
+
+K 7
+svn:log
+V 13
+commit step 4
+K 10
+svn:author
+V 5
+jonas
+K 8
+svn:date
+V 27
+PROPS-END
+
+Node-path: sdir3/file2
+Node-kind: file
+Node-action: change
+Text-content-length: 20
+Text-content-md5: c451d75663c545154aebf718770ada8b
+Content-length: 20
+
+hello4
+just copied!
+
+
