@@ -1,11 +1,7 @@
 == 0.5 branch (deltas) ==
 > It seems the copyfrom-revision is sometimes too large (+1). This is problematic
   with replace-actions. See copy_replace test.
-> Don't dump node contents if it is a copy and has not changed (we need
-  to keep track of the MD5-sums for this)
 > Add a test for --prefix
-> MD5-sums for deltas
-> Specify MD5 for copy source on copying
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
 > --dump-uuid as default?
@@ -23,6 +19,10 @@
 > Add --no-stop-on-copy option
 > Re-implement dumping of single files?
 > Output help on missing arguments, i.e. s.th. like "rsvndump --stop"
+> Don't dump node contents if it is a copy and has not changed (we need
+  to keep track of the MD5-sums for this)
+> MD5-sums for deltas
+> Specify MD5 for copy source on copying
 
 
 == Someday ==
