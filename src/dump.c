@@ -419,8 +419,10 @@ char dump(session_t *session, dump_options_t *opts)
 			/* Padd with empty revisions if neccessary */
 			while (local_rev < ((log_revision_t *)logs.elements)[list_idx].revision) {
 				dump_padding_revision(local_rev);
-				if (opts->verbosity >= 0) {
+				if (opts->verbosity == 0) {
 					fprintf(stderr, _("* Padded revision %ld.\n"), local_rev);
+				} else if (opts->verbosity > 0) {
+					fprintf(stderr, _("------ Padded revision %ld <<<\n\n"), local_rev);
 				}
 				++local_rev;
 			}
@@ -463,6 +465,10 @@ char dump(session_t *session, dump_options_t *opts)
 			start_empty = 0;
 		}
 
+		if (opts->verbosity > 0 && !(opts->flags & DF_DRY_RUN)) {
+			fprintf(stderr, _(">>> Dumping new revision, based on original revision %ld\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
+		}
+
 		/* Setup the delta editor and run a diff */
 		delta_setup_editor(session, opts, &logs, (log_revision_t *)logs.elements + list_idx, local_rev, &editor, &editor_baton, revpool);
 		if (dump_do_diff(session, diff_rev, ((log_revision_t *)logs.elements)[list_idx].revision, start_empty, editor, editor_baton, revpool)) {
@@ -470,12 +476,14 @@ char dump(session_t *session, dump_options_t *opts)
 			break;
 		}
 
-		if (opts->verbosity >= 0 && !(opts->flags & DF_DRY_RUN)) {
+		if (opts->verbosity == 0 && !(opts->flags & DF_DRY_RUN)) {
 			if (show_local_rev) {
 				fprintf(stderr, _("* Dumped revision %ld (local %ld).\n"), ((log_revision_t *)logs.elements)[list_idx].revision, local_rev);
 			} else {
 				fprintf(stderr, _("* Dumped revision %ld.\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
 			}
+		} else if (opts->verbosity > 0 && !(opts->flags & DF_DRY_RUN)) {
+			fprintf(stderr, _("\n------ Dumped revision %ld <<<\n\n"), local_rev);
 		}
 
 		global_rev = ((log_revision_t *)logs.elements)[list_idx].revision+1;

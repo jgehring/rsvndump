@@ -149,6 +149,13 @@ static void delta_mark_node(de_node_baton_t *node)
 	de_baton_t *de_baton = node->de_baton;
 	apr_hash_set(de_baton->dumped_entries, apr_pstrdup(de_baton->revision_pool, node->path), APR_HASH_KEY_STRING, de_baton /* The value doesn't matter */);
 	node->dumped = 1;
+	if ((de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
+		if (node->use_copy) {
+			fprintf(stderr, _("COPIED ... done.\n"));
+		} else {
+			fprintf(stderr, _("done.\n"));
+		}
+	}
 }
 
 
@@ -284,6 +291,10 @@ static char delta_dump_node(de_node_baton_t *node)
 	if ((node->use_copy == 1) && (node->action == 'A')) {
 		node->dumped = 1;
 		return 0;
+	}
+
+	if ((node->kind == svn_node_dir) && (de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
+		fprintf(stderr, _("     * adding path : %s ... "), node->path);
 	}
 
 	/* Check for potential copy. This is neede here because it might change the action. */
@@ -474,6 +485,9 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
 	
 	DEBUG_MSG("de_delete_entry(%s@%ld)\n", path, revision);
+	if ((parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
+		fprintf(stderr, _("     * deleting path : %s ... "), path);
+	}
 
 	/* Check if the parent dump needs to be dumped */
 	if (!parent->dumped) {
@@ -645,6 +659,10 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		node->use_copy = 0;
 	}
 
+	if (!((node->use_copy = 1) && (node->action == 'A')) && (parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
+		fprintf(stderr, _("     * adding path : %s ... "), path);
+	}
+
 	*file_baton = node;
 	return SVN_NO_ERROR;
 }
@@ -657,6 +675,9 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 	de_node_baton_t *node;
 
 	DEBUG_MSG("de_open_file(%s)\n", path);
+	if ((parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
+		fprintf(stderr, _("     * editing path : %s ... "), path);
+	}
 
 	/* Check if the parent node needs to be dumped */
 	if (!parent->dumped) {
