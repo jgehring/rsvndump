@@ -659,7 +659,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		node->use_copy = 0;
 	}
 
-	if (!((node->use_copy = 1) && (node->action == 'A')) && (parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
+	if (!((node->use_copy == 1) && (node->action == 'A')) && (parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
 		fprintf(stderr, _("     * adding path : %s ... "), path);
 	}
 
