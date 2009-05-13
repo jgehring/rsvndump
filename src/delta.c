@@ -80,6 +80,7 @@ typedef struct {
 	char			*copyfrom_path;
 	svn_revnum_t		copyfrom_revision;
 	char			use_copy; /* Propagate to children */
+	char			failed_copy; /* Propagate to children */
 	char			applied_delta;
 	char			dumped;
 } de_node_baton_t;
@@ -93,7 +94,7 @@ typedef struct {
 /*
  * If the dump output is not using deltas, we need to keep a local copy of
  * every file in the repository. The delta_hash hash defines a mapping
- * repository paths to temporary files for this purpose
+ * repository paths to temporary files for this purpose.
  */
 static apr_pool_t *delta_pool = NULL;
 static apr_hash_t *delta_hash = NULL;
@@ -122,6 +123,7 @@ static de_node_baton_t *delta_create_node(const char *path, de_node_baton_t *par
 	node->filename = NULL;
 	node->old_filename = NULL;
 	node->use_copy = parent->use_copy;
+	node->failed_copy = parent->failed_copy;
 	node->copyfrom_path = NULL;
 	node->applied_delta = 0;
 	node->dumped = 0;
@@ -139,6 +141,7 @@ static de_node_baton_t *delta_create_node_no_parent(const char *path, de_baton_t
 	parent.de_baton = de_baton;
 	parent.copyfrom_path = NULL;
 	parent.use_copy = 0;
+	parent.failed_copy = 0;
 	return delta_create_node(path, &parent, pool);
 }
 
@@ -169,6 +172,12 @@ static char delta_check_copy(de_node_baton_t *node)
 
 	/* Sanity check */
 	if (node->copyfrom_path == NULL) {
+		node->use_copy = 0;
+		return 0;
+	}
+
+	/* If the parent could not be copied, this node won't be copied, too */
+	if (node->failed_copy) {
 		node->use_copy = 0;
 		return 0;
 	}
@@ -221,6 +230,7 @@ static char delta_check_copy(de_node_baton_t *node)
 		} else {
 			node->action = 'A';
 			node->use_copy = 0;
+			node->failed_copy = 1;
 			DEBUG_MSG("delta_check_copy: no matching revision found\n");
 		}
 	} else {
@@ -230,6 +240,8 @@ static char delta_check_copy(de_node_baton_t *node)
 		   must be dumped recursively. */
 		node->action = 'A';
 		node->use_copy = 0;
+		node->failed_copy = 1;
+		DEBUG_MSG("delta_check_copy: resolving failed\n");
 	}
 
 	return 0;
@@ -515,6 +527,8 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 		delta_dump_node(parent);
 	}
 
+	DEBUG_MSG("de_add_directory(%s)\n", path);
+
 	node = delta_create_node(path, parent, dir_pool);
 	node->kind = svn_node_dir;
 
@@ -623,7 +637,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		delta_dump_node(parent);
 	}
 
-	DEBUG_MSG("de_add_file(%s)\n", path);
+	DEBUG_MSG("de_add_file(%s), falied_copy = %d\n", path, (int)parent->failed_copy);
 
 	node = delta_create_node(path, parent, file_pool);
 	node->kind = svn_node_file;
@@ -657,6 +671,14 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		 * information of the parent node
 		 */
 		node->use_copy = 0;
+	}
+
+	/*
+	 * If the node is part of a tree that is dumped instead of being copied,
+	 * this must be an add action
+	 */
+	if (node->failed_copy) {
+		node->action = 'A';
 	}
 
 	if (!((node->use_copy == 1) && (node->action == 'A')) && (parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
@@ -873,7 +895,7 @@ void delta_setup_editor(session_t *session, dump_options_t *options, list_t *log
 	*editor_baton = baton;
 
 	/* Check if the global file hash needs to be created */
-	if (!(options->flags & DF_USE_DELTAS) && delta_pool == NULL) {
+	if (!(options->flags & DF_USE_DELTAS) && (delta_pool == NULL)) {
 		delta_pool = svn_pool_create(session->pool);
 		delta_hash = apr_hash_make(delta_pool);
 	}

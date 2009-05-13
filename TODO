@@ -1,5 +1,5 @@
 == 0.5 branch (deltas) ==
-> Dump of rsvndump/branches can not be loaded!
+> Dump of rsvndump/branches can not be loaded! >> Add test for this!
 > It seems the copyfrom-revision is sometimes too large (+1). This is problematic
   with replace-actions. See copy_replace test.
 > Add a test for --prefix
