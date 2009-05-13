@@ -56,7 +56,6 @@ def run(id, args = []):
 	test_api.setup_repos(id, setup)
 
 	odump_path = test_api.dump_original(id)
-	args.append("--dump-uuid")
 	rdump_path = test_api.dump_rsvndump(id, args)
 	vdump_path = test_api.dump_reload(id, rdump_path)
 

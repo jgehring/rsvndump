@@ -60,7 +60,6 @@ def run(id, args = []):
 	# Set up the test repository
 	test_api.setup_repos(id, setup)
 
-	args.append("--dump-uuid")
 	rdump_path = test_api.dump_rsvndump(id, args)
 	vdump_path = test_api.dump_reload(id, rdump_path)
 
