@@ -1,10 +1,10 @@
 == 0.5 branch (deltas) ==
+> Dump of rsvndump/branches can not be loaded!
 > It seems the copyfrom-revision is sometimes too large (+1). This is problematic
   with replace-actions. See copy_replace test.
 > Add a test for --prefix
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
-> --dump-uuid as default?
 > Make the '-r'-specifier more like svnadmin (maybe)
 
 > Further validate copy handling and subdirectory dumping

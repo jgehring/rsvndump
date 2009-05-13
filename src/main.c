@@ -74,7 +74,6 @@ static void print_usage()
 	printf(_("    --keep-revnums            keep the dumped revision numbers in sync with\n" \
 	         "                              the repository by using empty revisions for\n" \
 	         "                              padding\n"));
-	printf(_("    --dump-uuid               include the repository uuid in the dump\n"));
 	printf("\n");
 	printf("Report bugs to <"PACKAGE_BUGREPORT">\n");
 }
@@ -180,8 +179,6 @@ int main(int argc, char **argv)
 			session.flags |= SF_NON_INTERACTIVE;
 		} else if (!strcmp(argv[i], "--keep-revnums")) {
 			opts.flags |= DF_KEEP_REVNUMS;
-		} else if (!strcmp(argv[i], "--dump-uuid")) {
-			opts.flags |= DF_DUMP_UUID;
 		} else if (!strcmp(argv[i], "--deltas")) {
 			opts.flags |= DF_USE_DELTAS;
 		} else if (!strcmp(argv[i], "--incremental")) {

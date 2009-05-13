@@ -291,12 +291,6 @@ char dump(session_t *session, dump_options_t *opts)
 	svn_revnum_t global_rev, local_rev = -1;
 	int list_idx;
 
-	/* Some sanity checks first */
-	if ((opts->flags & DF_DUMP_UUID) && ((opts->prefix != NULL) || (strlen(session->prefix) > 0))) {
-		fprintf(stderr, _("Sorry, '--dump-uuid' can only be used when dumping a repository root and without using a user prefix.\n"));
-		return 1;
-	}
-	
 	if ((opts->flags & DF_INCREMENTAL) && (opts->start != 0)) {
 		start_mid = 1;
 	}
@@ -355,7 +349,7 @@ char dump(session_t *session, dump_options_t *opts)
 
 		/* Write dumpfile header */
 		printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER, 3);
-		if ((opts->flags & DF_DUMP_UUID)) {
+		if ((opts->prefix == NULL) && (strlen(session->prefix) == 0)) {
 			const char *uuid;
 			if (dump_fetch_uuid(session, &uuid)) {
 				list_free(&logs);

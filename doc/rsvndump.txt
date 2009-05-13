@@ -99,12 +99,6 @@ myrepo
 	Keep the revision numbers in the output in sync with the repository.
 	This is done by inserting empty revisions for padding if neccessary.
 
-*--dump-uuid*::
-	Include the UUID of the repository in the dump output.
-	Please note that this is only allowed if you are dumping the root
-	of a repository without any additional prefix.
-
-
 
 REVISION NUMBERS
 ----------------
