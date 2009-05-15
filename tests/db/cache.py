@@ -53,8 +53,10 @@ def insert(id, name, repos, wc, setup_fn, log):
 	os.chdir(id)
 	step = 0
 	while setup_fn(step, log):
-		run("svn", "commit", "-m", "commit step "+str(step), output = log)
+		os.chdir(wc+"/..")
+		run("svn", "commit", id, "-m", "commit step "+str(step), output = log)
 		step += 1
+		os.chdir(id)
 	os.chdir(tmp)
 
 	# Create dump
