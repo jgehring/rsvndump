@@ -48,6 +48,8 @@
  #define SVN_REPOS_DUMPFILE_TEXT_CONTENT_MD5 SVN_REPOS_DUMPFILE_TEXT_CONTENT_CHECKSUM
 #endif
 
+#define MD5SUM_LENGTH 32
+
 
 /*---------------------------------------------------------------------------*/
 /* Local data structures                                                     */
@@ -84,7 +86,7 @@ typedef struct {
 	char			action;
 	svn_node_kind_t		kind;
 	apr_hash_t		*properties;
-	unsigned char		md5sum[33];
+	unsigned char		md5sum[MD5SUM_LENGTH+1];
 	char			*copyfrom_path;
 	svn_revnum_t		copyfrom_revision;
 	cp_info_t		cp_info;
@@ -105,6 +107,8 @@ typedef struct {
  */
 static apr_pool_t *delta_pool = NULL;
 static apr_hash_t *delta_hash = NULL;
+static apr_pool_t *md5_pool = NULL;
+static apr_hash_t *md5_hash = NULL;
 #ifdef USE_TIMING
  static float tm_de_apply_textdelta = 0.0f;
 #endif
@@ -156,6 +160,10 @@ static void delta_mark_node(de_node_baton_t *node)
 {
 	de_baton_t *de_baton = node->de_baton;
 	apr_hash_set(de_baton->dumped_entries, apr_pstrdup(de_baton->revision_pool, node->path), APR_HASH_KEY_STRING, de_baton /* The value doesn't matter */);
+	if (node->kind == svn_node_file) {
+		apr_hash_set(md5_hash, apr_pstrdup(md5_pool, node->path), APR_HASH_KEY_STRING, apr_pmemdup(md5_pool, node->md5sum, MD5SUM_LENGTH));
+		DEBUG_MSG("md5_hash += %s : %s\n", node->path, svn_md5_digest_to_cstring(node->md5sum, node->pool));
+	}
 	node->dumped = 1;
 	if ((de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
 		if (node->cp_info == CP_COPY) {
@@ -300,8 +308,7 @@ static char delta_dump_node(de_node_baton_t *node)
 		return 0;
 	}
 
-	/* If the node's parent has been copied, we don't need to dump it
-	   if the action is ADD */
+	/* If the node's parent has been copied, we don't need to dump it if its contents haven't changed */
 	if ((node->cp_info == CP_COPY) && (node->action == 'A')) {
 		node->dumped = 1;
 		return 0;
@@ -374,12 +381,22 @@ static char delta_dump_node(de_node_baton_t *node)
 		
 		/* Maybe we don't need to dump the properties and text */
 		if (node->action == 'A') {
+			unsigned char *prev_md5 = apr_hash_get(md5_hash, node->copyfrom_path, APR_HASH_KEY_STRING);
+			if (prev_md5 && !memcmp(node->md5sum, prev_md5, MD5SUM_LENGTH)) {
+				dump_content = 0;
+			} else {
+				dump_content = 1;
+			}
+		}
+		if (!dump_content) {
 			printf("\n\n");
 			if (opts->flags & DF_USE_DELTAS) {
 				unlink(node->filename);
 			}
 			delta_mark_node(node);
 			return 0;
+		} else if (node->kind == svn_node_dir) {
+			dump_content = 0;
 		}
 	}
 
@@ -687,7 +704,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		node->action = 'A';
 	}
 
-	if (!((node->cp_info == CP_COPY) && (node->action == 'A')) && (parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
+	if (!(node->cp_info == CP_COPY) && (parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
 		fprintf(stderr, _("     * adding path : %s ... "), path);
 	}
 
@@ -899,6 +916,12 @@ void delta_setup_editor(session_t *session, dump_options_t *options, list_t *log
 	baton->revision_pool = svn_pool_create(pool);
 	baton->dumped_entries = apr_hash_make(baton->revision_pool);
 	*editor_baton = baton;
+
+	/* Check if the global md5sum hash needs to be created */
+	if (md5_pool == NULL) {
+		md5_pool = svn_pool_create(session->pool);
+		md5_hash = apr_hash_make(md5_pool);
+	}
 
 	/* Check if the global file hash needs to be created */
 	if (!(options->flags & DF_USE_DELTAS) && (delta_pool == NULL)) {

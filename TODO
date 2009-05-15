@@ -6,6 +6,9 @@
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
 > Make the '-r'-specifier more like svnadmin (maybe)
+> Don't dump node contents if it is a copy and has not changed (we need
+  to keep track of the MD5-sums for this), but dump them if it has changed
+  (see copy_modify in tests/db)
 
 > Further validate copy handling and subdirectory dumping
 
@@ -19,8 +22,6 @@
 > Add --no-stop-on-copy option
 > Re-implement dumping of single files?
 > Output help on missing arguments, i.e. s.th. like "rsvndump --stop"
-> Don't dump node contents if it is a copy and has not changed (we need
-  to keep track of the MD5-sums for this)
 > MD5-sums for deltas
 > Specify MD5 for copy source on copying
 
