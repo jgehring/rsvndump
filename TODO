@@ -1,5 +1,4 @@
 == 0.5 branch (deltas) ==
-> Save MD5-sums of deltas (see above)
 > Don't dump node contents if it is a copy and has not changed (we need
   to keep track of the MD5-sums for this), but dump them if it has changed
   (see copy_modify in tests/db).
@@ -10,6 +9,7 @@
   if this can be fixed
 > Make the '-r'-specifier more like svnadmin (maybe)
 > svn_txdelta_to_svndiff to svn_txdelta_to_svndiff2
+> Correct error propagation from delta_dump_node
 
 > Further validate copy handling and subdirectory dumping
 

@@ -83,6 +83,7 @@ typedef struct {
 	char			*path;
 	char			*filename;
 	char			*old_filename;
+	char			*delta_filename;
 	char			action;
 	svn_node_kind_t		kind;
 	apr_hash_t		*properties;
@@ -133,6 +134,7 @@ static de_node_baton_t *delta_create_node(const char *path, de_node_baton_t *par
 	node->properties = apr_hash_make(pool);
 	node->filename = NULL;
 	node->old_filename = NULL;
+	node->delta_filename = NULL;
 	node->cp_info = parent->cp_info;
 	node->copyfrom_path = NULL;
 	node->applied_delta = 0;
@@ -254,6 +256,53 @@ static char delta_check_copy(de_node_baton_t *node)
 		DEBUG_MSG("delta_check_copy: resolving failed\n");
 	}
 
+	return 0;
+}
+
+
+/* Deltifies a node, i.e. generates a svndiff that can be dumped */
+static char delta_deltify_node(de_node_baton_t *node)
+{
+	svn_txdelta_stream_t *stream;
+	svn_txdelta_window_handler_t handler;
+	void *handler_baton;
+	svn_stream_t *source, *target, *dest;
+	apr_file_t *source_file = NULL, *target_file = NULL, *dest_file = NULL;
+	dump_options_t *opts = node->de_baton->opts;
+	apr_pool_t *pool = svn_pool_create(node->pool);
+	svn_error_t *err;
+
+	DEBUG_MSG("delta_deltify_node(%s): %s -> %s\n", node->path, node->old_filename, node->filename);
+
+	/* Open source and target */
+	apr_file_open(&target_file, node->filename, APR_READ, 0600, pool);
+	target = svn_stream_from_aprfile2(target_file, FALSE, pool);
+	if (node->old_filename) {
+		apr_file_open(&source_file, node->old_filename, APR_READ, 0600, pool);
+		source = svn_stream_from_aprfile2(source_file, FALSE, pool);
+	} else {
+		source = svn_stream_empty(pool);
+	}
+
+	/* Open temporary output file */
+	node->delta_filename = apr_palloc(node->pool, strlen(opts->temp_dir)+8);
+	sprintf(node->delta_filename, "%s/XXXXXX", opts->temp_dir);
+	apr_file_mktemp(&dest_file, node->delta_filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
+	dest = svn_stream_from_aprfile2(dest_file, FALSE, pool);
+
+	DEBUG_MSG("delta_deltify_node(%s): writing to %s\n", node->path, node->delta_filename);
+
+	/* Produce delta in svndiff format */
+	svn_txdelta(&stream, source, target, pool);
+	svn_txdelta_to_svndiff2(&handler, &handler_baton, dest, 0, pool);
+	if ((err = svn_txdelta_send_txstream(stream, handler, handler_baton, pool))) {
+		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		svn_error_clear(err);
+		svn_pool_destroy(pool);
+		return 1;
+	}
+
+	svn_pool_destroy(pool);
 	return 0;
 }
 
@@ -383,20 +432,29 @@ static char delta_dump_node(de_node_baton_t *node)
 		if (node->action == 'A') {
 			unsigned char *prev_md5 = apr_hash_get(md5_hash, node->copyfrom_path, APR_HASH_KEY_STRING);
 			if (prev_md5 && !memcmp(node->md5sum, prev_md5, MD5SUM_LENGTH)) {
+				DEBUG_MSG("md5sum matches\n");
 				dump_content = 0;
 			} else {
+				DEBUG_MSG("md5sum doesn't match\n");
 				dump_content = 1;
 			}
 		}
 		if (!dump_content) {
 			printf("\n\n");
-			if (opts->flags & DF_USE_DELTAS) {
-				unlink(node->filename);
-			}
 			delta_mark_node(node);
 			return 0;
 		} else if (node->kind == svn_node_dir) {
 			dump_content = 0;
+		}
+	}
+
+	/* Deltify? */
+	if (dump_content && (opts->flags & DF_USE_DELTAS)) {
+		if (delta_deltify_node(node)) {
+#if DEBUG
+			exit(1);
+#endif
+			return 1;
 		}
 	}
 
@@ -420,7 +478,8 @@ static char delta_dump_node(de_node_baton_t *node)
 	/* Dump content size */
 	if (dump_content) {
 		struct stat st;
-		if (stat(node->filename, &st)) {
+		char *path = (opts->flags & DF_USE_DELTAS) ? node->delta_filename : node->filename;
+		if (stat(path, &st)) {
 			DEBUG_MSG("dump_delta_node: FATAL: cannot stat %s\n", node->filename);
 #if DEBUG
 			exit(1);
@@ -457,7 +516,11 @@ static char delta_dump_node(de_node_baton_t *node)
 		char *buffer = malloc(2049);
 		size_t s;
 
-		f = fopen(node->filename, "rb");
+		if (opts->flags & DF_USE_DELTAS) {
+			f = fopen(node->delta_filename, "rb");
+		} else {
+			f = fopen(node->filename, "rb");
+		}
 		if (f == NULL) {
 			fprintf(stderr, _("ERROR: Failed to open %s.\n"), node->filename);
 			free(buffer);
@@ -471,7 +534,7 @@ static char delta_dump_node(de_node_baton_t *node)
 		/* Close and remove temporary file */
 		fclose(f);
 		if (opts->flags & DF_USE_DELTAS) {
-			unlink(node->filename);
+			unlink(node->delta_filename);
 		}
 	}
 
@@ -756,25 +819,20 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 	apr_file_mktemp(&dest_file, node->filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
 	dest_stream = svn_stream_from_aprfile2(dest_file, FALSE, pool);
 
-	if (opts->flags & DF_USE_DELTAS) {
-		/* When dumping in delta mode, we just need to save the delta */
-		svn_txdelta_to_svndiff(dest_stream, pool, handler, handler_baton);
+	/* Update the local copy */
+	char *filename = apr_hash_get(delta_hash, node->path, APR_HASH_KEY_STRING);
+	if (filename == NULL) {
+		src_stream = svn_stream_empty(pool);
 	} else {
-		/* Else, we need to update our local copy */
-		char *filename = apr_hash_get(delta_hash, node->path, APR_HASH_KEY_STRING);
-		if (filename == NULL) {
-			src_stream = svn_stream_empty(pool);
-		} else {
-			apr_file_open(&src_file, filename, APR_READ, 0600, pool);
-			src_stream = svn_stream_from_aprfile2(src_file, FALSE, pool);
-		}
-
-		svn_txdelta_apply(src_stream, dest_stream, node->md5sum, node->path, pool, handler, handler_baton);
-		apr_hash_set(delta_hash, apr_pstrdup(delta_pool, node->path), APR_HASH_KEY_STRING, apr_pstrdup(delta_pool, node->filename));
-		node->old_filename = filename;
-
-		DEBUG_MSG("applied delta: %s -> %s\n", filename, node->filename);
+		apr_file_open(&src_file, filename, APR_READ, 0600, pool);
+		src_stream = svn_stream_from_aprfile2(src_file, FALSE, pool);
 	}
+
+	svn_txdelta_apply(src_stream, dest_stream, node->md5sum, node->path, pool, handler, handler_baton);
+	apr_hash_set(delta_hash, apr_pstrdup(delta_pool, node->path), APR_HASH_KEY_STRING, apr_pstrdup(delta_pool, node->filename));
+	node->old_filename = filename;
+
+	DEBUG_MSG("applied delta: %s -> %s\n", filename, node->filename);
 
 	node->applied_delta = 1;
 
@@ -847,12 +905,10 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 		DEBUG_MSG("Checking %s (%c)\n", path, log->action);
 		if (log->action == 'D') {
 			/* We can unlink a possible temporary file now */
-			if (!(de_baton->opts->flags & DF_USE_DELTAS)) {
-				char *filename = apr_hash_get(delta_hash, path, APR_HASH_KEY_STRING);
-				if (filename) {
-					unlink(filename);
-					apr_hash_set(delta_hash, path, APR_HASH_KEY_STRING, NULL);
-				}
+			char *filename = apr_hash_get(delta_hash, path, APR_HASH_KEY_STRING);
+			if (filename) {
+				unlink(filename);
+				apr_hash_set(delta_hash, path, APR_HASH_KEY_STRING, NULL);
 			}
 			
 			if (apr_hash_get(de_baton->dumped_entries, path, APR_HASH_KEY_STRING) == NULL) {
@@ -924,7 +980,7 @@ void delta_setup_editor(session_t *session, dump_options_t *options, list_t *log
 	}
 
 	/* Check if the global file hash needs to be created */
-	if (!(options->flags & DF_USE_DELTAS) && (delta_pool == NULL)) {
+	if (delta_pool == NULL) {
 		delta_pool = svn_pool_create(session->pool);
 		delta_hash = apr_hash_make(delta_pool);
 	}
