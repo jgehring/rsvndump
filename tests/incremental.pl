@@ -5,7 +5,7 @@
 
 
 # Some constants. Too lazy to create arguments of them
-my $steps = 10;
+my $steps = 1;
 
 
 # Print help if neccessary

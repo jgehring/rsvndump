@@ -430,12 +430,18 @@ static char delta_dump_node(de_node_baton_t *node)
 		
 		/* Maybe we don't need to dump the properties and text */
 		if (node->action == 'A') {
-			unsigned char *prev_md5 = apr_hash_get(md5_hash, node->copyfrom_path, APR_HASH_KEY_STRING);
+			unsigned char *prev_md5 = apr_hash_get(md5_hash, node->copyfrom_path+offset, APR_HASH_KEY_STRING);
 			if (prev_md5 && !memcmp(node->md5sum, prev_md5, MD5SUM_LENGTH)) {
 				DEBUG_MSG("md5sum matches\n");
 				dump_content = 0;
 			} else {
-				DEBUG_MSG("md5sum doesn't match\n");
+#if DEBUG
+				if (prev_md5) {
+					DEBUG_MSG("md5sum doesn't match: (%s != %s)\n", svn_md5_digest_to_cstring(node->md5sum, node->pool), svn_md5_digest_to_cstring(prev_md5, node->pool));
+				} else {
+					DEBUG_MSG("md5sum of %s not available\n", node->copyfrom_path+offset);
+				}
+#endif
 				dump_content = 1;
 			}
 		}
