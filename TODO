@@ -1,4 +1,7 @@
 == 0.5 branch (deltas) ==
+> Don't dump node contents if it is a copy and has not changed (we need
+  to keep track of the MD5-sums for this), but dump them if it has changed
+  (see copy_modify in tests/db)
 > Dump of rsvndump/branches can not be loaded! >> Add test for this!
 > It seems the copyfrom-revision is sometimes too large (+1). This is problematic
   with replace-actions. See copy_replace test.
@@ -6,9 +9,6 @@
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
 > Make the '-r'-specifier more like svnadmin (maybe)
-> Don't dump node contents if it is a copy and has not changed (we need
-  to keep track of the MD5-sums for this), but dump them if it has changed
-  (see copy_modify in tests/db)
 > Save MD5-sums of deltas
 > svn_txdelta_to_svndiff to svn_txdelta_to_svndiff2
 
