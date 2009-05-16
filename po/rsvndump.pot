@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.5\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-05-04 13:39+0200\n"
+"POT-Creation-Date: 2009-05-16 17:03+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,54 +16,92 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/delta.c:414
+#: src/delta.c:172
+#, c-format
+msgid "COPIED ... done.\n"
+msgstr ""
+
+#: src/delta.c:174
+#, c-format
+msgid "done.\n"
+msgstr ""
+
+#: src/delta.c:367 src/delta.c:777
+#, c-format
+msgid "     * adding path : %s ... "
+msgstr ""
+
+#: src/delta.c:531
 #, c-format
 msgid "ERROR: Failed to open %s.\n"
 msgstr ""
 
-#: src/dump.c:170
+#: src/delta.c:589
+#, c-format
+msgid "     * deleting path : %s ... "
+msgstr ""
+
+#: src/delta.c:793
+#, c-format
+msgid "     * editing path : %s ... "
+msgstr ""
+
+#: src/dump.c:204
 #, c-format
 msgid "ERROR: URL '%s' not found in HEAD revision\n"
 msgstr ""
 
-#: src/dump.c:264
-#, c-format
-msgid ""
-"Sorry, '--dump-uuid' can only be used when dumping a repository root and "
-"without using a user prefix.\n"
-msgstr ""
-
-#: src/dump.c:284
+#: src/dump.c:310
 #, c-format
 msgid "ERROR: URL '%s' not found in revision %ld\n"
 msgstr ""
 
-#: src/dump.c:393
+#: src/dump.c:417
 #, c-format
 msgid "* Padded revision %ld.\n"
 msgstr ""
 
-#: src/dump.c:448
+#: src/dump.c:419
+#, c-format
+msgid ""
+"------ Padded revision %ld <<<\n"
+"\n"
+msgstr ""
+
+#: src/dump.c:463
+#, c-format
+msgid ">>> Dumping new revision, based on original revision %ld\n"
+msgstr ""
+
+#: src/dump.c:475
 #, c-format
 msgid "* Dumped revision %ld (local %ld).\n"
 msgstr ""
 
-#: src/dump.c:450
+#: src/dump.c:477
 #, c-format
 msgid "* Dumped revision %ld.\n"
 msgstr ""
 
-#: src/log.c:158
+#: src/dump.c:480
+#, c-format
+msgid ""
+"\n"
+"------ Dumped revision %ld <<<\n"
+"\n"
+msgstr ""
+
+#: src/log.c:166
 #, c-format
 msgid "Determining start end end revision... "
 msgstr ""
 
-#: src/log.c:171 src/log.c:246
+#: src/log.c:179 src/log.c:254
 #, c-format
 msgid "done\n"
 msgstr ""
 
-#: src/log.c:231
+#: src/log.c:239
 #, c-format
 msgid "Fetching logs... "
 msgstr ""
@@ -132,16 +170,21 @@ msgstr ""
 
 #: src/main.c:71
 #, c-format
-msgid "    --no-check-certificate    don't validate SSL certificates\n"
+msgid "    --no-auth-cache           do not cache authentication tokens\n"
 msgstr ""
 
 #: src/main.c:72
+#, c-format
+msgid "    --non-interactive         do no interactive prompting\n"
+msgstr ""
+
+#: src/main.c:73
 #, c-format
 msgid ""
 "    --prefix arg              prepend arg to the path that is being dumped\n"
 msgstr ""
 
-#: src/main.c:73
+#: src/main.c:74
 #, c-format
 msgid ""
 "    --keep-revnums            keep the dumped revision numbers in sync with\n"
@@ -149,110 +192,32 @@ msgid ""
 "                              padding\n"
 msgstr ""
 
-#: src/main.c:76
-#, c-format
-msgid "    --dump-uuid               include the repository uuid in the dump\n"
-msgstr ""
-
-#: src/main.c:184
+#: src/main.c:188
 #, c-format
 msgid "ERROR: invalid revision range '%s'\n"
 msgstr ""
 
-#: src/main.c:210
+#: src/main.c:214
 #, c-format
 msgid "ERROR: multiple URLs detected.\n"
 msgstr ""
 
-#: src/main.c:217
+#: src/main.c:221
 #, c-format
 msgid "ERROR: Unkown argument or malformed url '%s'.\n"
 msgstr ""
 
-#: src/main.c:218
+#: src/main.c:222
 #, c-format
 msgid "Type %s --help for usage information.\n"
 msgstr ""
 
-#: src/main.c:246
+#: src/main.c:250
 #, c-format
 msgid "ERROR: Unable to create download directory.\n"
 msgstr ""
 
-#: src/session.c:108
-msgid "Username: "
-msgstr ""
-
-#: src/session.c:113
-#, c-format
-msgid "Password for '%s': "
-msgstr ""
-
-#: src/session.c:117
-msgid "Password: "
-msgstr ""
-
-#. TRANSLATORS: This is the key used for accepting a certificate temporarily.
-#. * Every other key is used to reject the certificate.
-#: src/session.c:133
-msgid "t"
-msgstr ""
-
-#: src/session.c:137 src/session.c:146 src/session.c:154 src/session.c:162
-#: src/session.c:170
-#, c-format
-msgid "WARNING: Validating server certificate for '%s' failed:\n"
-msgstr ""
-
-#: src/session.c:139 src/session.c:148 src/session.c:156 src/session.c:164
-#: src/session.c:172
-#, c-format
-msgid "Error validating server certificate for '%s':\n"
-msgstr ""
-
-#: src/session.c:141
-#, c-format
-msgid ""
-" - The certificate is not issued by a trusted authority. Use the\n"
-"   fingerprint to validate the certificate manually!\n"
-msgstr ""
-
-#: src/session.c:150
-#, c-format
-msgid " - The certificate hostname does not match.\n"
-msgstr ""
-
-#: src/session.c:158
-#, c-format
-msgid " - The certificate is not yet valid.\n"
-msgstr ""
-
-#: src/session.c:166
-#, c-format
-msgid " - The certificate has expired.\n"
-msgstr ""
-
-#: src/session.c:174
-#, c-format
-msgid " - The certificate has an unknown error.\n"
-msgstr ""
-
-#: src/session.c:177
-#, c-format
-msgid ""
-"Certificate information:\n"
-" - Hostname: %s\n"
-" - Valid: from %s until %s\n"
-" - Issuer: %s\n"
-" - Fingerprint: %s\n"
-msgstr ""
-
-#: src/session.c:195
-#, c-format
-msgid "(R)eject or accept (t)emporarily? "
-msgstr ""
-
-#: src/session.c:370
+#: src/session.c:192
 #, c-format
 msgid "ERROR: '%s' refers to a file.\n"
 msgstr ""
