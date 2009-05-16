@@ -872,15 +872,16 @@ static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, a
 {
 	de_node_baton_t *node = (de_node_baton_t *)file_baton;
 
+	/* Check if the this node needs to be dumped */
+	if (!node->dumped) {
+		delta_dump_node(node);
+	}
+
 	/* Remove the old file if neccessary */
 	if (node->old_filename) {
 		unlink(node->old_filename);
 	}
 
-	/* Check if the this node needs to be dumped */
-	if (!node->dumped) {
-		delta_dump_node(node);
-	}
 	return SVN_NO_ERROR;
 }
 
