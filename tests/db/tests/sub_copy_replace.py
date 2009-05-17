@@ -39,12 +39,11 @@ def setup(step, log):
 		print >>f, "hello7"
 		return True
 	elif step == 3:
-		os.chdir("..")
+		os.chdir("dir1")
 		test_api.run("svn", "up", output = log)
 		test_api.run("svn", "cp", "sdir2", "sdir3", output = log)
 		return True
 	elif step == 4:
-		os.chdir("..")
 		f = open("dir1/sdir3/file2","a")
 		print >>f, "just copied!"
 		return True
