@@ -5,7 +5,6 @@
   if this can be fixed
 > Make the '-r'-specifier more like svnadmin (maybe)
 > Correct error propagation from delta_dump_node
-> MD5-sums for deltas
 
 > Further validate copy handling and subdirectory dumping
 

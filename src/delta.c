@@ -499,7 +499,7 @@ static char delta_dump_node(de_node_baton_t *node)
 		}
 		printf("%s: %lu\n", SVN_REPOS_DUMPFILE_TEXT_CONTENT_LENGTH, content_len);
 
-		if (!(opts->flags & DF_USE_DELTAS) && *node->md5sum != 0x00) {
+		if (*node->md5sum != 0x00) {
 			printf("%s: %s\n", SVN_REPOS_DUMPFILE_TEXT_CONTENT_MD5, svn_md5_digest_to_cstring(node->md5sum, node->pool));
 		}
 	}
