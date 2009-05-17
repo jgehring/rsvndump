@@ -39,7 +39,6 @@ def setup(step, log):
 		print >>f, "hello7"
 		return True
 	elif step == 3:
-		os.chdir("../..")
 		test_api.run("svn", "up", output = log)
 		test_api.run("svn", "cp", "dir1", "dir2", output = log)
 		return True
