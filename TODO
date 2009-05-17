@@ -4,7 +4,6 @@
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
 > Make the '-r'-specifier more like svnadmin (maybe)
-> Correct error propagation from delta_dump_node
 
 > Further validate copy handling and subdirectory dumping
 
