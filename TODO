@@ -3,14 +3,14 @@
   with replace-actions. See copy_replace test.
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
-> Make the '-r'-specifier more like svnadmin (maybe)
+> Replace unlink()-calls with apr_file_remove()
+> Use svn_stream_copy for concatenation
 
 > Further validate copy handling and subdirectory dumping
 
 > Rewrite manpage:
   - Add notes about the resulting revision numbers, using example combinations of
     subdirectories, --keep-revnums, -r X:Y and --incremental
-> Check compilation with svn 1.6, 1.5 and 1.4
 
 
 == Schedule for 0.5.X ==
@@ -25,3 +25,4 @@
 == Someday ==
 > Dump user prefix in first revision, even with --keep-revnums
 > Retries if connection is lost
+> Make the '-r'-specifier more like svnadmin (maybe)
