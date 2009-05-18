@@ -16,7 +16,7 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * 	
- *      file: utils.h
+ *      file: utils.c
  *      desc: Miscellaneous utility functions
  */
 

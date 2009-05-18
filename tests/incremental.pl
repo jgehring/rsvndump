@@ -44,7 +44,7 @@ print("done\n");
 
 
 # Run incremental dumps
-print(">> Preforming normal dump... ");
+print(">> Preforming incremental dump... ");
 my $start = 0;
 my $end = $steps;
 while (system("../src/rsvndump --incremental -r $start:$end $args $url >> .dumps/incremental 2>> .dumps/incremental.log") == 0) {
