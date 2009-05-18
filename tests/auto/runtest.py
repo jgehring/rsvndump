@@ -201,7 +201,6 @@ if __name__ == "__main__":
 	try:
 		subdir = test.dump_dir
 	except AttributeError:
-		extra_args.append("--dump-uuid")
 		pass
 	rsvndump_dump(subdir)
 
