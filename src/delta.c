@@ -615,6 +615,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 
 	/* We can dump this entry directly */
 	node = delta_create_node(path, parent, pool);
+	node->kind = svn_node_none;
 	node->action = 'D';
 	if ((err = delta_dump_node(node))) {
 		return err;
