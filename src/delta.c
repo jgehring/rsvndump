@@ -457,6 +457,19 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		}
 	}
 
+#ifdef DUMP_DEBUG
+	/* Dump some extra debug info */
+	if (dump_content) {
+		printf("Debug-filename: %s\n", node->filename);
+		if (node->old_filename) {
+			printf("Debug-old-filename: %s\n", node->old_filename);
+		}
+		if (opts->flags & DF_USE_DELTAS) {
+			printf("Debug-delta-filename: %s\n", node->delta_filename);
+		}
+	}
+#endif
+
 	/* Dump properties & content */
 	prop_len = 0;
 	content_len = 0;
@@ -538,9 +551,11 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 
 		apr_file_close(in);
 		apr_pool_destroy(epool);
+#ifndef DUMP_DEBUG
 		if (opts->flags & DF_USE_DELTAS) {
 			apr_file_remove(node->delta_filename, node->pool);
 		}
+#endif
 	}
 
 	printf("\n\n");
@@ -582,6 +597,9 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 {
 	de_node_baton_t *node;
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
+	apr_hash_index_t *hi;
+	svn_error_t *err;
+	int pathlen;
 	
 	DEBUG_MSG("de_delete_entry(%s@%ld)\n", path, revision);
 	if ((parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
@@ -590,7 +608,6 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 
 	/* Check if the parent dump needs to be dumped */
 	if (!parent->dumped) {
-		svn_error_t *err;
 		if ((err = delta_dump_node(parent))) {
 			return err;
 		}
@@ -599,7 +616,36 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 	/* We can dump this entry directly */
 	node = delta_create_node(path, parent, pool);
 	node->action = 'D';
-	return delta_dump_node(node);
+	if ((err = delta_dump_node(node))) {
+		return err;
+	}
+
+	/* This node might be a directory, so clear the data of all children */
+	pathlen = strlen(node->path);
+	for (hi = apr_hash_first(pool, delta_hash); hi; hi = apr_hash_next(hi)) {
+		const char *npath;
+		char *filename;
+		apr_hash_this(hi, (const void **)&npath, NULL, (void **)&filename);
+		/* TODO: This is a small hack to make sure the node is a directory */
+		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
+#ifndef DUMP_DEBUG
+			unlink(filename);
+#endif
+			DEBUG_MSG("deleting %s from delta_hash\n", npath);
+			apr_hash_set(delta_hash, npath, APR_HASH_KEY_STRING, NULL);
+		}
+	}
+	for (hi = apr_hash_first(pool, md5_hash); hi; hi = apr_hash_next(hi)) {
+		const char *npath;
+		char *md5sum;
+		apr_hash_this(hi, (const void **)&npath, NULL, (void **)&md5sum);
+		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
+			DEBUG_MSG("deleting %s from md5_hash\n", npath);
+			apr_hash_set(md5_hash, npath, APR_HASH_KEY_STRING, NULL);
+		}
+	}
+
+	return SVN_NO_ERROR;
 }
 
 
@@ -896,9 +942,11 @@ static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, a
 	}
 
 	/* Remove the old file if neccessary */
+#ifndef DUMP_DEBUG
 	if (node->old_filename) {
 		unlink(node->old_filename);
 	}
+#endif
 
 	return SVN_NO_ERROR;
 }
@@ -932,7 +980,9 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 			/* We can unlink a possible temporary file now */
 			char *filename = apr_hash_get(delta_hash, path, APR_HASH_KEY_STRING);
 			if (filename) {
+#ifndef DUMP_DEBUG
 				unlink(filename);
+#endif
 				apr_hash_set(delta_hash, path, APR_HASH_KEY_STRING, NULL);
 			}
 			
