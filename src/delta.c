@@ -261,7 +261,7 @@ static char delta_check_copy(de_node_baton_t *node)
 
 
 /* Deltifies a node, i.e. generates a svndiff that can be dumped */
-static char delta_deltify_node(de_node_baton_t *node)
+static svn_error_t *delta_deltify_node(de_node_baton_t *node)
 {
 	svn_txdelta_stream_t *stream;
 	svn_txdelta_window_handler_t handler;
@@ -295,15 +295,10 @@ static char delta_deltify_node(de_node_baton_t *node)
 	/* Produce delta in svndiff format */
 	svn_txdelta(&stream, source, target, pool);
 	svn_txdelta_to_svndiff2(&handler, &handler_baton, dest, 0, pool);
-	if ((err = svn_txdelta_send_txstream(stream, handler, handler_baton, pool))) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
-		svn_error_clear(err);
-		svn_pool_destroy(pool);
-		return 1;
-	}
 
+	err = svn_txdelta_send_txstream(stream, handler, handler_baton, pool);
 	svn_pool_destroy(pool);
-	return 0;
+	return err;
 }
 
 
@@ -513,29 +508,38 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 
 	/* Dump content */
 	if (dump_content) {
-		FILE *f;
-		char *buffer = malloc(2049);
-		size_t s;
+		apr_status_t status;
+		apr_file_t *in = NULL, *out = NULL;
+		const apr_size_t bsize = 4096;
+		apr_size_t osize;
+		void *buffer = apr_palloc(node->pool, bsize);
+		apr_pool_t *epool = svn_pool_create(NULL);
+		const int ebsize = 512;
+		char *errbuf = apr_palloc(epool, ebsize);
 
+		status = apr_file_open_stdout(&out, node->pool);
+		if (status) {
+			return svn_error_create(status, NULL, apr_strerror(status, errbuf, ebsize));
+		}
 		if (opts->flags & DF_USE_DELTAS) {
-			f = fopen(node->delta_filename, "rb");
+			status = apr_file_open(&in, node->delta_filename, APR_READ, 0600, node->pool);
 		} else {
-			f = fopen(node->filename, "rb");
+			status = apr_file_open(&in, node->filename, APR_READ, 0600, node->pool);
 		}
-		if (f == NULL) {
-			fprintf(stderr, _("ERROR: Failed to open %s.\n"), node->filename);
-			free(buffer);
-			return svn_error_create(1, NULL, apr_psprintf(session->pool, "Failed to open %s", node->filename));
+
+		osize = bsize;
+		while ((status == 0) && ((status = apr_file_read(in, buffer, &osize) == 0))) {
+			status = apr_file_write(out, buffer, &osize); 
+			osize = bsize;
 		}
-		while ((s = fread(buffer, 1, 2048, f))) {
-			fwrite(buffer, 1, s, stdout);
+		if (status) {
+			return svn_error_create(status, NULL, apr_strerror(status, errbuf, ebsize));
 		}
-		free(buffer);
-		
-		/* Close and remove temporary file */
-		fclose(f);
+
+		apr_file_close(in);
+		apr_pool_destroy(epool);
 		if (opts->flags & DF_USE_DELTAS) {
-			unlink(node->delta_filename);
+			apr_file_remove(node->delta_filename, node->pool);
 		}
 	}
 
