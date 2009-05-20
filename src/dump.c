@@ -393,7 +393,6 @@ char dump(session_t *session, dump_options_t *opts)
 		svn_delta_editor_t *editor;
 		void *editor_baton;
 		svn_revnum_t diff_rev;
-		char start_empty;
 		apr_pool_t *revpool = svn_pool_create(session->pool);
 
 		if (logs_fetched == 0) {
@@ -452,20 +451,13 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 		DEBUG_MSG("global = %ld, diff = %ld, start = %ld\n", global_rev, diff_rev, opts->start);
 
-		/* Determine whether to start with an empty revision */
-		if ((global_rev == opts->start) && (!(opts->flags & DF_INCREMENTAL) || !(opts->flags & DF_USE_DELTAS))) {
-			start_empty = 1;
-		} else {
-			start_empty = 0;
-		}
-
 		if (opts->verbosity > 0 && !(opts->flags & DF_DRY_RUN)) {
 			fprintf(stderr, _(">>> Dumping new revision, based on original revision %ld\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
 		}
 
 		/* Setup the delta editor and run a diff */
 		delta_setup_editor(session, opts, &logs, (log_revision_t *)logs.elements + list_idx, local_rev, &editor, &editor_baton, revpool);
-		if (dump_do_diff(session, diff_rev, ((log_revision_t *)logs.elements)[list_idx].revision, start_empty, editor, editor_baton, revpool)) {
+		if (dump_do_diff(session, diff_rev, ((log_revision_t *)logs.elements)[list_idx].revision, (global_rev == opts->start), editor, editor_baton, revpool)) {
 			ret = 1;
 			break;
 		}
