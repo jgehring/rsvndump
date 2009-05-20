@@ -25,10 +25,11 @@
 #include <unistd.h>
 
 #include <svn_delta.h>
+#include <svn_io.h>
 #include <svn_md5.h>
 #include <svn_pools.h>
-#include <svn_repos.h>
 #include <svn_props.h>
+#include <svn_repos.h>
 
 #include <apr_hash.h>
 #include <apr_file_io.h>
@@ -302,6 +303,38 @@ static svn_error_t *delta_deltify_node(de_node_baton_t *node)
 }
 
 
+/* Dumps the contents of a file to stdout */
+static svn_error_t *delta_cat_file(apr_pool_t *pool, const char *path)
+{
+	svn_error_t *err;
+	apr_status_t status;
+	apr_file_t *in_file = NULL;
+	svn_stream_t *in, *out;
+	apr_pool_t *epool = svn_pool_create(NULL);
+	const int ebsize = 512;
+	char *errbuf = apr_palloc(epool, ebsize);
+
+	status = apr_file_open(&in_file, path, APR_READ, 0600, pool);
+	if (status) {
+		return svn_error_create(status, NULL, apr_strerror(status, errbuf, ebsize));
+	}
+	in = svn_stream_from_aprfile2(in_file, FALSE, pool);
+	if ((err = svn_stream_for_stdout(&out, pool))) {
+		svn_stream_close(in);
+		return err;
+	}
+
+	/* Write contents */
+	if ((err = svn_stream_copy(in, out, pool))) {
+		svn_stream_close(in);
+		return err;
+	}
+
+	err = svn_stream_close(in);
+	return SVN_NO_ERROR;
+}
+
+
 /* Dumps a node that has a 'replace' action */
 static svn_error_t *delta_dump_replace(de_node_baton_t *node)
 {
@@ -521,36 +554,17 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 
 	/* Dump content */
 	if (dump_content) {
-		apr_status_t status;
-		apr_file_t *in = NULL, *out = NULL;
-		const apr_size_t bsize = 4096;
-		apr_size_t osize;
-		void *buffer = apr_palloc(node->pool, bsize);
-		apr_pool_t *epool = svn_pool_create(NULL);
-		const int ebsize = 512;
-		char *errbuf = apr_palloc(epool, ebsize);
+		svn_error_t *err;
+		apr_pool_t *pool = svn_pool_create(node->pool);
+		const char *path = (opts->flags & DF_USE_DELTAS) ? node->delta_filename : node->filename;
 
-		status = apr_file_open_stdout(&out, node->pool);
-		if (status) {
-			return svn_error_create(status, NULL, apr_strerror(status, errbuf, ebsize));
+		fflush(stdout);
+		if ((err = delta_cat_file(pool, path))) {
+			return err;
 		}
-		if (opts->flags & DF_USE_DELTAS) {
-			status = apr_file_open(&in, node->delta_filename, APR_READ, 0600, node->pool);
-		} else {
-			status = apr_file_open(&in, node->filename, APR_READ, 0600, node->pool);
-		}
+		fflush(stdout);
 
-		osize = bsize;
-		while ((status == 0) && ((status = apr_file_read(in, buffer, &osize) == 0))) {
-			status = apr_file_write(out, buffer, &osize); 
-			osize = bsize;
-		}
-		if (status) {
-			return svn_error_create(status, NULL, apr_strerror(status, errbuf, ebsize));
-		}
-
-		apr_file_close(in);
-		apr_pool_destroy(epool);
+		svn_pool_destroy(pool);
 #ifndef DUMP_DEBUG
 		if (opts->flags & DF_USE_DELTAS) {
 			apr_file_remove(node->delta_filename, node->pool);
