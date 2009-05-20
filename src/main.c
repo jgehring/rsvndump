@@ -120,7 +120,7 @@ static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 			}
 		}
 
-		if (*start > *end) {
+		if ((*start > *end) && (*end != -1)) {
 			return 1;
 		}
 	}
