@@ -44,13 +44,12 @@ enum dump_flags {
 
 /* Data structure to bundle information related to the dumping process */
 typedef struct {
-	char		*temp_dir;
-	char		*prefix;
-	svn_revnum_t	start;
-	svn_revnum_t	end;
-	int		verbosity;
-	int		flags;
-	char		prefix_is_file;
+	char          *temp_dir;
+	char          *prefix;
+	svn_revnum_t  start;
+	svn_revnum_t  end;
+	int           verbosity;
+	int           flags;
 } dump_options_t;
 
 
