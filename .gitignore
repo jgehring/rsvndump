@@ -20,3 +20,14 @@ missing
 stamp-*
 doc/rsvndump.xml
 doc/rsvndump.1
+tests/suite/logs
+tests/suite/playground
+tests/suite/rsvndump
+tests/suite/work
+tests/db/logs
+tests/db/tmp
+tests/db/repos
+tests/db/dumps
+tests/db/cache
+tests/db/wcs
+tests/auto/work
