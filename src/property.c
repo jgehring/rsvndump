@@ -70,10 +70,10 @@ void property_dump(const char *key, const char *value)
 	if (key == NULL) {
 		return;
 	}
-	printf("K %d\n", strlen(key));
+	printf("K %lu\n", (unsigned long)strlen(key));
 	printf("%s\n", key);
 	if (value != NULL) {
-		printf("V %d\n", strlen(value));
+		printf("V %lu\n", (unsigned long)strlen(value));
 		printf("%s\n", value);
 	} else {
 		printf("V 0\n\n");

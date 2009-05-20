@@ -139,7 +139,7 @@ static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 /* Program entry point */
 int main(int argc, char **argv)
 {
-	char ret, dir_created = 0;
+	char ret = 1, dir_created = 0;
 	int i;
 	session_t session;
 	dump_options_t opts;
