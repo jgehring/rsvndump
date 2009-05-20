@@ -23,14 +23,20 @@ repository data, as required by the "*svnadmin*(1) dump" command.
 If invoked with valid options, *rsvndump* will print a dump file to 'stdout'
 and optional progress to 'stderr'.
 
-Since *rsvndump* is also able to dump subdirectories of a repository, or
-dumping only a specified revision range, the revision numbers in the dump
-don't neccessarily reflect the original revision numbers. This behaviour
-is described in detail in the *REVISION NUMBERS* section.
+Since *rsvndump* is also able to dump subdirectories of a repository, the revision
+numbers in the dump don't neccessarily reflect the original revision numbers.
+For more information on this, please refer to the *REVISION NUMBERS* section.
+
+There are also some additional differences to a "normal" dump generated
+by *svnadmin*(1), which are listed in *DIFFERENCES TO SVNADMIN DUMP*.
 
 
 OPTIONS
 -------
+Most of the options can also be found in *svnadmin*(1) and *svn*(1) and should
+be also semantically equivalent, unless not stated otherwise.
+
+
 *-h*::
 *--help*::
 Print a nice help screen
@@ -41,20 +47,15 @@ Don't print any progress
 
 *-v*::
 *--verbose*::
-Print detailed progress
+Print detailed progress, similar to "*svnadmin*(1) load".
 
 *-u*::
 *--username* 'username'::
 Username for repository authentication.
-If not specified and the repository does not provide anonymous access,
-the policy is to try your username first and finally ask for a
-username on 'stdin'.
 
 *-p*::
 *--password* 'password'::
 Password for repository authentication.
-If not specified and the repository does not provide anonymous access,
-the password will be prompted on 'stdin'.
 
 *-r*::
 *--revision* 'X' or 'X:Y'::
@@ -62,6 +63,12 @@ Specifiy the revision (or revision range) that should be dumped. 'X'
 and 'Y' can either be a number or "HEAD".
 The default revision range is "0:HEAD", i.e. the complete revision
 history.
++
+In contrast to *svnadmin*(1), dumps that were generated using this option
+can always be loaded into a new repository, (unless *--incremental* is given,
+of course). However, the resulting dump may not exactly represent the original
+history. Please take a look at *DIFFERENCES TO SVNADMIN DUMP* for further
+information.
 
 *--deltas*::
 Use text deltas instead of full texts in dump output
@@ -102,18 +109,18 @@ myrepo
 
 REVISION NUMBERS
 ----------------
-The revision numbers inside the dump depend on the options and the path that
+The revision numbers in the dump output depend on the options and the path that
 are given to *rsvndump*. If you are dumping the root of a repository, you
 don't need to worry about revision numbers out of sync, of course. If you
 are dumping a subdirectory, only the revisions that changed this subdirectory
-will occur in the dump output. The revision numbers in the dump will still be
+will occur in the dump output. The revision numbers in the dump are strictly
 sequential, so they will differ from the original ones.
 
-The following flags change this behaviour:
-
-- The *--keep-revnums* flag padds revisions that did not change the subdirectory
-with empty revisions. They don't have an author or date property, but contain
-the log message "This is an empty revision for padding.".
+If you need the keep the revision numbers from the original repository (e.g,
+if a bug tracker depends on them), you can use the *--keep-revnums* flag. It 
+padds revisions that did not change the subdirectory with empty revisions.
+They don't have an author or date property, but contain the log message
+"This is an empty revision for padding.".
 
 
 DIFFERENCES TO SVNADMIN DUMP
@@ -129,14 +136,29 @@ copied from another place.
 Since *rsvndump* has been designed to allow dumps of subdirectories if
 your repository access is limited to this subdirectory (in fact, that was the
 primary reason this project exists), it will not access other subdirectories
-than the one you want to dump. As a result, dumping a branch will most likely
+than the one you want to dump. Example given, dumping a branch will most likely
 not result in the full history of the branch as it might have been copied from
 trunk at some point in time.
 
-This is also the reason why *rsvndump* will *not* dump a copy action if the
-source of the copy is not inside the directory tree which is currently being
-dumped. Instead, the contents in question will simply be dumped as if they had
-been added to the repository.
+Thus, *rsvndump* will generally replace a copy action by a simple add
+operation if both of the following conditions are true:
+
+ * The source of the copy is outside the direcotry tree which is being dumped
+
+ * The source of the copy is not included in the dump because the revision
+   range has been limited using the *--revision* flag
+
+The second condition is without effect if the *--incremental* flag is given,
+so that incremental dumps yield the same result as normal dumps.
+
+Maybe I should also note that the dump will only contain the repository's UUID if
+the following conditions are true:
+
+ * The root of the repository is being dumped
+ 
+ * There is no user prefix
+
+ * The revision range is *0:HEAD*, or *0:X* and *--incrementals* is given.
 
 
 EXIT STATUS

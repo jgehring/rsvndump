@@ -1,20 +1,14 @@
 == 0.5 branch (deltas) ==
-> Check if revision range determnination can be done faster
 > It seems the copyfrom-revision is sometimes too large (+1). This is problematic
   with replace-actions. See copy_replace test.
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
 > Replace unlink()-calls with apr_file_remove()
 
-> Further validate copy handling and subdirectory dumping
-
-> Rewrite manpage:
-  - Add notes about the resulting revision numbers, using example combinations of
-    subdirectories, --keep-revnums, -r X:Y and --incremental
-
 
 == Schedule for 0.5.X ==
 > Add --no-stop-on-copy option
+> Check if revision range determnination can be done faster
 > Re-implement dumping of single files?
 > Output help on missing arguments, i.e. s.th. like "rsvndump --stop"
 > Specify MD5 for copy source on copying
