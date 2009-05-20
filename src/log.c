@@ -80,7 +80,7 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 	for (hi = apr_hash_first(pool, changed_paths); hi; hi = apr_hash_next(hi)) {
 		const char *key;
 		svn_log_changed_path_t *svalue, *dvalue;
-		apr_hash_this(hi, (const void **)&key, NULL, (void **)&svalue);
+		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&svalue);
 
 		/* Skip this entry? */
 		if ((strlen(key) < 1) || strncmp(data->session->prefix, key+1, strlen(data->session->prefix))) {

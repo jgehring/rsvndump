@@ -512,7 +512,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	for (hi = apr_hash_first(node->pool, node->properties); hi; hi = apr_hash_next(hi)) {
 		const char *key;
 		svn_string_t *value;
-		apr_hash_this(hi, (const void **)&key, NULL, (void **)&value);
+		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
 		prop_len += property_strlen(key, value->data);
 	}
 	if ((prop_len > 0) || (node->action == 'A')) {
@@ -546,7 +546,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		for (hi = apr_hash_first(node->pool, node->properties); hi; hi = apr_hash_next(hi)) {
 			const char *key;
 			svn_string_t *value;
-			apr_hash_this(hi, (const void **)&key, NULL, (void **)&value);
+			apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
 			property_dump(key, value->data);
 		}
 		printf(PROPS_END);
@@ -640,7 +640,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 	for (hi = apr_hash_first(pool, delta_hash); hi; hi = apr_hash_next(hi)) {
 		const char *npath;
 		char *filename;
-		apr_hash_this(hi, (const void **)&npath, NULL, (void **)&filename);
+		apr_hash_this(hi, (const void **)(void *)&npath, NULL, (void **)(void *)&filename);
 		/* TODO: This is a small hack to make sure the node is a directory */
 		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
 #ifndef DUMP_DEBUG
@@ -653,7 +653,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 	for (hi = apr_hash_first(pool, md5_hash); hi; hi = apr_hash_next(hi)) {
 		const char *npath;
 		char *md5sum;
-		apr_hash_this(hi, (const void **)&npath, NULL, (void **)&md5sum);
+		apr_hash_this(hi, (const void **)(void *)&npath, NULL, (void **)(void *)&md5sum);
 		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
 			DEBUG_MSG("deleting %s from md5_hash\n", npath);
 			apr_hash_set(md5_hash, npath, APR_HASH_KEY_STRING, NULL);
@@ -991,7 +991,7 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 	for (hi = apr_hash_first(pool, de_baton->log_revision->changed_paths); hi; hi = apr_hash_next(hi)) {
 		const char *path;
 		svn_log_changed_path_t *log;
-		apr_hash_this(hi, (const void **)&path, NULL, (void **)&log);
+		apr_hash_this(hi, (const void **)(void *)&path, NULL, (void **)(void *)&log);
 		DEBUG_MSG("Checking %s (%c)\n", path, log->action);
 		if (log->action == 'D') {
 			/* We can unlink a possible temporary file now */
