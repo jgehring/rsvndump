@@ -37,6 +37,9 @@
 
 #ifdef USE_TIMING
 
+ #ifdef TIME_WITH_SYS_TIME
+  #include <sys/time.h>
+ #endif
  #include <time.h>
  #ifdef WIN32
   #include <windows.h>

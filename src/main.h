@@ -45,17 +45,11 @@
  #ifndef HAVE_MEMSET
   extern void *memset(void *str, int c, size_t len);
  #endif
- #ifndef HAVE_STRDUP
-  extern char *strdup(const char *s);
- #endif
- #ifndef HAVE_GETPASS
-  extern char *getpass(const char *prompt);
+ #ifndef HAVE_MEMCMP
+  extern int *memcmp(const void *b1, const void *b2, size_t len);
  #endif
  #ifndef HAVE_RMDIR
   extern int rmdir(char const *dir);
- #endif
- #ifndef HAVE_STRNLEN
-  extern size_t strnlen(const char *string, size_t maxlen);
  #endif
 
  /* Internationalization */
