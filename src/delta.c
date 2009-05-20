@@ -338,6 +338,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	char *path = node->path;
 	unsigned long prop_len, content_len;
 	char dump_content = 0;
+	apr_hash_index_t *hi;
 
 	/* Check if this is a dry run */
 	if (opts->flags & DF_DRY_RUN) {
@@ -475,7 +476,6 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	content_len = 0;
 
 	/* Dump property size */
-	apr_hash_index_t *hi;
 	for (hi = apr_hash_first(node->pool, node->properties); hi; hi = apr_hash_next(hi)) {
 		const char *key;
 		svn_string_t *value;
@@ -879,6 +879,8 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 #ifdef USE_TIMING
 	stopwatch_t watch = stopwatch_create();
 #endif
+	char *filename;
+
 	DEBUG_MSG("de_apply_textdelta(%s)\n", node->path);
 
 	/* Create a new temporary file to write to */
@@ -888,7 +890,7 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 	dest_stream = svn_stream_from_aprfile2(dest_file, FALSE, pool);
 
 	/* Update the local copy */
-	char *filename = apr_hash_get(delta_hash, node->path, APR_HASH_KEY_STRING);
+	filename = apr_hash_get(delta_hash, node->path, APR_HASH_KEY_STRING);
 	if (filename == NULL) {
 		src_stream = svn_stream_empty(pool);
 	} else {
@@ -988,11 +990,11 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 			}
 			
 			if (apr_hash_get(de_baton->dumped_entries, path, APR_HASH_KEY_STRING) == NULL) {
+				svn_error_t *err;
 				de_node_baton_t *node = delta_create_node_no_parent(path, de_baton, pool);
 				node->action = log->action;
 
 				DEBUG_MSG("Post-dumping %s\n", path);
-				svn_error_t *err;
 				if ((err = delta_dump_node(node))) {
 					return err;
 				}
@@ -1010,8 +1012,10 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 /* Subversion delta editor callback */
 static svn_error_t *de_abort_edit(void *edit_baton, apr_pool_t *pool)
 {
+#ifdef DEBUG
 	DEBUG_MSG("abort_edit\n");
-//	exit(1);
+	exit(1);
+#endif
 	return SVN_NO_ERROR;
 }
 
@@ -1024,6 +1028,8 @@ static svn_error_t *de_abort_edit(void *edit_baton, apr_pool_t *pool)
 /* Sets up a delta editor for dumping a revision */
 void delta_setup_editor(session_t *session, dump_options_t *options, list_t *logs, log_revision_t *log_revision, svn_revnum_t local_revnum, svn_delta_editor_t **editor, void **editor_baton, apr_pool_t *pool)
 {
+	de_baton_t *baton;
+
 	*editor = svn_delta_default_editor(pool);
 	(*editor)->set_target_revision = de_set_target_revision;
 	(*editor)->open_root = de_open_root;
@@ -1042,7 +1048,7 @@ void delta_setup_editor(session_t *session, dump_options_t *options, list_t *log
 	(*editor)->absent_file = de_absent_file;
 	(*editor)->abort_edit = de_abort_edit;
 
-	de_baton_t *baton = apr_palloc(pool, sizeof(de_baton_t));
+	baton = apr_palloc(pool, sizeof(de_baton_t));
 	baton->session = session;
 	baton->opts = options;
 	baton->logs = logs;

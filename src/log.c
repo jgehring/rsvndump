@@ -63,6 +63,7 @@ typedef struct {
 /* Callback for svn_ra_get_log() */
 static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_revnum_t revision, const char *author, const char *date, const char *message, apr_pool_t *pool)
 {
+	apr_hash_index_t *hi;
 	log_receiver_baton_t *data = (log_receiver_baton_t *)baton;
 
 	data->log->revision = revision;
@@ -72,7 +73,6 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 	data->log->changed_paths = apr_hash_make(data->pool);
 
 	/* Deep-copy the changed_paths hash */
-	apr_hash_index_t *hi;
 	if (changed_paths == NULL) {
 		DEBUG_MSG("changed_paths is NULL\n");
 		return SVN_NO_ERROR;
