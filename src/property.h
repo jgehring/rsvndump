@@ -26,7 +26,7 @@
 
 
 /* Returns the length of a property */
-extern unsigned int property_strlen(const char *key, const char *value);
+extern size_t property_strlen(struct apr_pool_t *pool, const char *key, const char *value);
 
 /* Dumps a property to stdout */
 extern void property_dump(const char *key, const char *value);

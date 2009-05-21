@@ -34,6 +34,9 @@ def setup(step, log):
 		test_api.run("svn", "add", "dir2", output = log)
 		test_api.run("svn", "propset", "svn:externals", "ext/test    svn://slug/rsvndump/trunk/src", "dir2", output = log)
 		return True
+	elif step == 4:
+		test_api.run("svn", "propset", "svn:ignore", "", "dir1", output = log)
+		return True
 	else:
 		return False
 

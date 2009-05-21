@@ -510,7 +510,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		const char *key;
 		svn_string_t *value;
 		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
-		prop_len += property_strlen(key, value->data);
+		prop_len += property_strlen(node->pool, key, value->data);
 	}
 	if ((prop_len > 0) || (node->action == 'A')) {
 		prop_len += PROPS_END_LEN;

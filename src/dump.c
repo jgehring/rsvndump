@@ -47,19 +47,19 @@
 
 
 /* Dumps a revision header using the given properties */
-static void dump_revision_header(log_revision_t *revision, svn_revnum_t local_revnum, dump_options_t *opts)
+static void dump_revision_header(apr_pool_t *pool, log_revision_t *revision, svn_revnum_t local_revnum, dump_options_t *opts)
 {
 	int props_length = 0;
 
 	/* Determine length of revision properties */
 	if (revision->message != NULL) {
-		props_length += property_strlen("svn:log", revision->message);
+		props_length += property_strlen(pool, "svn:log", revision->message);
 	}
 	if (revision->author != NULL) {
-		props_length += property_strlen("svn:author", revision->author);
+		props_length += property_strlen(pool, "svn:author", revision->author);
 	}
 	if (revision->date != NULL) {
-		props_length += property_strlen("svn:date", revision->date);
+		props_length += property_strlen(pool, "svn:date", revision->date);
 	}
 	if (props_length > 0) {
 		props_length += PROPS_END_LEN;
@@ -86,12 +86,12 @@ static void dump_revision_header(log_revision_t *revision, svn_revnum_t local_re
 
 
 /* Dumps an empty revision for padding the given number */
-static void dump_padding_revision(svn_revnum_t rev)
+static void dump_padding_revision(apr_pool_t *pool, svn_revnum_t rev)
 {
 	int props_length = 0;
 	const char *message = "This is an empty revision for padding.";
 
-	props_length += property_strlen("svn:log", message);
+	props_length += property_strlen(pool, "svn:log", message);
 	props_length += PROPS_END_LEN;
 
 	printf("%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, rev);
@@ -410,7 +410,7 @@ char dump(session_t *session, dump_options_t *opts)
 		if ((opts->flags & DF_KEEP_REVNUMS) && !(opts->flags & DF_DRY_RUN)) {
 			/* Padd with empty revisions if neccessary */
 			while (local_rev < ((log_revision_t *)logs.elements)[list_idx].revision) {
-				dump_padding_revision(local_rev);
+				dump_padding_revision(revpool, local_rev);
 				if (opts->verbosity == 0) {
 					fprintf(stderr, _("* Padded revision %ld.\n"), local_rev);
 				} else if (opts->verbosity > 0) {
@@ -422,7 +422,7 @@ char dump(session_t *session, dump_options_t *opts)
 
 		/* Dump the revision header */
 		if (!(opts->flags & DF_DRY_RUN)) {
-			dump_revision_header((log_revision_t *)logs.elements + list_idx, local_rev, opts);
+			dump_revision_header(revpool, (log_revision_t *)logs.elements + list_idx, local_rev, opts);
 
 			/* The first revision also sets up the user prefix */
 			if (local_rev == 1) {

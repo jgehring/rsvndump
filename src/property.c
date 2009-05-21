@@ -25,6 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <svn_pools.h>
+
+#include <apr_strings.h>
+
 #include "property.h"
 
 
@@ -34,32 +38,22 @@
 
 
 /* Returns the length of a property */
-unsigned int property_strlen(const char *key, const char *value)
+size_t property_strlen(struct apr_pool_t *pool, const char *key, const char *value)
 {
-	unsigned int len, keylen, vallen;
-	char *buffer;
+	size_t len;
+	apr_pool_t *subpool = svn_pool_create((apr_pool_t *)pool);
+
 	if (key == NULL) {
 		return 0;
 	}
-	len = 0;
-	keylen = strlen(key);
+
 	if (value == NULL) {
-		vallen = 0;
+		len = strlen(apr_psprintf(subpool, "K %d\n%s\nV 0\n\n", strlen(key), key));
 	} else {
-		vallen = strlen(value);
+		len = strlen(apr_psprintf(subpool, "K %d\n%s\nV %d\n%s\n", strlen(key), key, strlen(value), value));
 	}
-	buffer = malloc(16 + (keylen < vallen ? vallen : keylen));
-	sprintf(buffer, "K %d\n", keylen);
-	len += strlen(buffer);
-	sprintf(buffer, "%s\n", key);
-	len += strlen(buffer);
-	sprintf(buffer, "V %d\n", vallen);
-	len += strlen(buffer);
-	if (value != NULL) {
-		sprintf(buffer, "%s\n", value);
-		len += strlen(buffer);
-	}
-	free(buffer);
+
+	apr_pool_destroy(subpool);
 	return len;
 }
 
