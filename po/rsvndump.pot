@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.5\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-05-16 17:03+0200\n"
+"POT-Creation-Date: 2009-05-21 14:08+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,32 +16,27 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/delta.c:172
+#: src/delta.c:173
 #, c-format
 msgid "COPIED ... done.\n"
 msgstr ""
 
-#: src/delta.c:174
+#: src/delta.c:175
 #, c-format
 msgid "done.\n"
 msgstr ""
 
-#: src/delta.c:367 src/delta.c:777
+#: src/delta.c:396 src/delta.c:850
 #, c-format
 msgid "     * adding path : %s ... "
 msgstr ""
 
-#: src/delta.c:531
-#, c-format
-msgid "ERROR: Failed to open %s.\n"
-msgstr ""
-
-#: src/delta.c:589
+#: src/delta.c:620
 #, c-format
 msgid "     * deleting path : %s ... "
 msgstr ""
 
-#: src/delta.c:793
+#: src/delta.c:866
 #, c-format
 msgid "     * editing path : %s ... "
 msgstr ""
@@ -56,34 +51,34 @@ msgstr ""
 msgid "ERROR: URL '%s' not found in revision %ld\n"
 msgstr ""
 
-#: src/dump.c:417
+#: src/dump.c:416
 #, c-format
 msgid "* Padded revision %ld.\n"
 msgstr ""
 
-#: src/dump.c:419
+#: src/dump.c:418
 #, c-format
 msgid ""
 "------ Padded revision %ld <<<\n"
 "\n"
 msgstr ""
 
-#: src/dump.c:463
+#: src/dump.c:455
 #, c-format
 msgid ">>> Dumping new revision, based on original revision %ld\n"
 msgstr ""
 
-#: src/dump.c:475
+#: src/dump.c:467
 #, c-format
 msgid "* Dumped revision %ld (local %ld).\n"
 msgstr ""
 
-#: src/dump.c:477
+#: src/dump.c:469
 #, c-format
 msgid "* Dumped revision %ld.\n"
 msgstr ""
 
-#: src/dump.c:480
+#: src/dump.c:472
 #, c-format
 msgid ""
 "\n"
@@ -217,7 +212,7 @@ msgstr ""
 msgid "ERROR: Unable to create download directory.\n"
 msgstr ""
 
-#: src/session.c:192
+#: src/session.c:193
 #, c-format
 msgid "ERROR: '%s' refers to a file.\n"
 msgstr ""
