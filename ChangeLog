@@ -1,3 +1,15 @@
+2009-05-30  --  version 0.5
+
+	* Added support for dumping file content deltas
+	* Added support for incremental dumps
+of 	* Improved session authentication support
+	* Added dumping of MD5-sums
+	* Removed online/offline mode distinction (now always using
+	  "online" diff calls)
+	* Fixed dumping of file copies which include modifications
+	* Again, a complete rewrite
+
+
 2009-04-15  --  version 0.4.4-1
 
 	* Fixed build issues with Subversion 1.6.1
