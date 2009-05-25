@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.5\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-05-21 14:08+0200\n"
+"POT-Creation-Date: 2009-05-26 01:35+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -189,30 +189,54 @@ msgstr ""
 
 #: src/main.c:188
 #, c-format
-msgid "ERROR: invalid revision range '%s'\n"
+msgid "ERROR: invalid revision range '%s'.\n"
 msgstr ""
 
-#: src/main.c:214
+#: src/main.c:215
+#, c-format
+msgid ""
+"WARNING: the '--stop' option is deprated. Please use '--revision'.\n"
+"         The resulting dump WILL DIFFER from the one obtained with\n"
+"         previous versions of the program if you are dumping a "
+"subdirectory.\n"
+msgstr ""
+
+#: src/main.c:220
+#, c-format
+msgid "ERROR: invalid revision number '%s'.\n"
+msgstr ""
+
+#: src/main.c:226 src/main.c:228
+#, c-format
+msgid "WARNING: the '%s' option is deprecated.\n"
+msgstr ""
+
+#: src/main.c:231 src/main.c:233
+#, c-format
+msgid "WARNING: the '%s' option is deprecated and will be IGNORED!.\n"
+msgstr ""
+
+#: src/main.c:239
 #, c-format
 msgid "ERROR: multiple URLs detected.\n"
 msgstr ""
 
-#: src/main.c:221
+#: src/main.c:246
 #, c-format
 msgid "ERROR: Unkown argument or malformed url '%s'.\n"
 msgstr ""
 
-#: src/main.c:222
+#: src/main.c:247
 #, c-format
 msgid "Type %s --help for usage information.\n"
 msgstr ""
 
-#: src/main.c:250
+#: src/main.c:275
 #, c-format
 msgid "ERROR: Unable to create download directory.\n"
 msgstr ""
 
-#: src/session.c:193
+#: src/session.c:192
 #, c-format
 msgid "ERROR: '%s' refers to a file.\n"
 msgstr ""

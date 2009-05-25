@@ -185,7 +185,7 @@ int main(int argc, char **argv)
 			opts.flags |= DF_INCREMENTAL;
 		} else if (i+1 < argc && (!strcmp(argv[i], "-r") || !strcmp(argv[i], "--revision"))) {
 			if (parse_revnum(argv[++i], &opts.start, &opts.end)) {
-				fprintf(stderr, _("ERROR: invalid revision range '%s'\n"), argv[i]);
+				fprintf(stderr, _("ERROR: invalid revision range '%s'.\n"), argv[i]);
 				session_free(&session);
 				dump_options_free(&opts);
 				return EXIT_FAILURE;
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 			                  "         previous versions of the program if you are dumping a subdirectory.\n"));
 			opts.start = 0;
 			if (parse_revnum(argv[++i], &opts.end, &opts.end)) {
-				fprintf(stderr, _("ERROR: invalid revision number '%s'\n"), argv[i]);
+				fprintf(stderr, _("ERROR: invalid revision number '%s'.\n"), argv[i]);
 				session_free(&session);
 				dump_options_free(&opts);
 				return EXIT_FAILURE;
@@ -228,9 +228,9 @@ int main(int argc, char **argv)
 			fprintf(stderr, _("WARNING: the '%s' option is deprecated.\n"), argv[i]);
 			++i;
 		} else if (!strcmp(argv[i], "--no-check-certificate")) {
-			fprintf(stderr, _("WARNING: the '%s' option is deprecated and will be IGNORED!\n"), argv[i]);
+			fprintf(stderr, _("WARNING: the '%s' option is deprecated and will be IGNORED!.\n"), argv[i]);
 		} else if ((i+1 < argc && (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--outfile")))) {
-			fprintf(stderr, _("WARNING: the '%s' option is deprecated and will be IGNORED!\n"), argv[i]);
+			fprintf(stderr, _("WARNING: the '%s' option is deprecated and will be IGNORED!.\n"), argv[i]);
 			++i;
 		
 		/* An url */
