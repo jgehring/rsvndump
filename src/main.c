@@ -209,6 +209,31 @@ int main(int argc, char **argv)
 				free(opts.prefix);
 			}
 			opts.prefix = apr_pstrdup(session.pool, argv[++i]);
+
+		/* Deprecated options */
+		} else if (i+1 < argc && !strcmp(argv[i], "--stop")) {
+			fprintf(stderr, _("WARNING: the '--stop' option is deprated. Please use '--revision'.\n" \
+			                  "         The resulting dump WILL DIFFER from the one obtained with\n" \
+			                  "         previous versions of the program if you are dumping a subdirectory.\n"));
+			opts.start = 0;
+			if (parse_revnum(argv[++i], &opts.end, &opts.end)) {
+				fprintf(stderr, _("ERROR: invalid revision number '%s'\n"), argv[i]);
+				session_free(&session);
+				dump_options_free(&opts);
+				return EXIT_FAILURE;
+			}
+		} else if (!strcmp(argv[i], "--online") || !strcmp(argv[i], "--dump-uuid")) {
+			fprintf(stderr, _("WARNING: the '%s' option is deprecated.\n"), argv[i]);
+		} else if (i+1 < argc && (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--download-dir"))) {
+			fprintf(stderr, _("WARNING: the '%s' option is deprecated.\n"), argv[i]);
+			++i;
+		} else if (!strcmp(argv[i], "--no-check-certificate")) {
+			fprintf(stderr, _("WARNING: the '%s' option is deprecated and will be IGNORED!\n"), argv[i]);
+		} else if ((i+1 < argc && (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--outfile")))) {
+			fprintf(stderr, _("WARNING: the '%s' option is deprecated and will be IGNORED!\n"), argv[i]);
+			++i;
+		
+		/* An url */
 		} else if (svn_path_is_url(argv[i])) {
 			if (session.url != NULL) {
 				fprintf(stderr, _("ERROR: multiple URLs detected.\n"));
