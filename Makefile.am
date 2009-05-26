@@ -11,6 +11,7 @@ EXTRA_DIST = \
              lib/memcmp.c \
              lib/memset.c \
              lib/rmdir.c \
+             doc/Makefile.in \
              doc/Makefile.am \
              doc/rsvndump.txt
 
