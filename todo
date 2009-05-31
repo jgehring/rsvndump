@@ -1,11 +1,3 @@
-== 0.5 branch (deltas) ==
-> It seems the copyfrom-revision is sometimes too large (+1). This is problematic
-  with replace-actions. See copy_replace test.
-> The svn:merginfo property will sometimes be dumped too early (-1). Not sure
-  if this can be fixed
-> Replace unlink()-calls with apr_file_remove()
-
-
 == Schedule for 0.5.X ==
 > Add --no-stop-on-copy option
 > Check if revision range determnination can be done faster
@@ -14,6 +6,11 @@
 > Specify MD5 for copy source on copying
 > Optimize delta dumps (i.e., don't apply delta -> generate delta ->
     read delta).
+> Replace unlink()-calls with apr_file_remove()
+> It seems the copyfrom-revision is sometimes too large (+1). This is problematic
+  with replace-actions. See copy_replace test.
+> The svn:merginfo property will sometimes be dumped too early (-1). Not sure
+  if this can be fixed
 
 
 == Someday ==
