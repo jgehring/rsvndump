@@ -1,4 +1,4 @@
-2009-05-30  --  version 0.5
+2009-06-01  --  version 0.5
 
 	* Added support for dumping file content deltas
 	* Added support for incremental dumps
