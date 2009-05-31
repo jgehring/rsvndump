@@ -1,4 +1,4 @@
-== Schedule for 0.5.X ==
+== Schedule for 0.5.x ==
 > Add --no-stop-on-copy option
 > Check if revision range determnination can be done faster
 > Re-implement dumping of single files?
@@ -8,7 +8,7 @@
     read delta).
 > Replace unlink()-calls with apr_file_remove()
 > It seems the copyfrom-revision is sometimes too large (+1). This is problematic
-  with replace-actions. See copy_replace test.
+  with replace-actions, but needs further evaluation
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
 
