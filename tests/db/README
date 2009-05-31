@@ -1,0 +1,21 @@
+The 'incremental' test will most likely not succeeed, because the incremental
+dump is unable to determine file modifications. Thus, the file dir1/file2
+will be dumped with all its content, just to be sure there's no modification
+missing. The diff will look like:
+
+	@@ -170,6 +170,13 @@
+	 Node-action: add
+	 Node-copyfrom-rev: 3
+	 Node-copyfrom-path: dir1/file2
+	+Prop-content-length: 10
+	+Text-content-length: 7
+	+Text-content-md5: c50b33076305131cf486d8c599f3eb0d
+	+Content-length: 17
+	+
+	+PROPS-END
+	+hello3
+	 
+	 
+	 Revision-number: 5
+
+This needs to be integrated into the test itself, of course
