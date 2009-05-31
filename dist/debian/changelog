@@ -1,3 +1,10 @@
+rsvndump (0.5) unstable; urgency=low
+
+  * Packaged upstream version 0.5
+
+ -- Jonas Gehring <jonas.gehring@boolsoft.org>  Mon, 01 Jun 2009 00:01:09 +0200
+
+
 rsvndump (0.4.4-1) unstable; urgency=low
 
   * Packaged upstream version 0.4.4-1
