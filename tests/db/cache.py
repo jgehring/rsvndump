@@ -54,7 +54,7 @@ def insert(id, name, repos, wc, setup_fn, log):
 	step = 0
 	while setup_fn(step, log):
 		os.chdir(wc+"/..")
-		run("svn", "commit", id, "-m", "commit step "+str(step), output = log)
+		run("svn", "commit", id, "-m", "commit step "+str(step), "--username", "test", output = log)
 		step += 1
 		os.chdir(id)
 	os.chdir(tmp)

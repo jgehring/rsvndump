@@ -17,11 +17,11 @@ def print_help(cmd = None):
 		print("USAGE: "+sys.argv[0]+" list\n")
 		print("Lists all available tests")
 	elif cmd == "run":
-		print("USAGE: "+sys.argv[0]+" run <test> [argss]\n")
-		print("Runs the specified test with the given extr arguments")
+		print("USAGE: "+sys.argv[0]+" run <test> [args]\n")
+		print("Runs the specified test with the given extra arguments")
 	elif cmd == "all":
-		print("USAGE: "+sys.argv[0]+" all [argss]\n")
-		print("Runs all tests with the given extr arguments")
+		print("USAGE: "+sys.argv[0]+" all [args]\n")
+		print("Runs all tests with the given extra arguments")
 	elif cmd == "purge":
 		print("USAGE: "+sys.argv[0]+" purge\n")
 		print("Clears logs, dumps and repositories of previous tests")
