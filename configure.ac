@@ -11,7 +11,7 @@ AC_CONFIG_LIBOBJ_DIR([lib])
 
 sinclude(build/find_apr.m4)
 sinclude(build/find_svn.m4)
-sinclude(build/rsvndump-conf.m4)
+sinclude(build/rsvndump_conf.m4)
 
 # Optional features
 USE_MAN="no"
@@ -21,6 +21,9 @@ AC_ARG_ENABLE(man, [  --enable-man            generate the man page], USE_MAN="y
 AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_RANLIB
+if test "$USE_MAN" = "yes"; then
+	RSVN_CHECK_MAN_PROGS
+fi
 
 AM_GNU_GETTEXT([external])
 
@@ -47,10 +50,10 @@ AC_CHECK_FUNCS([memcmp], ,[AC_LIBOBJ([memcmp]) USE_COMPAT="yes"])
 AC_CHECK_FUNCS([rmdir], ,[AC_LIBOBJ([rmdir]) USE_COMPAT="yes"])
 AC_CHECK_FUNCS([atexit strtol gettimeofday])
 if test "$USE_COMPAT" = "yes"; then
-  COMPAT_LIBS="../lib/libcompat.a"
-  COMPAT_SUBDIRS="lib"
-  AC_SUBST([COMPAT_LIBS])
-  AC_SUBST([COMPAT_SUBDIRS])
+	COMPAT_LIBS="../lib/libcompat.a"
+	COMPAT_SUBDIRS="lib"
+	AC_SUBST([COMPAT_LIBS])
+	AC_SUBST([COMPAT_SUBDIRS])
 fi
 
 # Checks for libraries
@@ -77,12 +80,12 @@ AC_CHECK_LIB([svn_delta-1], [svn_txdelta_apply], ,[AC_MSG_ERROR([Neccessary Subv
 
 AC_CONFIG_FILES([Makefile])
 if test "$USE_COMPAT" = "yes"; then
-  AC_CONFIG_FILES([lib/Makefile])
+	AC_CONFIG_FILES([lib/Makefile])
 fi
 AC_CONFIG_FILES([src/Makefile po/Makefile.in])
 if test "$USE_MAN" = "yes"; then
-  DOC_SUBDIRS="doc"
-  AC_SUBST([DOC_SUBDIRS])
-  AC_CONFIG_FILES([doc/Makefile])
+	DOC_SUBDIRS="doc"
+	AC_SUBST([DOC_SUBDIRS])
+	AC_CONFIG_FILES([doc/Makefile])
 fi
 AC_OUTPUT
