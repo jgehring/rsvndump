@@ -34,7 +34,7 @@ http://saubue.boolsoft.org/projects/rsvndump/manpage.html
 CREDITS
 =======
 rsvndump 0.5
-written by Jonas Gehring <jonas.gehring@boolsoft.org>
+written by Jonas Gehring
 http://saubue.boolsoft.org/projects/rsvndump
 
 rsvndump uses autoconf macros from APR which are licensed under the Apache
