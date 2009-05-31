@@ -2,7 +2,7 @@
 
 	* Added support for dumping file content deltas
 	* Added support for incremental dumps
-of 	* Improved session authentication support
+	* Improved session authentication support
 	* Added dumping of MD5-sums
 	* Removed online/offline mode distinction (now always using
 	  "online" diff calls)
