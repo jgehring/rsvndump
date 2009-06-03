@@ -44,8 +44,8 @@
 /* Prints the program version */
 static void print_version()
 {
-	printf(APPNAME" "APPVERSION"\n");
-	printf("Copyright (C) 2008-2009 "APPAUTHOR"\n");
+	printf(PACKAGE" "PACKAGE_VERSION"\n");
+	printf("Copyright (C) 2008-2009 "PACKAGE_AUTHOR"\n");
 	printf("Released under the GNU General Public License.\n");
 }
 
@@ -56,7 +56,7 @@ static void print_usage()
 	print_version();
 	printf("\n");
 	printf(_("USAGE:"));
-	printf(" "APPNAME" ");
+	printf(" "PACKAGE" ");
 	printf(_("[options] <url>\n\n"));
 	printf(_("Valid options:\n"));
 	printf(_("    -h [--help]               print a nice help screen\n"));
@@ -151,7 +151,7 @@ int main(int argc, char **argv)
 #endif /* ENABLE_NLS */
 
 	/* Init subversion (sets apr locale etc.) */
-	if (svn_cmdline_init(APPNAME, stderr) != EXIT_SUCCESS) {
+	if (svn_cmdline_init(PACKAGE, stderr) != EXIT_SUCCESS) {
 		return EXIT_FAILURE;
 	}
 	atexit(apr_terminate);
@@ -263,12 +263,12 @@ int main(int argc, char **argv)
 	if (opts.temp_dir == NULL) {
 		const char *tdir = getenv("TMPDIR");
 		if (tdir != NULL) {
-			char *tmp = malloc(strlen(tdir)+strlen(APPNAME)+8);
-			sprintf(tmp, "%s/%sXXXXXX", tdir, APPNAME);
+			char *tmp = malloc(strlen(tdir)+strlen(PACKAGE)+8);
+			sprintf(tmp, "%s/%sXXXXXX", tdir, PACKAGE);
 			opts.temp_dir = utils_canonicalize_pstrdup(session.pool, tmp);
 			free(tmp);
 		} else {
-			opts.temp_dir = utils_canonicalize_pstrdup(session.pool, "/tmp/"APPNAME"XXXXXX");
+			opts.temp_dir = utils_canonicalize_pstrdup(session.pool, "/tmp/"PACKAGE"XXXXXX");
 		}
 		opts.temp_dir = mkdtemp(opts.temp_dir);
 		if (opts.temp_dir == NULL) {

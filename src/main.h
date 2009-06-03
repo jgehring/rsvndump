@@ -27,46 +27,44 @@
 
 /* Application-specific constants */
 #ifndef HAVE_CONFIG_H
- #define APPNAME "rsvndump"
- #define APPVERSION "0.5"
- #define PACKAGE_BUGREPORT "jonas.gehring@boolsoft.org"
+	#define PACKAGE "rsvndump"
+	#define PACKAGE_VERSION "0.5"
+	#define PACKAGE_BUGREPORT "jonas.gehring@boolsoft.org"
 
- /* Internationalization */
- #define _(String) (String)
- #define N_(String) String
- #define textdomain(Domain)
- #define bindtextdomain(Package, Directory)
-#else /* HAVE_CONFIG_H */
- #include "config.h"
- #define APPNAME PACKAGE
- #define APPVERSION PACKAGE_VERSION
+	/* Internationalization */
+	#define _(String) (String)
+	#define N_(String) String
+	#define textdomain(Domain)
+	#define bindtextdomain(Package, Directory)
+#else /* !HAVE_CONFIG_H */
+	#include "config.h"
 
- /* Compability functions */
- #ifndef HAVE_MEMSET
-  extern void *memset(void *str, int c, size_t len);
- #endif
- #ifndef HAVE_MEMCMP
-  extern int *memcmp(const void *b1, const void *b2, size_t len);
- #endif
- #ifndef HAVE_RMDIR
-  extern int rmdir(char const *dir);
- #endif
+	/* Compability functions */
+	#ifndef HAVE_MEMSET
+		extern void *memset(void *str, int c, size_t len);
+	#endif
+	#ifndef HAVE_MEMCMP
+		extern int *memcmp(const void *b1, const void *b2, size_t len);
+	#endif
+	#ifndef HAVE_RMDIR
+		extern int rmdir(char const *dir);
+	#endif
 
- /* Internationalization */
- #if ENABLE_NLS
-  #include "../lib/gettext.h"
-  #define _(String) gettext (String)
-  #define gettext_noop(String) String
-  #define N_(String) gettext_noop (String)
- #else /* ENABLE_NLS */
-  #define _(String) (String)
-  #define N_(String) String
-  #define textdomain(Domain)
-  #define bindtextdomain(Package, Directory)
- #endif /* ENABLE_NLS */
-#endif /* HAVE_CONFIG_H */
+	/* Internationalization */
+	#if ENABLE_NLS
+		#include "../lib/gettext.h"
+		#define _(String) gettext (String)
+		#define gettext_noop(String) String
+		#define N_(String) gettext_noop (String)
+	#else /* ENABLE_NLS */
+		#define _(String) (String)
+		#define N_(String) String
+		#define textdomain(Domain)
+		#define bindtextdomain(Package, Directory)
+	#endif /* ENABLE_NLS */
+#endif /* !HAVE_CONFIG_H */
 
-#define APPAUTHOR "Jonas Gehring <"PACKAGE_BUGREPORT">"
+#define PACKAGE_AUTHOR "Jonas Gehring <"PACKAGE_BUGREPORT">"
 
 
 /* Helper definitions */
@@ -75,13 +73,13 @@
 
 /* Other features, some used for debugging */
 #if defined(USE_TIMING) && !defined(HAVE_GETTIMEOFDAY)
- #undef USE_TIMING
+	#undef USE_TIMING
 #endif
 
 extern int utils_debug(const char *format, ...);
 #define DEBUG_MSG utils_debug
 #ifndef DEBUG
- #undef DUMP_DEBUG
+	#undef DUMP_DEBUG
 #endif
 
 /* This enables dumping of single files (not working yet) */
