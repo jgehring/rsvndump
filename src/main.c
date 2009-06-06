@@ -259,24 +259,19 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	/* Generate temporary directory if neccessary */
+	/* Generate temporary directory */
+	const char *tdir = getenv("TMPDIR");
+	if (tdir != NULL) {
+		char *tmp = apr_psprintf(session.pool, "%s/"PACKAGE"XXXXXX", tdir);
+		opts.temp_dir = utils_canonicalize_pstrdup(session.pool, tmp);
+	} else {
+		opts.temp_dir = utils_canonicalize_pstrdup(session.pool, "/tmp/"PACKAGE"XXXXXX");
+	}
+	opts.temp_dir = mkdtemp(opts.temp_dir);
 	if (opts.temp_dir == NULL) {
-		const char *tdir = getenv("TMPDIR");
-		if (tdir != NULL) {
-			char *tmp = malloc(strlen(tdir)+strlen(PACKAGE)+8);
-			sprintf(tmp, "%s/%sXXXXXX", tdir, PACKAGE);
-			opts.temp_dir = utils_canonicalize_pstrdup(session.pool, tmp);
-			free(tmp);
-		} else {
-			opts.temp_dir = utils_canonicalize_pstrdup(session.pool, "/tmp/"PACKAGE"XXXXXX");
-		}
-		opts.temp_dir = mkdtemp(opts.temp_dir);
-		if (opts.temp_dir == NULL) {
-			fprintf(stderr, _("ERROR: Unable to create download directory.\n"));
-			dump_options_free(&opts);
-			return EXIT_FAILURE;
-		}
-		dir_created = 1;
+		fprintf(stderr, _("ERROR: Unable to create download directory.\n"));
+		dump_options_free(&opts);
+		return EXIT_FAILURE;
 	}
 
 	/* Do the real work */
@@ -287,7 +282,7 @@ int main(int argc, char **argv)
 
 	/* Clean up temporary directory */
 #ifndef DUMP_DEBUG
-	utils_rrmdir(session.pool, opts.temp_dir, dir_created);
+	utils_rrmdir(session.pool, opts.temp_dir, 1);
 #endif
 
 	session_free(&session);
