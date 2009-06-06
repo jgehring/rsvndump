@@ -49,7 +49,7 @@ extern char *utils_canonicalize_pstrdup(struct apr_pool_t *pool, char *path);
 
 /* Recursively removes the contents of a directory and the directory */
 /* itself it 'rmdir' is non-zero */
-extern void utils_rrmdir(const char *path, char rmdir);
+extern void utils_rrmdir(struct apr_pool_t *pool, const char *path, char rmdir);
 
 
 #endif

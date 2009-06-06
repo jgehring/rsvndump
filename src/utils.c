@@ -21,14 +21,14 @@
  */
 
 
-#include <dirent.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+
+#include <apr_file_info.h>
+#include <apr_file_io.h>
+#include <apr_strings.h>
 
 #include <svn_path.h>
 #include <svn_pools.h>
@@ -128,31 +128,29 @@ char *utils_canonicalize_pstrdup(struct apr_pool_t *pool, char *path)
 
 /* Recursively removes the contents of a directory and the directory */
 /* itself if 'remove_dir' is non-zero */
-void utils_rrmdir(const char *path, char remove_dir)
+void utils_rrmdir(struct apr_pool_t *pool, const char *path, char remove_dir)
 {
-	DIR *dir;
-	struct dirent *entry;
+	apr_pool_t *subpool = svn_pool_create((apr_pool_t *)pool);
+	apr_dir_t *dir = NULL;
 
-	if ((dir = opendir(path)) != NULL) {
-		while ((entry = readdir(dir)) != NULL) {
-			if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
-				struct stat st;
-				char *filename = malloc(strlen(path)+strlen(entry->d_name)+2);
-				sprintf(filename, "%s/%s", path, entry->d_name);
-				stat(filename, &st);
-				/* Descend into other directories if they aren't symlinks */
-				if ((st.st_mode & S_IFDIR) && !(st.st_mode & S_IFLNK)) {
-					utils_rrmdir(filename, 1);
+	if (apr_dir_open(&dir, path, subpool) == APR_SUCCESS) {
+		apr_finfo_t *info = apr_palloc(subpool, sizeof(apr_finfo_t));
+		while (apr_dir_read(info, APR_FINFO_NAME | APR_FINFO_TYPE, dir) == APR_SUCCESS) {
+			if (strcmp(info->name, ".") && strcmp(info->name, "..")) {
+				char *fpath = apr_psprintf(subpool, "%s/%s", path, info->name);
+				if ((info->filetype == APR_DIR) && (info->filetype != APR_LNK)) {
+					utils_rrmdir(subpool, fpath, 1);
 				} else {
-					unlink(filename);
+					apr_file_remove(fpath, subpool);
 				}
-				free(filename);
 			}
 		}
 
-		closedir(dir);
+		apr_dir_close(dir);
 		if (remove_dir) {
-			rmdir(path);
+			apr_dir_remove(path, subpool);
 		}
 	}
+
+	svn_pool_destroy(subpool);
 }

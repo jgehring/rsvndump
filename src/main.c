@@ -287,7 +287,7 @@ int main(int argc, char **argv)
 
 	/* Clean up temporary directory */
 #ifndef DUMP_DEBUG
-	utils_rrmdir(opts.temp_dir, dir_created);
+	utils_rrmdir(session.pool, opts.temp_dir, dir_created);
 #endif
 
 	session_free(&session);
