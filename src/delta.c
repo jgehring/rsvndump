@@ -21,9 +21,6 @@
  */
 
 
-#include <sys/stat.h>
-#include <unistd.h>
-
 #include <svn_delta.h>
 #include <svn_io.h>
 #include <svn_md5.h>
@@ -522,13 +519,13 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 
 	/* Dump content size */
 	if (dump_content) {
-		struct stat st;
 		char *path = (opts->flags & DF_USE_DELTAS) ? node->delta_filename : node->filename;
-		if (stat(path, &st)) {
+		apr_finfo_t *info = apr_pcalloc(node->pool, sizeof(apr_finfo_t));
+		if (apr_stat(info, path, APR_FINFO_CSIZE, node->pool) != APR_SUCCESS) {
 			DEBUG_MSG("dump_delta_node: FATAL: cannot stat %s\n", node->filename);
 			return svn_error_create(1, NULL, apr_psprintf(session->pool, "Cannot stat %s", node->filename));
 		}
-		content_len = st.st_size;
+		content_len = info->size;
 
 		if (opts->flags & DF_USE_DELTAS) {
 			printf("%s: true\n", SVN_REPOS_DUMPFILE_TEXT_DELTA);
@@ -644,7 +641,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 		/* TODO: This is a small hack to make sure the node is a directory */
 		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
 #ifndef DUMP_DEBUG
-			unlink(filename);
+			apr_file_remove(filename, node->pool);
 #endif
 			DEBUG_MSG("deleting %s from delta_hash\n", npath);
 			apr_hash_set(delta_hash, npath, APR_HASH_KEY_STRING, NULL);
@@ -961,7 +958,7 @@ static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, a
 	/* Remove the old file if neccessary */
 #ifndef DUMP_DEBUG
 	if (node->old_filename) {
-		unlink(node->old_filename);
+		apr_file_remove(node->old_filename, pool);
 	}
 #endif
 
@@ -998,7 +995,7 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 			char *filename = apr_hash_get(delta_hash, path, APR_HASH_KEY_STRING);
 			if (filename) {
 #ifndef DUMP_DEBUG
-				unlink(filename);
+				apr_file_remove(filename, pool);
 #endif
 				apr_hash_set(delta_hash, path, APR_HASH_KEY_STRING, NULL);
 			}

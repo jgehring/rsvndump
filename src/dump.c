@@ -22,7 +22,6 @@
 
 
 #include <stdio.h>
-#include <sys/stat.h>
 
 #include <svn_pools.h>
 #include <svn_props.h>

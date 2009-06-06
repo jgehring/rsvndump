@@ -46,9 +46,6 @@
 	#ifndef HAVE_MEMCMP
 		extern int *memcmp(const void *b1, const void *b2, size_t len);
 	#endif
-	#ifndef HAVE_RMDIR
-		extern int rmdir(char const *dir);
-	#endif
 
 	/* Internationalization */
 	#if ENABLE_NLS
