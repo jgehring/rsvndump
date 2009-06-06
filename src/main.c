@@ -138,6 +138,7 @@ static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 int main(int argc, char **argv)
 {
 	char ret = 1;
+	const char *tdir;
 	int i;
 	session_t session;
 	dump_options_t opts;
@@ -258,7 +259,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Generate temporary directory */
-	const char *tdir = getenv("TMPDIR");
+	tdir = getenv("TMPDIR");
 	if (tdir != NULL) {
 		char *tmp = apr_psprintf(session.pool, "%s/"PACKAGE"XXXXXX", tdir);
 		opts.temp_dir = utils_canonicalize_pstrdup(session.pool, tmp);
