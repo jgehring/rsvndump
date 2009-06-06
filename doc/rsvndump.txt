@@ -103,8 +103,8 @@ myrepo
 ----
 
 *--keep-revnums*::
-	Keep the revision numbers in the output in sync with the repository.
-	This is done by inserting empty revisions for padding if neccessary.
+Keep the revision numbers in the output in sync with the repository.
+This is done by inserting empty revisions for padding if neccessary.
 
 
 REVISION NUMBERS
@@ -159,6 +159,14 @@ the following conditions are true:
  * There is no user prefix
 
  * The revision range is *0:HEAD*, or *0:X* and *--incrementals* is given.
+
+
+ENVIRONMENT VARIABLES
+---------------------
+*TMPDIR*::
+If *TMPDIR* is set, it specifies the directory to use for temporary files.
+Otherwise, */tmp* is used.
+
 
 
 EXIT STATUS
