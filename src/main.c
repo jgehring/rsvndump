@@ -270,6 +270,7 @@ int main(int argc, char **argv)
 	opts.temp_dir = mkdtemp(opts.temp_dir);
 	if (opts.temp_dir == NULL) {
 		fprintf(stderr, _("ERROR: Unable to create download directory.\n"));
+		session_free(&session);
 		dump_options_free(&opts);
 		return EXIT_FAILURE;
 	}
