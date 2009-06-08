@@ -333,11 +333,11 @@ char dump(session_t *session, dump_options_t *opts)
 
 		/* Set local revision number */
 		local_rev = 0;
-		while ((local_rev < logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
+		while ((local_rev < (long int)logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
 			++local_rev;
 		}
 
-		/* The first revision is a dry ru.n
+		/* The first revision is a dry run
 		   This is because we need to get the data of the previous
 		   revision first */
 		opts->flags |= DF_DRY_RUN;
