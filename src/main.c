@@ -301,7 +301,6 @@ int main(int argc, char **argv)
 		dump_options_free(&opts);
 		return EXIT_FAILURE;
 	}
-	fprintf(stderr, "tmp = %s\n", opts.temp_dir);
 #endif /* !WIN32 */
 
 	/* Do the real work */

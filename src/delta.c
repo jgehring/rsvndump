@@ -519,9 +519,9 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 
 	/* Dump content size */
 	if (dump_content) {
-		char *path = (opts->flags & DF_USE_DELTAS) ? node->delta_filename : node->filename;
+		char *fpath = (opts->flags & DF_USE_DELTAS) ? node->delta_filename : node->filename;
 		apr_finfo_t *info = apr_pcalloc(node->pool, sizeof(apr_finfo_t));
-		if (apr_stat(info, path, APR_FINFO_SIZE, node->pool) != APR_SUCCESS) {
+		if (apr_stat(info, fpath, APR_FINFO_SIZE, node->pool) != APR_SUCCESS) {
 			DEBUG_MSG("dump_delta_node: FATAL: cannot stat %s\n", node->filename);
 			return svn_error_create(1, NULL, apr_psprintf(session->pool, "Cannot stat %s", node->filename));
 		}
@@ -553,10 +553,10 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	if (dump_content) {
 		svn_error_t *err;
 		apr_pool_t *pool = svn_pool_create(node->pool);
-		const char *path = (opts->flags & DF_USE_DELTAS) ? node->delta_filename : node->filename;
+		const char *fpath = (opts->flags & DF_USE_DELTAS) ? node->delta_filename : node->filename;
 
 		fflush(stdout);
-		if ((err = delta_cat_file(pool, path))) {
+		if ((err = delta_cat_file(pool, fpath))) {
 			return err;
 		}
 		fflush(stdout);
