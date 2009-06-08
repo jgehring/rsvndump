@@ -181,12 +181,12 @@ void utils_handle_error(svn_error_t *error, FILE *stream, svn_boolean_t fatal, c
 
 				APR_ARRAY_PUSH(empties, apr_status_t) = tmp_err->apr_err;
 			}
-
-			tmp_err = tmp_err->child;
 		}
+
+		tmp_err = tmp_err->child;
 	}
 
-	svn_pool_destroy(subpool);
+	apr_pool_destroy(subpool);
 	fflush(stream);
 
 	if (fatal) {
