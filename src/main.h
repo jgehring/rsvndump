@@ -15,7 +15,7 @@
  *      You should have received a copy of the GNU General Public License
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * 	
+ *
  *      file: main.h
  *      desc: Common definitions and types
  */
@@ -74,6 +74,7 @@
 #endif
 
 extern int utils_debug(const char *format, ...);
+extern void utils_handle_error(svn_error_t *error, FILE *stream, svn_boolean_t fatal, const char *prefix);
 #define DEBUG_MSG utils_debug
 #ifndef DEBUG
 	#undef DUMP_DEBUG

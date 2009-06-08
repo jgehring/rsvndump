@@ -15,12 +15,15 @@
  *      You should have received a copy of the GNU General Public License
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * 	
+ *
  *      file: main.c
  *      desc: Program initialization and option parsing
  */
 
 
+#ifdef WIN32
+ #include <io.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,6 +32,8 @@
 #include <svn_path.h>
 #include <svn_pools.h>
 #include <svn_opt.h>
+
+#include <apr_file_io.h>
 
 #include "main.h"
 #include "dump.h"
@@ -138,7 +143,7 @@ static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 int main(int argc, char **argv)
 {
 	char ret = 1;
-	const char *tdir;
+	const char *tdir = NULL;
 	int i;
 	session_t session;
 	dump_options_t opts;
@@ -150,10 +155,16 @@ int main(int argc, char **argv)
 #endif /* ENABLE_NLS */
 
 	/* Init subversion (sets apr locale etc.) */
+#ifndef WIN32
 	if (svn_cmdline_init(PACKAGE, stderr) != EXIT_SUCCESS) {
 		return EXIT_FAILURE;
 	}
 	atexit(apr_terminate);
+#else /* !WIN32 */
+	if (svn_cmdline_init(PACKAGE, NULL) != EXIT_SUCCESS) {
+		return EXIT_FAILURE;
+	}
+#endif /* !WIN32 */
 
 	session = session_create();
 	opts = dump_options_create();
@@ -231,7 +242,7 @@ int main(int argc, char **argv)
 		} else if ((i+1 < argc && (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--outfile")))) {
 			fprintf(stderr, _("WARNING: the '%s' option is deprecated and will be IGNORED!.\n"), argv[i]);
 			++i;
-		
+
 		/* An url */
 		} else if (svn_path_is_url(argv[i])) {
 			if (session.url != NULL) {
@@ -259,6 +270,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Generate temporary directory */
+#ifndef WIN32
 	tdir = getenv("TMPDIR");
 	if (tdir != NULL) {
 		char *tmp = apr_psprintf(session.pool, "%s/"PACKAGE"XXXXXX", tdir);
@@ -273,6 +285,24 @@ int main(int argc, char **argv)
 		dump_options_free(&opts);
 		return EXIT_FAILURE;
 	}
+#else /* !WIN32 */
+	tdir = getenv("TEMP");
+	if (tdir == NULL) {
+		fprintf(stderr, _("ERROR: Unable to find a suitable temporary directory.\n"));
+		session_free(&session);
+		dump_options_free(&opts);
+		return EXIT_FAILURE;
+	}
+	opts.temp_dir = utils_canonicalize_pstrdup(session.pool, apr_psprintf(session.pool, "%s/"PACKAGE"XXXXXX", tdir));
+	opts.temp_dir = _mktemp(opts.temp_dir);
+	if ((opts.temp_dir == NULL) || (apr_dir_make(opts.temp_dir, 0700, session.pool) != APR_SUCCESS)) {
+		fprintf(stderr, _("ERROR: Unable to create download directory.\n"));
+		session_free(&session);
+		dump_options_free(&opts);
+		return EXIT_FAILURE;
+	}
+	fprintf(stderr, "tmp = %s\n", opts.temp_dir);
+#endif /* !WIN32 */
 
 	/* Do the real work */
 	if (session_open(&session) == 0) {
@@ -282,7 +312,7 @@ int main(int argc, char **argv)
 
 	/* Clean up temporary directory */
 #ifndef DUMP_DEBUG
-	utils_rrmdir(session.pool, opts.temp_dir, 1);
+	//utils_rrmdir(session.pool, opts.temp_dir, 1);
 #endif
 
 	session_free(&session);

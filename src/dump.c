@@ -68,7 +68,7 @@ static void dump_revision_header(apr_pool_t *pool, log_revision_t *revision, svn
 	printf("%s: %ld\n", SVN_REPOS_DUMPFILE_REVISION_NUMBER, local_revnum);
 	printf("%s: %d\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, props_length);
 	printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, props_length);
-	
+
 	if (props_length > 0) {
 		if (revision->message != NULL) {
 			property_dump("svn:log", revision->message);
@@ -155,7 +155,7 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, "", TRUE, TRUE, TRUE, session->encoded_url, editor, editor_baton, subpool);
 #endif
 	if (err) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		svn_pool_destroy(subpool);
 		return 1;
@@ -163,7 +163,7 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 
 	err = reporter->set_path(report_baton, "", src, start_empty, NULL, subpool);
 	if (err) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		svn_pool_destroy(subpool);
 		return 1;
@@ -171,7 +171,7 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 
 	err = reporter->finish_report(report_baton, subpool);
 	if (err) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		svn_pool_destroy(subpool);
 		return 1;
@@ -194,7 +194,7 @@ static char dump_determine_end(session_t *session, svn_revnum_t *rev)
 
 	err = svn_ra_stat(session->ra, "",  *rev, &dirent, session->pool);
 	if (err) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		svn_pool_destroy(pool);
 		return 1;
@@ -220,7 +220,7 @@ static svn_node_kind_t dump_check_path(session_t *session, const char *path, svn
 
 	err = svn_ra_check_path(session->ra, path, rev, &kind, pool);
 	if (err) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		svn_pool_destroy(pool);
 		return svn_node_none;
@@ -242,7 +242,7 @@ static char dump_fetch_uuid(session_t *session, const char **uuid)
 	err = svn_ra_get_uuid(session->ra, uuid, pool);
 #endif
 	if (err) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		svn_pool_destroy(pool);
 		return 1;
