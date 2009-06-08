@@ -22,20 +22,17 @@ def print_help(cmd = None):
 	elif cmd == "all":
 		print("USAGE: "+sys.argv[0]+" all [args]\n")
 		print("Runs all tests with the given extra arguments")
-	elif cmd == "purge":
-		print("USAGE: "+sys.argv[0]+" purge\n")
-		print("Clears logs, dumps and repositories of previous tests")
 	elif cmd == "clear":
-		print("USAGE: "+sys.argv[0]+" clear\n")
-		print("Clears the repository cache")
+		print("USAGE: "+sys.argv[0]+" clear [--cache]\n")
+		print("Clears logs, dumps and repositories of previous tests")
+		print("If --cache is given, also clear the repository cache")
 	else:
 		print("USAGE: "+sys.argv[0]+" <action> [options]\n")
 		print("action is one of:")
 		print("    list    lists available tests")
 		print("    run     runs a test")
 		print("    all     runs all test")
-		print("    purge   clears logs and dumps of previous tests")
-		print("    clear   clears the repository cache")
+		print("    clear   clears temporary data")
 		print("\nRun "+sys.argv[0]+" help <action> for more specific help")
 
 
@@ -87,10 +84,10 @@ def main():
 		if len(sys.argv) > 2:
 			args = sys.argv[2:]
 		return runtests(tests, args)
-	elif action == "purge":
-		test.cleanup()
 	elif action == "clear":
-		cache.clear()
+		test.cleanup()
+		if len(sys.argv) > 2 and sys.argv[2] == "--cache":
+			cache.clear()
 	else:
 		print("Unkown command "+action)
 		return 1
