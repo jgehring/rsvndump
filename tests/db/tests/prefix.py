@@ -16,19 +16,19 @@ def info():
 def setup(step, log):
 	if step == 0:
 		os.mkdir("dir1")
-		f = open("dir1/file1","w")
+		f = open("dir1/file1","wb")
 		print >>f, "hello1"
 		print >>f, "hello2"
-		f = open("dir1/file2","w")
+		f = open("dir1/file2","wb")
 		print >>f, "hello3"
 		test_api.run("svn", "add", "dir1", output = log)
 		return True
 	elif step == 1:
-		f = open("dir1/file2","w")
+		f = open("dir1/file2","wb")
 		print >>f, "hello4"
 		return True
 	elif step == 2:
-		f = open("dir1/file2","w")
+		f = open("dir1/file2","wb")
 		print >>f, "hello5"
 		return True
 	else:

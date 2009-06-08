@@ -18,22 +18,22 @@ def setup(step, log):
 		os.mkdir("dir1")
 		os.mkdir("dir1/sdir1")
 		os.mkdir("dir1/sdir2")
-		f = open("dir1/file1",'w')
+		f = open("dir1/file1",'wb')
 		print >>f, 'hello1'
-		f = open("dir1/sdir1/file1",'w')
+		f = open("dir1/sdir1/file1",'wb')
 		print >>f, 'hello2'
-		f = open("dir1/sdir2/file1",'w')
+		f = open("dir1/sdir2/file1",'wb')
 		print >>f, 'hello3'
-		f = open("dir1/sdir2/file2",'w')
+		f = open("dir1/sdir2/file2",'wb')
 		print >>f, 'hello4'
 		test_api.run("svn", "add", "dir1", output = log)
 		return True
 	elif step == 1:
-		f = open("dir1/sdir2/file2",'a')
+		f = open("dir1/sdir2/file2",'ab')
 		print >>f, 'hello5'
 		return True
 	elif step == 2:
-		f = open("dir1/sdir1/file2",'w')
+		f = open("dir1/sdir1/file2",'wb')
 		print >>f, 'hello6'
 		test_api.run("svn", "add", "dir1/sdir1/file2", output = log)
 		return True
@@ -41,7 +41,7 @@ def setup(step, log):
 		test_api.run("svn", "cp", "dir1/sdir1", "sdir1", output = log)
 		return True
 	elif step == 4:
-		f = open("sdir1/file1",'a')
+		f = open("sdir1/file1",'ab')
 		print >>f, "just copied!"
 		return True
 	else:
@@ -66,7 +66,7 @@ def run(id, args = []):
 	# We need to strip the date property from the dumpfile generated
 	# by rsvndump in order to validate it properly
 	tmp = test_api.mktemp(id)
-	o = open(tmp, "w")
+	o = open(tmp, "wb")
 	cnt = -1
 	for line in open(rdump_path):
 		if line == "svn:date\n":
