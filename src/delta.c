@@ -150,7 +150,7 @@ static de_node_baton_t *delta_create_node_no_parent(const char *path, de_baton_t
 	parent.path = NULL;
 	parent.de_baton = de_baton;
 	parent.copyfrom_path = NULL;
-	parent.cp_info = CP_NONE;
+	parent.cp_info = CPI_NONE;
 	return delta_create_node(path, &parent, pool);
 }
 
@@ -190,7 +190,7 @@ static char delta_check_copy(de_node_baton_t *node)
 
 	/* Sanity check */
 	if (node->copyfrom_path == NULL) {
-		node->cp_info = CP_NONE;
+		node->cp_info = CPI_NONE;
 		return 0;
 	}
 
@@ -353,7 +353,7 @@ static svn_error_t *delta_dump_replace(de_node_baton_t *node)
 	printf("\n\n");
 
 	/* Don't use the copy information of the parent */
-	node->cp_info = CP_NONE;
+	node->cp_info = CPI_NONE;
 	node->action = 'A';
 	return delta_dump_node(node);
 }
