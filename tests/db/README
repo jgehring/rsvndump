@@ -1,7 +1,11 @@
 The 'incremental' test will most likely not succeeed, because the incremental
 dump is unable to determine file modifications. Thus, the file dir1/file2
 will be dumped with all its content, just to be sure there's no modification
-missing. The diff will look like:
+missing. 
+The test will apply a binary patch using the 'bspatch' utility, which is part
+of the 'bsidff' programs ( http://www.daemonology.net/bsdiff/ ). If the
+utility is not present on your system, the test will fail and the resulting
+diff in logs/ will look like this:
 
 	@@ -170,6 +170,13 @@
 	 Node-action: add
@@ -17,5 +21,3 @@ missing. The diff will look like:
 	 
 	 
 	 Revision-number: 5
-
-This needs to be integrated into the test itself, of course

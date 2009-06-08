@@ -69,4 +69,12 @@ def run(id, args = []):
 	rdump_path = test_api.dump_rsvndump_incremental(id, 1, args)
 	vdump_path = test_api.dump_reload(id, rdump_path)
 
+	# We apply a patch to the incremental dump because it will miss
+	# that a path has not been changed on copy (simply because it does
+	# not consider previous revisions)
+	patch_path = test_api.data_dir()+"/"+test_api.name(id)+".patch"
+	if "--deltas" in args:
+		patch_path += ".deltas"
+	test_api.bspatch(id, rdump_path, patch_path)
+
 	return test_api.diff(id, rdump_path+".orig", rdump_path)
