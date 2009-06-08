@@ -23,6 +23,7 @@
 
 #ifdef WIN32
  #include <io.h>
+ #include <fcntl.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -164,6 +165,12 @@ int main(int argc, char **argv)
 	if (svn_cmdline_init(PACKAGE, NULL) != EXIT_SUCCESS) {
 		return EXIT_FAILURE;
 	}
+
+	/*
+	 * On windows, we need to change the mode for stdout to binary to avoid
+	 * newlines being automatically translated to CRLF.
+	 */
+	_setmode(_fileno(stdout), _O_BINARY);
 #endif /* !WIN32 */
 
 	session = session_create();
