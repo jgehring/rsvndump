@@ -146,7 +146,10 @@ def dump_reload_rsvndump(id, dumpfile, args):
 	run("svnadmin", "load", tmp, input = dumpfile, output = test.log(id))
 
 	dump = test.dumps(id)+"/validate.dump"
-	run("../../src/rsvndump", uri("file://"+tmp), extra_args = tuple(args), output = dump, error = test.log(id))
+	if not platform.system() == "Windows":
+		run("../../src/rsvndump", uri("file://"+tmp), extra_args = tuple(args), output = dump, error = test.log(id))
+	else:
+		run("../../bin/rsvndump.exe", uri("file://"+tmp), extra_args = tuple(args), output = dump, error = test.log(id))
 	return dump
 
 
@@ -160,7 +163,10 @@ def dump_reload_rsvndump_sub(id, dumpfile, path, args):
 	run("svnadmin", "load", tmp, input = dumpfile, output = test.log(id))
 
 	dump = test.dumps(id)+"/validate.dump"
-	run("../../src/rsvndump", uri("file://"+tmp+"/"+path), extra_args = tuple(args), output = dump, error = test.log(id))
+	if not platform.system() == "Windows":
+		run("../../src/rsvndump", uri("file://"+tmp+"/"+path), extra_args = tuple(args), output = dump, error = test.log(id))
+	else:
+		run("../../bin/rsvndump.exe", uri("file://"+tmp+"/"+path), extra_args = tuple(args), output = dump, error = test.log(id))
 	return dump
 
 
