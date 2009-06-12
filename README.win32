@@ -2,24 +2,34 @@
 These are special build instructions for Windows operating systems
 ===============================================================================
 
+First, you should create a top-level "bin" directory inside the project tree.
+
 Prerequesits:
 
 	- Subversion development files for Windows (>= 1.4)
 	  http://subversion.tigris.org/servlets/ProjectDocumentList?folderID=91&expandFolder=91&folderID=91
 	  Please download "Subversion Win32 development libraries and documentation"
-	  and rename the extracted folder to "svn-win32"
+	  and rename the unzipped directory to "svn-win32"
 
 	- Subversion runtime files for Windows (>= 1.4)
 	  http://subversion.tigris.org/servlets/ProjectDocumentList?folderID=91&expandFolder=91&folderID=91
 	  Please download "Subversion Win32 binaries for Apache 2.0.x" and
-	  extract all dlls in "bin/" to the top-level "bin" directory of
-	  rsvndump's project tree.
+	  extract all dlls in "bin" to the top-level "bin" directory.
 
 	- libintl_svn (Patched libintl)
 	  http://subversion.tigris.org/files/documents/15/20739/svn-win32-libintl.zip 
-	  The *.lib file should go into svn-win32, the *.dll into "bin/"
+	  The *.lib file should go into svn-win32\lib
 
 	- CodeBlocks (>= 8.02, not tested below)
+
+If everything is set up correctly, the project should be build using the
+CodeBlocks project file provided in the "win" directory.
+
+In order to run the test suite (located in "tests\db\"), you need to have
+Python (>= 2.5) and Subversion (the command line tools, not TurtoiseSVN)
+installed. Additionally, you need to have a diff and patch program somewhere
+in your path. The UnxUtils ( http://sourceforge.net/projects/unxutils )
+provide a couple of unix programs, including diff and patch.
 
 
 NOTE: My build environment is Windows XP, using MSVC 8 (Visual Studio 2005)
