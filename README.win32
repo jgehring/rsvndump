@@ -2,6 +2,14 @@
 These are special build instructions for Windows operating systems
 ===============================================================================
 
+
+Known issues:
+	- If an error from Subversion leads to program termination, the program
+	  will crash (Windows 7 Beta) or enter an infinite loop (Windows XP)
+
+	- No internationalization
+
+
 First, you should create a top-level "bin" directory inside the project tree.
 
 Prerequesits:
@@ -30,7 +38,6 @@ Python (>= 2.5) and Subversion (the command line tools, not TurtoiseSVN)
 installed. Additionally, you need to have a diff and patch program somewhere
 in your path. The UnxUtils ( http://sourceforge.net/projects/unxutils )
 provide a couple of unix programs, including diff and patch.
-
 
 NOTE: My build environment is Windows XP, using MSVC 8 (Visual Studio 2005)
 and version 6.1 of the Windows SDK.
