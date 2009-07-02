@@ -91,53 +91,46 @@ static void print_usage()
 /* Parses a revision number (or range) */
 static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 {
-	char *split, *end_ptr;
-	errno = 0;
-	if ((split = strchr(str, ':')) == NULL) {
-		/* Single number */
-		if (strncmp("HEAD", str, 4) == 0) {
-			*start = -1;
-			*end = -1;
-			return 0;
+	static const char *head = "HEAD";
+	char tmp1[5], tmp2[5];
+	char eos;
+
+	/*
+	 * Simply try all possible schemes.
+	 * The eos-character is used to force that the sscanf command
+	 * matches the whole string by ignoring it in the count comparison.
+	 */
+	if (sscanf(str, "%4s:%4s%c", tmp1, tmp2, &eos) == 2 && !strcmp(tmp1, head) && !strcmp(tmp2, head)) {
+		*start = -1;
+		*end = -1;
+		return 0;
+	}
+	if (sscanf(str, "%ld:%4s%c", start, tmp1, &eos) == 2 && !strcmp(tmp1, head)) {
+		if (*start < 0) {
+			return 1;
 		}
-		*start = strtol(str, &end_ptr, 10);
-		if (*end_ptr != 0) {
+		*end = -1;
+		return 0;
+	}
+	if (sscanf(str, "%ld:%ld%c", start, end, &eos) == 2) {
+		if (*start < 0 || *end < 0 || *end < *start) {
+			return 1;
+		}
+		return 0;
+	}
+	if (sscanf(str, "%ld%c", start, &eos) == 1) {
+		if (*start < 0) {
 			return 1;
 		}
 		*end = *start;
-	} else {
-		/* Range */
-		if ((str == split) || (*(++split) == '\0')) {
-			return 1;
-		}
-
-		if (strncmp("HEAD", str, 4) == 0) {
-			*start = -1;
-		} else {
-			*start = strtol(str, &end_ptr, 10);
-			if ((errno == EINVAL) || (errno == ERANGE) || (end_ptr != split-1)) {
-				return 1;
-			}
-		}
-
-		if (strncmp("HEAD", split, 4) == 0) {
-			*end = -1;
-		} else {
-			*end = strtol(split, &end_ptr, 10);
-			if (*end_ptr != 0) {
-				return 1;
-			}
-		}
-
-		if ((*start > *end) && (*end != -1)) {
-			return 1;
-		}
+		return 0;
 	}
-
-	if ((errno == EINVAL) || (errno == ERANGE)) {
-		return 1;
+	if (sscanf(str, "%4s%c", tmp1, &eos) == 1 && !strcmp(tmp1, head)) {
+		*start = -1;
+		*end = -1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 
