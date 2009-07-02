@@ -1,4 +1,4 @@
-SUBDIRS = po $(COMPAT_SUBDIRS) src $(DOC_SUBDIRS)
+SUBDIRS = po $(COMPAT_SUBDIRS) src $(DOC_SUBDIRS) $(TESTS_SUBDIRS)
 
 EXTRA_DIST = \
              config.rpath \

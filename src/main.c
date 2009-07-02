@@ -145,6 +145,8 @@ static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 /* Global functions                                                          */
 /*---------------------------------------------------------------------------*/
 
+#ifndef UNIT_TESTS
+
 /* Program entry point */
 int main(int argc, char **argv)
 {
@@ -336,3 +338,20 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 }
+
+#endif /* !UNIT_TESTS */
+
+
+
+/*---------------------------------------------------------------------------*/
+/* Functions exported for unit testing                                       */
+/*---------------------------------------------------------------------------*/
+
+#ifdef UNIT_TESTS
+
+char ut_parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
+{
+	return parse_revnum(str, start, end);
+}
+
+#endif /* !UNIT_TESTS */
