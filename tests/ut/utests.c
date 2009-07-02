@@ -24,11 +24,12 @@
 #include <svn_types.h>
 
 #include <main.h>
+#include <list.h>
 
 
 /* Check parse_revnum in main.c */
 extern char ut_parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end);
-static void test_parse_revnum()
+static char test_parse_revnum()
 {
 	typedef struct {
 		const char *str;
@@ -38,6 +39,7 @@ static void test_parse_revnum()
 	} testcase_t;
 
 	int i;
+	char ret = 0;
 	testcase_t tests[] = {
 		{"0:1:0", 1, 0, 0},
 		{"-3:-4", 1, 0, 0},
@@ -60,30 +62,97 @@ static void test_parse_revnum()
 		{"10:HEAD:0", 1, 0, 0}
 	};
 
-	printf("Testing parse_revnum() [targetted]:\n");
+	printf("Testing parse_revnum(): ");
 	for (i = 0; i < sizeof(tests)/sizeof(testcase_t); i++) {
 		char res;
 		svn_revnum_t start, end;
 
-		res = ut_parse_revnum(tests[i].str, &start, &end);
+		res = ut_parse_revnum((char *)tests[i].str, &start, &end);
 		if (res != tests[i].result) {
-			printf("\t%d: FAIL: wrong result: %d instead of %d\n", i, (int)res, (int)tests[i].result);
+			printf("\n\t%d: FAIL: wrong result: %d instead of %d\n", i, (int)res, (int)tests[i].result);
+			ret = 1;
 			continue;
 		}
 		if (res == 0 && (start != tests[i].start || end != tests[i].end)) {
-			printf("\t%d: FAIL: wrong range: %ld:%ld instead of %ld:%ld\n", i, start, end, tests[i].start, tests[i].end);
+			printf("\n\t%d: FAIL: wrong range: %ld:%ld instead of %ld:%ld\n\t", i, start, end, tests[i].start, tests[i].end);
+			ret = 1;
 			continue;
 		}
 
-		printf("\t%d: pass\n", i);
+		printf("%d ", i);
+		fflush(stdout);
 	}
+
+	printf("\n");
+	return ret;
+}
+
+static inline int intcmp(const void *a, const void *b) {
+	return *(long *)a - *(long *)b;
+}
+
+static char test_list()
+{
+	long i, j;
+	list_t l;
+
+	printf("Testing list implementation: ");
+
+	l = list_create(sizeof(long));
+	for (i = 0; i < 10; i++) {
+		long s = (long)4 << i;
+		for (j = 0; j < s; j++) {
+			list_append(&l, &j);
+		}
+		size_t t = l.size;
+		if (l.size != s) {
+			printf("\n\t%ld: FAIL: size corrupted after inserting: %ld instead of %ld\n", i, (long)t, s);
+			list_free(&l);
+			return 1;
+		}
+
+		list_qsort(&l, intcmp);
+
+		if (l.size != t) {
+			printf("\n\t%ld: FAIL: size corrupted after sorting: %ld instead of %ld\n", i, (long)l.size, (long)t);
+			list_free(&l);
+			return 1;
+		}
+		for (j = 0; j < t-1; j++) {
+			if (((long *)l.elements)[j] > ((long *)l.elements)[j+1]) {
+				printf("\n\t%ld: FAIL: sorting failed: [%ld] > [%ld]\n", i, j, j+1);
+				list_free(&l);
+				return 1;
+			}
+		}
+
+		for (j = 0; j < t; j++) {
+			list_remove(&l, rand() % l.size);
+		}
+		if (l.size != 0) {
+			printf("\n\t%ld: FAIL: List not empty after removing %ld elements\n", i, (long)t);
+			list_free(&l);
+			return 1;
+		}
+		printf("%ld ", i);
+		fflush(stdout);
+	}
+
+	printf("\n");
+	list_free(&l);
+	return 0;
 }
 
 
 /* Program entry point */
 int main(int argc, char **argv)
 {
-	test_parse_revnum();
+	if (test_parse_revnum()) {
+		return EXIT_FAILURE;
+	}
+	if (test_list()) {
+		return EXIT_FAILURE;
+	}
 
 	return EXIT_SUCCESS;
 }

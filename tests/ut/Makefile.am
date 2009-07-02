@@ -1,7 +1,8 @@
 bin_PROGRAMS = rsvndump_ut
 rsvndump_ut_SOURCES = \
 	utests.c \
-	../../src/main.c
+	../../src/main.c \
+	../../src/list.c
 
 localedir = $(datadir)/locale
 AM_LDFLAGS = $(APR_LIBS) $(SVN_LDFLAGS) $(COMPAT_LIBS) $(LIB_INTL)
