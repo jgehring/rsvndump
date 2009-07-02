@@ -44,15 +44,23 @@ static void test_parse_revnum()
 		{"a:b", 1, 0, 0},
 		{"-:", 1, 0, 0},
 		{"", 1, 0, 0},
+		{"2392miocsc_", 1, 0, 0},
 		{"0:1", 0, 0, 1},
+		{"1:1", 0, 1, 1},
+		{"1:", 1, 0, 0},
+		{":1", 1, 0, 0},
 		{"00:1201", 0, 0, 1201},
 		{"90:3", 1, 0, 0},
+		{"-1:4", 1, 0, 0},
 		{"HEAD", 0, -1, -1},
+		{"HEAD:", 1, 0, 0},
+		{"HEAD:HEAD", 0, -1, -1},
 		{"HEAD:4", 1, 0, 0},
-		{"10:HEAD", 0, 10, -1}
+		{"10:HEAD", 0, 10, -1},
+		{"10:HEAD:0", 1, 0, 0}
 	};
 
-	printf("Testing parse_revnum():\n");
+	printf("Testing parse_revnum() [targetted]:\n");
 	for (i = 0; i < sizeof(tests)/sizeof(testcase_t); i++) {
 		char res;
 		svn_revnum_t start, end;
@@ -62,8 +70,9 @@ static void test_parse_revnum()
 			printf("\t%d: FAIL: wrong result: %d instead of %d\n", i, (int)res, (int)tests[i].result);
 			continue;
 		}
-		if (start != tests[i].start || end != tests[i].end) {
+		if (res == 0 && (start != tests[i].start || end != tests[i].end)) {
 			printf("\t%d: FAIL: wrong range: %ld:%ld instead of %ld:%ld\n", i, start, end, tests[i].start, tests[i].end);
+			continue;
 		}
 
 		printf("\t%d: pass\n", i);
