@@ -56,9 +56,9 @@
 
 /* Copy info enumeration */
 typedef enum {
-	CP_NONE,
-	CP_COPY,
-	CP_FAILED
+	CPI_NONE,
+	CPI_COPY,
+	CPI_FAILED
 } cp_info_t;
 
 
@@ -150,7 +150,7 @@ static de_node_baton_t *delta_create_node_no_parent(const char *path, de_baton_t
 	parent.path = NULL;
 	parent.de_baton = de_baton;
 	parent.copyfrom_path = NULL;
-	parent.cp_info = CP_NONE;
+	parent.cp_info = CPI_NONE;
 	return delta_create_node(path, &parent, pool);
 }
 
@@ -166,7 +166,7 @@ static void delta_mark_node(de_node_baton_t *node)
 	}
 	node->dumped = 1;
 	if ((de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
-		if (node->cp_info == CP_COPY) {
+		if (node->cp_info == CPI_COPY) {
 			fprintf(stderr, _("COPIED ... done.\n"));
 		} else {
 			fprintf(stderr, _("done.\n"));
@@ -184,19 +184,19 @@ static char delta_check_copy(de_node_baton_t *node)
 	svn_revnum_t local_revnum = node->de_baton->local_revnum;
 
 	/* If the parent could not be copied, this node won't be copied, too */
-	if (node->cp_info == CP_FAILED) {
+	if (node->cp_info == CPI_FAILED) {
 		return 0;
 	}
 
 	/* Sanity check */
 	if (node->copyfrom_path == NULL) {
-		node->cp_info = CP_NONE;
+		node->cp_info = CPI_NONE;
 		return 0;
 	}
 
 	/* Check if we can use the information we already have */
 	if ((strlen(session->prefix) == 0) && ((opts->start == 0) || (opts->flags & DF_INCREMENTAL))) {
-		node->cp_info = CP_COPY;
+		node->cp_info = CPI_COPY;
 		return 0;
 	}
 
@@ -209,7 +209,7 @@ static char delta_check_copy(de_node_baton_t *node)
 
 		/* If we sync the revision numbers, the copy-from revision is correct */
 		if (opts->flags & DF_KEEP_REVNUMS) {
-			node->cp_info = CP_COPY;
+			node->cp_info = CPI_COPY;
 			return 0;
 		}
 
@@ -237,11 +237,11 @@ static char delta_check_copy(de_node_baton_t *node)
 
 		if (r > 0) {
 			node->copyfrom_revision = rr;
-			node->cp_info = CP_COPY;
+			node->cp_info = CPI_COPY;
 			DEBUG_MSG("delta_check_copy: using local %ld\n", rr);
 		} else {
 			node->action = 'A';
-			node->cp_info = CP_FAILED;
+			node->cp_info = CPI_FAILED;
 			DEBUG_MSG("delta_check_copy: no matching revision found\n");
 		}
 	} else {
@@ -250,7 +250,7 @@ static char delta_check_copy(de_node_baton_t *node)
 		   This will work fine for single files, but directories
 		   must be dumped recursively. */
 		node->action = 'A';
-		node->cp_info = CP_FAILED;
+		node->cp_info = CPI_FAILED;
 		DEBUG_MSG("delta_check_copy: resolving failed\n");
 	}
 
@@ -353,7 +353,7 @@ static svn_error_t *delta_dump_replace(de_node_baton_t *node)
 	printf("\n\n");
 
 	/* Don't use the copy information of the parent */
-	node->cp_info = CP_NONE;
+	node->cp_info = CPI_NONE;
 	node->action = 'A';
 	return delta_dump_node(node);
 }
@@ -384,7 +384,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	}
 
 	/* If the node's parent has been copied, we don't need to dump it if its contents haven't changed */
-	if ((node->cp_info == CP_COPY) && (node->action == 'A')) {
+	if ((node->cp_info == CPI_COPY) && (node->action == 'A')) {
 		node->dumped = 1;
 		return SVN_NO_ERROR;
 	}
@@ -442,7 +442,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	}
 
 	/* Output copy information if neccessary */
-	if (node->cp_info == CP_COPY) {
+	if (node->cp_info == CPI_COPY) {
 		int offset = strlen(session->prefix);
 		while (*(node->copyfrom_path+offset) == '/') {
 			++offset;
@@ -453,7 +453,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		} else {
 			printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, node->copyfrom_path+offset);
 		}
-		
+
 		/* Maybe we don't need to dump the properties and text */
 		if (node->action == 'A') {
 			unsigned char *prev_md5 = apr_hash_get(md5_hash, node->copyfrom_path+offset, APR_HASH_KEY_STRING);
@@ -519,9 +519,9 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 
 	/* Dump content size */
 	if (dump_content) {
-		char *path = (opts->flags & DF_USE_DELTAS) ? node->delta_filename : node->filename;
+		char *fpath = (opts->flags & DF_USE_DELTAS) ? node->delta_filename : node->filename;
 		apr_finfo_t *info = apr_pcalloc(node->pool, sizeof(apr_finfo_t));
-		if (apr_stat(info, path, APR_FINFO_SIZE, node->pool) != APR_SUCCESS) {
+		if (apr_stat(info, fpath, APR_FINFO_SIZE, node->pool) != APR_SUCCESS) {
 			DEBUG_MSG("dump_delta_node: FATAL: cannot stat %s\n", node->filename);
 			return svn_error_create(1, NULL, apr_psprintf(session->pool, "Cannot stat %s", node->filename));
 		}
@@ -553,10 +553,10 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	if (dump_content) {
 		svn_error_t *err;
 		apr_pool_t *pool = svn_pool_create(node->pool);
-		const char *path = (opts->flags & DF_USE_DELTAS) ? node->delta_filename : node->filename;
+		const char *fpath = (opts->flags & DF_USE_DELTAS) ? node->delta_filename : node->filename;
 
 		fflush(stdout);
-		if ((err = delta_cat_file(pool, path))) {
+		if ((err = delta_cat_file(pool, fpath))) {
 			return err;
 		}
 		fflush(stdout);
@@ -587,7 +587,7 @@ static svn_error_t *de_set_target_revision(void *edit_baton, svn_revnum_t target
 /* Subversion delta editor callback */
 static svn_error_t *de_open_root(void *edit_baton, svn_revnum_t base_revision, apr_pool_t *dir_pool, void **root_baton)
 {
-	de_node_baton_t *node;	
+	de_node_baton_t *node;
 	node = delta_create_node_no_parent("", (de_baton_t *)edit_baton, dir_pool);
 
 	/*
@@ -611,7 +611,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 	apr_hash_index_t *hi;
 	svn_error_t *err;
 	int pathlen;
-	
+
 	DEBUG_MSG("de_delete_entry(%s@%ld)\n", path, revision);
 	if ((parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
 		fprintf(stderr, _("     * deleting path : %s ... "), path);
@@ -708,8 +708,8 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 		 * If the node is preset in the log, we must not use the copy
 		 * information of the parent node
 		 */
-		if (node->cp_info != CP_FAILED) {
-			node->cp_info = CP_NONE;
+		if (node->cp_info != CPI_FAILED) {
+			node->cp_info = CPI_NONE;
 		}
 	}
 
@@ -804,7 +804,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 
 	/* Get corresponding log entry */
 	log = apr_hash_get(node->de_baton->log_revision->changed_paths, path, APR_HASH_KEY_STRING);
-	
+
 	/*
 	 * Although this function is named de_add_file, it will also be called
 	 * for nodes that have been copied (or are located in a tree that has
@@ -830,8 +830,8 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		 * If the node is preset in the log, we must not use the copy
 		 * information of the parent node
 		 */
-		if (node->cp_info != CP_FAILED) {
-			node->cp_info = CP_NONE;
+		if (node->cp_info != CPI_FAILED) {
+			node->cp_info = CPI_NONE;
 		}
 	}
 
@@ -839,11 +839,11 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 	 * If the node is part of a tree that is dumped instead of being copied,
 	 * this must be an add action
 	 */
-	if (node->cp_info == CP_FAILED) {
+	if (node->cp_info == CPI_FAILED) {
 		node->action = 'A';
 	}
 
-	if (!(node->cp_info == CP_COPY) && (parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
+	if (!(node->cp_info == CPI_COPY) && (parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
 		fprintf(stderr, _("     * adding path : %s ... "), path);
 	}
 
@@ -999,7 +999,7 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 #endif
 				apr_hash_set(delta_hash, path, APR_HASH_KEY_STRING, NULL);
 			}
-			
+
 			if (apr_hash_get(de_baton->dumped_entries, path, APR_HASH_KEY_STRING) == NULL) {
 				svn_error_t *err;
 				de_node_baton_t *node = delta_create_node_no_parent(path, de_baton, pool);

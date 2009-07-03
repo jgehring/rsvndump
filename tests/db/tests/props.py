@@ -16,7 +16,7 @@ def info():
 def setup(step, log):
 	if step == 0:
 		os.mkdir("dir1")
-		f = open("dir1/file1","w")
+		f = open("dir1/file1","wb")
 		print >>f, "hello1"
 		test_api.run("svn", "add", "dir1", output = log)
 		return True

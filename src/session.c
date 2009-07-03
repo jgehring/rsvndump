@@ -88,31 +88,31 @@ char session_open(session_t *session)
 
 	/* Do neccessary SVN library initialization */
 	if ((err = svn_fs_initialize(session->pool))) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		return 1;
 	}
 	if ((err = svn_ra_initialize(session->pool))) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		return 1;
 	}
 
 	if ((err = svn_config_ensure(NULL, session->pool))) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		return 1;
 	}
 
 	/* Setup the client context */
 	if ((err = svn_client_create_context(&ctx, session->pool))) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		return 1;
 	}
 
 	if ((err = svn_config_get_config(&(ctx->config), NULL, session->pool))) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		return 1;
 	}
@@ -120,7 +120,7 @@ char session_open(session_t *session)
 	/* Setup auth baton */
 	config = apr_hash_get(ctx->config, SVN_CONFIG_CATEGORY_CONFIG, APR_HASH_KEY_STRING);
 	if ((err = svn_cmdline_setup_auth_baton(&auth_baton, (session->flags & SF_NON_INTERACTIVE), session->username, session->password, NULL, (session->flags & SF_NO_AUTH_CACHE), config, NULL, NULL, session->pool))) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		return 1;
 	}
@@ -128,14 +128,14 @@ char session_open(session_t *session)
 
 	/* Setup the RA session */
 	if ((err = svn_client_open_ra_session(&(session->ra), session->encoded_url, ctx, session->pool))) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		return 1;
 	}
 
 	/* Determine the root (and the prefix) of the URL */
 	if ((err = svn_ra_get_repos_root(session->ra, &root, session->pool))) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		return 1;
 	}
@@ -168,7 +168,7 @@ char session_check_reparent(session_t *session, svn_revnum_t rev)
 	/* Check if the current root is a file */
 	err = svn_ra_check_path(session->ra, "", rev, &kind, pool);
 	if (err) {
-		svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		svn_pool_destroy(pool);
 		return 1;
@@ -182,7 +182,7 @@ char session_check_reparent(session_t *session, svn_revnum_t rev)
 		/* Reparent the session to the parent repository */
 		err = svn_ra_reparent(session->ra, new_parent, pool);
 		if (err) {
-			svn_handle_error2(err, stderr, FALSE, "ERROR: ");
+			utils_handle_error(err, stderr, FALSE, "ERROR: ");
 			svn_error_clear(err);
 			svn_pool_destroy(pool);
 			return 1;

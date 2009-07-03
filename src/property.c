@@ -15,7 +15,7 @@
  *      You should have received a copy of the GNU General Public License
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * 	
+ *
  *      file: property.c
  *      desc: Convenience functions for dumping properties
  */
@@ -40,20 +40,17 @@
 /* Returns the length of a property */
 size_t property_strlen(struct apr_pool_t *pool, const char *key, const char *value)
 {
-	size_t len;
-	apr_pool_t *subpool = svn_pool_create((apr_pool_t *)pool);
+	size_t len = 0;
 
 	if (key == NULL) {
 		return 0;
 	}
-
 	if (value == NULL) {
-		len = strlen(apr_psprintf(subpool, "K %d\n%s\nV 0\n\n", strlen(key), key));
+		len = strlen(apr_psprintf(pool, "K %d\n%s\nV 0\n\n", strlen(key), key));
 	} else {
-		len = strlen(apr_psprintf(subpool, "K %d\n%s\nV %d\n%s\n", strlen(key), key, strlen(value), value));
+		len = strlen(apr_psprintf(pool, "K %d\n%s\nV %d\n%s\n", strlen(key), key, strlen(value), value));
 	}
 
-	apr_pool_destroy(subpool);
 	return len;
 }
 

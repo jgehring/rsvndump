@@ -15,7 +15,7 @@
  *      You should have received a copy of the GNU General Public License
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * 	
+ *
  *      file: utils.c
  *      desc: Miscellaneous utility functions
  */
@@ -30,8 +30,10 @@
 #include <apr_file_io.h>
 #include <apr_strings.h>
 
+#include <svn_error.h>
 #include <svn_path.h>
 #include <svn_pools.h>
+#include <svn_utf.h>
 
 #include "utils.h"
 
@@ -123,6 +125,75 @@ char *utils_canonicalize_pstrdup(struct apr_pool_t *pool, char *path)
 	char *ed = apr_pstrdup(pool, e);
 	svn_pool_destroy(subpool);
 	return ed;
+}
+
+
+/* Error handling proxy function */
+void utils_handle_error(svn_error_t *error, FILE *stream, svn_boolean_t fatal, const char *prefix)
+{
+#ifndef WIN32
+	utils_handle_error(error, stream, fatal, prefix);
+#else /* !WIN32 */
+	/*
+	 * When running under Windows, a custom error handler (very similar to the one
+	 * from Subversion) is used, because passing stderr to Subversion functions
+	 * is a little problematic. Note that it is possible, but it's too much hassle
+	 * for now.
+	 */
+	apr_pool_t *subpool;
+	svn_error_t *tmp_err;
+	apr_array_header_t *empties;
+
+	apr_pool_create(&subpool, error->pool);
+	empties = apr_array_make(subpool, 0, sizeof(apr_status_t));
+
+	tmp_err = error;
+	while (tmp_err) {
+		int i;
+		svn_boolean_t printed_already = FALSE;
+
+		if (!tmp_err->message) {
+			for (i = 0; i < empties->nelts; i++) {
+				if (tmp_err->apr_err == APR_ARRAY_IDX(empties, i, apr_status_t)) {
+					printed_already = TRUE;
+					break;
+				}
+			}
+		}
+
+		if (!printed_already) {
+			char errbuf[256];
+			const char *err_string;
+			svn_error_t *tmp_err2 = NULL;
+
+			if (tmp_err->message) {
+				fprintf(stderr,"%s%s\n", prefix, tmp_err->message);
+				svn_error_clear(tmp_err);
+			} else {
+				if ((tmp_err->apr_err > APR_OS_START_USEERR) && (tmp_err->apr_err <= APR_OS_START_CANONERR)) {
+					err_string = svn_strerror(tmp_err->apr_err, errbuf, sizeof(errbuf));
+				} else if ((tmp_err2 = svn_utf_cstring_from_utf8(&err_string, apr_strerror(tmp_err->apr_err, errbuf, sizeof(errbuf)), tmp_err->pool))) {
+					svn_error_clear(tmp_err2);
+					err_string = "Can't recode error string from APR";
+				}
+				fprintf(stderr,"%s%s\n", prefix, tmp_err->message);
+				svn_error_clear(tmp_err);
+
+				APR_ARRAY_PUSH(empties, apr_status_t) = tmp_err->apr_err;
+			}
+		}
+
+		tmp_err = tmp_err->child;
+	}
+
+	apr_pool_destroy(subpool);
+	fflush(stream);
+
+	if (fatal) {
+		svn_error_clear(error);
+		exit(EXIT_FAILURE);
+	}
+#endif /* !WIN32 */
 }
 
 

@@ -4,7 +4,7 @@
 #
 
 
-import os, shutil, subprocess
+import os, platform, shutil, subprocess
 
 import test, cache
 
@@ -25,6 +25,15 @@ def run(*args, **misc):
 	if error:
 		redirections['stderr'] = open(error, "a+")
 	subprocess.check_call(args, **redirections)
+
+
+# Returns a valid file URI for both sane operating systems and windows
+def uri(loc):
+	if not platform.system() == "Windows":
+		return loc
+	t = loc.replace("://", ":///")
+	t = t.replace(os.sep, "/")
+	return t
 
 
 # Returns the tests data dir
@@ -71,7 +80,10 @@ def dump_rsvndump(id, args, repos = None):
 	if not repos:
 		repos = test.repo(id)
 	dump = test.dumps(id)+"/rsvndump.dump"
-	run("../../src/rsvndump", "file://"+repos, extra_args = tuple(args), output = dump, error = test.log(id))
+	if not platform.system() == "Windows":
+		run("../../src/rsvndump", uri("file://"+repos), extra_args = tuple(args), output = dump, error = test.log(id))
+	else:
+		run("../../bin/rsvndump.exe", uri("file://"+repos), extra_args = tuple(args), output = dump, error = test.log(id))
 	return dump
 
 
@@ -82,7 +94,10 @@ def dump_rsvndump_sub(id, path, args, repos = None):
 	if not repos:
 		repos = test.repo(id)
 	dump = test.dumps(id)+"/rsvndump.dump"
-	run("../../src/rsvndump", "file://"+repos+"/"+path, extra_args = tuple(args), output = dump, error = test.log(id))
+	if not platform.system() == "Windows":
+		run("../../src/rsvndump", uri("file://"+repos+"/"+path), extra_args = tuple(args), output = dump, error = test.log(id))
+	else:
+		run("../../bin/rsvndump.exe", uri("file://"+repos+"/"+path), extra_args = tuple(args), output = dump, error = test.log(id))
 	return dump
 
 
@@ -97,7 +112,10 @@ def dump_rsvndump_incremental(id, stepsize, args, repos = None):
 	end = stepsize
 	while True:
 		try:
-			run("../../src/rsvndump", "file://"+repos, "--incremental", "--revision", str(start)+":"+str(end), extra_args = tuple(args), output = dump, error = test.log(id))
+			if not platform.system() == "Windows":
+				run("../../src/rsvndump", uri("file://"+repos), "--incremental", "--revision", str(start)+":"+str(end), extra_args = tuple(args), output = dump, error = test.log(id))
+			else:
+				run("../../bin/rsvndump.exe", uri("file://"+repos), "--incremental", "--revision", str(start)+":"+str(end), extra_args = tuple(args), output = dump, error = test.log(id))
 			start = end+1
 			end = start+stepsize
 		except:
@@ -128,7 +146,10 @@ def dump_reload_rsvndump(id, dumpfile, args):
 	run("svnadmin", "load", tmp, input = dumpfile, output = test.log(id))
 
 	dump = test.dumps(id)+"/validate.dump"
-	run("../../src/rsvndump", "file://"+tmp, extra_args = tuple(args), output = dump, error = test.log(id))
+	if not platform.system() == "Windows":
+		run("../../src/rsvndump", uri("file://"+tmp), extra_args = tuple(args), output = dump, error = test.log(id))
+	else:
+		run("../../bin/rsvndump.exe", uri("file://"+tmp), extra_args = tuple(args), output = dump, error = test.log(id))
 	return dump
 
 
@@ -142,7 +163,10 @@ def dump_reload_rsvndump_sub(id, dumpfile, path, args):
 	run("svnadmin", "load", tmp, input = dumpfile, output = test.log(id))
 
 	dump = test.dumps(id)+"/validate.dump"
-	run("../../src/rsvndump", "file://"+tmp+"/"+path, extra_args = tuple(args), output = dump, error = test.log(id))
+	if not platform.system() == "Windows":
+		run("../../src/rsvndump", uri("file://"+tmp+"/"+path), extra_args = tuple(args), output = dump, error = test.log(id))
+	else:
+		run("../../bin/rsvndump.exe", uri("file://"+tmp+"/"+path), extra_args = tuple(args), output = dump, error = test.log(id))
 	return dump
 
 

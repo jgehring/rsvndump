@@ -18,22 +18,22 @@ def setup(step, log):
 		os.mkdir("dir1")
 		os.mkdir("dir1/sdir1")
 		os.mkdir("dir1/sdir2")
-		f = open("dir1/file1","w")
+		f = open("dir1/file1","wb")
 		print >>f, "hello1"
-		f = open("dir1/sdir1/file1","w")
+		f = open("dir1/sdir1/file1","wb")
 		print >>f, "hello2"
-		f = open("dir1/sdir2/file1","w")
+		f = open("dir1/sdir2/file1","wb")
 		print >>f, "hello3"
-		f = open("dir1/sdir2/file2","w")
+		f = open("dir1/sdir2/file2","wb")
 		print >>f, "hello4"
 		test_api.run("svn", "add", "dir1", output=log)
 		return 1
 	elif step == 1:
-		f = open("dir1/sdir2/file2","a")
+		f = open("dir1/sdir2/file2","ab")
 		print >>f, "hello5"
 		return 1
 	elif step == 2:
-		f = open("dir1/sdir1/file2","w")
+		f = open("dir1/sdir1/file2","wb")
 		print >>f, "hello6"
 		test_api.run("svn", "add", "dir1/sdir1/file2", output=log)
 		return 1
@@ -45,7 +45,7 @@ def setup(step, log):
 		test_api.run("svn", "rm", "dir1/sdir2/file1", output=log)
 		return 1
 	elif step == 5:
-		f = open("dir1/sdir2/file2","a")
+		f = open("dir1/sdir2/file2","ab")
 		print >>f, "still there!"
 		return 1
 	else:

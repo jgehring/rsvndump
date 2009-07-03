@@ -8,6 +8,7 @@ import os, shutil, hashlib
 
 import test
 from test_api import run
+from test_api import uri
 
 
 # Globals
@@ -49,7 +50,7 @@ def insert(id, name, repos, wc, setup_fn, log):
 	# Checkout and commit
 	tmp = os.getcwd()
 	os.chdir(wc+"/..")
-	run("svn", "checkout", "file://"+repos, output = log)
+	run("svn", "checkout", uri("file://"+repos), output = log)
 	os.chdir(id)
 	step = 0
 	while setup_fn(step, log):

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="rsvndump" />
+		<Option pch_mode="2" />
+		<Option compiler="msvc8" />
+		<Build>
+			<Target title="Debug">
+				<Option platforms="Windows;" />
+				<Option output="..\bin\rsvndump" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj\Debug\" />
+				<Option type="1" />
+				<Option compiler="msvc8" />
+				<Compiler>
+					<Add option="/MDd" />
+					<Add option="/Zi /D_DEBUG" />
+					<Add option="/Zi" />
+					<Add option="/D_DEBUG" />
+				</Compiler>
+				<Linker>
+					<Add option="/DEBUG" />
+					<Add library="msvcrtd.lib" />
+					<Add library="msvcprtd.lib" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="..\bin\rsvndump" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj\Release\" />
+				<Option type="1" />
+				<Option compiler="msvc8" />
+				<Compiler>
+					<Add option="/Ox" />
+					<Add option="/DNDEBUG" />
+					<Add option="/MD" />
+				</Compiler>
+				<Linker>
+					<Add library="msvcrt.lib" />
+					<Add library="msvcprt.lib" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="/W3" />
+			<Add option="/DWIN32" />
+			<Add directory="C:\Programme\Microsoft SDKs\Windows\v6.1\Include" />
+			<Add directory="..\svn-win32\include" />
+			<Add directory="..\svn-win32\include\apr" />
+			<Add directory="..\svn-win32\include\apr-iconv" />
+			<Add directory="..\svn-win32\include\apr-util" />
+		</Compiler>
+		<Linker>
+			<Add library="..\svn-win32\lib\apr\libapr.lib" />
+			<Add library="..\svn-win32\lib\apr-iconv\libapriconv.lib" />
+			<Add library="..\svn-win32\lib\apr-util\libaprutil.lib" />
+			<Add library="..\svn-win32\lib\apr-util\xml.lib" />
+			<Add library="..\svn-win32\lib\intl3_svn.lib" />
+			<Add library="..\svn-win32\lib\neon\libneon.lib" />
+			<Add library="..\svn-win32\lib\neon\zlibstat.lib" />
+			<Add library="..\svn-win32\lib\serf\serf.lib" />
+			<Add library="..\svn-win32\lib\sasl\libsasl.lib" />
+			<Add library="..\svn-win32\lib\libsvn_client-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_delta-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_diff-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_fs-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_fs_base-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_fs_fs-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_fs_util-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_ra-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_ra_local-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_ra_neon-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_ra_serf-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_ra_svn-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_repos-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_subr-1.lib" />
+			<Add library="..\svn-win32\lib\libsvn_wc-1.lib" />
+		</Linker>
+		<Unit filename="..\src\delta.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\src\delta.h" />
+		<Unit filename="..\src\dump.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\src\dump.h" />
+		<Unit filename="..\src\list.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\src\list.h" />
+		<Unit filename="..\src\log.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\src\log.h" />
+		<Unit filename="..\src\main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\src\main.h" />
+		<Unit filename="..\src\property.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\src\property.h" />
+		<Unit filename="..\src\session.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\src\session.h" />
+		<Unit filename="..\src\utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\src\utils.h" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
