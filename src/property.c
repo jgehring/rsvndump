@@ -55,6 +55,20 @@ size_t property_strlen(struct apr_pool_t *pool, const char *key, const char *val
 }
 
 
+/* Returns the length of a property deletion */
+size_t property_del_strlen(struct apr_pool_t *pool, const char *key)
+{
+	size_t len = 0;
+
+	if (key == NULL) {
+		return 0;
+	}
+	len = strlen(apr_psprintf(pool, "D %d\n%s\n", strlen(key), key));
+
+	return len;
+}
+
+
 /* Dumps a property to stdout */
 void property_dump(const char *key, const char *value)
 {
@@ -69,4 +83,15 @@ void property_dump(const char *key, const char *value)
 	} else {
 		printf("V 0\n\n");
 	}
+}
+
+
+/* Dumps a property deletion to stdout */
+void property_del_dump(const char *key)
+{
+	if (key == NULL) {
+		return;
+	}
+	printf("D %lu\n", (unsigned long)strlen(key));
+	printf("%s\n", key);
 }

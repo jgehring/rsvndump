@@ -85,6 +85,7 @@ typedef struct {
 	char              action;
 	svn_node_kind_t   kind;
 	apr_hash_t        *properties;
+	apr_hash_t        *del_properties; /* Value is always 0x1 */
 	unsigned char     md5sum[MD5SUM_LENGTH+1];
 	char              *copyfrom_path;
 	svn_revnum_t      copyfrom_revision;
@@ -130,6 +131,7 @@ static de_node_baton_t *delta_create_node(const char *path, de_node_baton_t *par
 	node->de_baton = parent->de_baton;
 	node->pool = pool;
 	node->properties = apr_hash_make(pool);
+	node->del_properties = apr_hash_make(pool);
 	node->filename = NULL;
 	node->old_filename = NULL;
 	node->delta_filename = NULL;
@@ -378,7 +380,8 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 
 	/* If the node is a directory and no properties have been changed,
 	   we don't need to dump it */
-	if ((node->action == 'M') && (node->kind == svn_node_dir) && (apr_hash_count(node->properties) == 0)) {
+	if ((node->action == 'M') && (node->kind == svn_node_dir) &&
+	   (apr_hash_count(node->properties) == 0) && (apr_hash_count(node->del_properties) == 0)) {
 		node->dumped = 1;
 		return SVN_NO_ERROR;
 	}
@@ -454,7 +457,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 			printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, node->copyfrom_path+offset);
 		}
 
-		/* Maybe we don't need to dump the properties and text */
+		/* Maybe we don't need to dump the contents */
 		if (node->action == 'A') {
 			unsigned char *prev_md5 = apr_hash_get(md5_hash, node->copyfrom_path+offset, APR_HASH_KEY_STRING);
 			if (prev_md5 && !memcmp(node->md5sum, prev_md5, MD5SUM_LENGTH)) {
@@ -512,7 +515,20 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
 		prop_len += property_strlen(node->pool, key, value->data);
 	}
+	/* In dump format version 3, deleted properties should be dumped, too */
+	if (opts->dump_format == 3) {
+		for (hi = apr_hash_first(node->pool, node->del_properties); hi; hi = apr_hash_next(hi)) {
+			const char *key;
+			void *value;
+			apr_hash_this(hi, (const void **)(void *)&key, NULL, &value);
+			prop_len += property_del_strlen(node->pool, key);
+		}
+	}
 	if ((prop_len > 0) || (node->action == 'A')) {
+		if (opts->dump_format == 3) {
+			printf("%s: true\n", SVN_REPOS_DUMPFILE_PROP_DELTA);
+		}
+
 		prop_len += PROPS_END_LEN;
 		printf("%s: %lu\n", SVN_REPOS_DUMPFILE_PROP_CONTENT_LENGTH, prop_len);
 	}
@@ -545,6 +561,15 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 			svn_string_t *value;
 			apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
 			property_dump(key, value->data);
+		}
+		/* In dump format version 3, deleted properties should be dumped, too */
+		if (opts->dump_format == 3) {
+			for (hi = apr_hash_first(node->pool, node->del_properties); hi; hi = apr_hash_next(hi)) {
+				const char *key;
+				void *value;
+				apr_hash_this(hi, (const void **)(void *)&key, NULL, &value);
+				property_del_dump(key);
+			}
 		}
 		printf(PROPS_END);
 	}
@@ -751,7 +776,13 @@ static svn_error_t *de_change_dir_prop(void *dir_baton, const char *name, const 
 		return SVN_NO_ERROR;
 	}
 
-	apr_hash_set(node->properties, apr_pstrdup(node->pool, name), APR_HASH_KEY_STRING, svn_string_dup(value, node->pool));
+	DEBUG_MSG("de_change_dir_prop(%s) %s = %s\n", ((de_node_baton_t *)dir_baton)->path, name, value ? value->data : NULL);
+
+	if (value != NULL) {
+		apr_hash_set(node->properties, apr_pstrdup(node->pool, name), APR_HASH_KEY_STRING, svn_string_dup(value, node->pool));
+	} else {
+		apr_hash_set(node->del_properties, apr_pstrdup(node->pool, name), APR_HASH_KEY_STRING, (void *)0x1);
+	}
 
 	return SVN_NO_ERROR;
 }
@@ -934,9 +965,13 @@ static svn_error_t *de_change_file_prop(void *file_baton, const char *name, cons
 		return SVN_NO_ERROR;
 	}
 
-	DEBUG_MSG("de_change_file_prop(%s) %s = %s\n", ((de_node_baton_t *)file_baton)->path, name, value->data);
+	DEBUG_MSG("de_change_file_prop(%s) %s = %s\n", ((de_node_baton_t *)file_baton)->path, name, value ? value->data : NULL);
 
-	apr_hash_set(node->properties, apr_pstrdup(node->pool, name), APR_HASH_KEY_STRING, svn_string_dup(value, node->pool));
+	if (value != NULL) {
+		apr_hash_set(node->properties, apr_pstrdup(node->pool, name), APR_HASH_KEY_STRING, svn_string_dup(value, node->pool));
+	} else {
+		apr_hash_set(node->del_properties, apr_pstrdup(node->pool, name), APR_HASH_KEY_STRING, (void *)0x1);
+	}
 
 	return SVN_NO_ERROR;
 }

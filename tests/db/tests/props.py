@@ -35,7 +35,19 @@ def setup(step, log):
 		test_api.run("svn", "propset", "svn:externals", "ext/test    svn://slug/rsvndump/trunk/src", "dir2", output = log)
 		return True
 	elif step == 4:
+		test_api.run("svn", "propset", "svn:eol-style", "native", "dir1/file1", output = log)
+		return True
+	elif step == 5:
+		test_api.run("svn", "up", output = log)
 		test_api.run("svn", "propdel", "svn:ignore", "dir1", output = log)
+		return True
+	elif step == 6:
+		f = open("dir1/file1","wb")
+		print >>f, "hello2"
+		test_api.run("svn", "propset", "svn:eol-style", "LF", "dir1/file1", output = log)
+		return True
+	elif step == 7:
+		test_api.run("svn", "propdel", "copyright", "dir1/file1", output = log)
 		return True
 	else:
 		return False

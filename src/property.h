@@ -28,8 +28,14 @@
 /* Returns the length of a property */
 extern size_t property_strlen(struct apr_pool_t *pool, const char *key, const char *value);
 
+/* Returns the length of a property deletion */
+extern size_t property_del_strlen(struct apr_pool_t *pool, const char *key);
+
 /* Dumps a property to stdout */
 extern void property_dump(const char *key, const char *value);
+
+/* Dumps a property deletion to stdout */
+extern void property_del_dump(const char *key);
 
 
 #endif
