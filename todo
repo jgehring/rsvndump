@@ -1,5 +1,4 @@
 == Schedule for 0.5.x ==
-> Dump in format version 2 if dumping without --deltas
 > Add --no-stop-on-copy option
 > Check if revision range determnination can be done faster
 > Re-implement dumping of single files?

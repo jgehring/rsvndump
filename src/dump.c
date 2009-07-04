@@ -266,6 +266,7 @@ dump_options_t dump_options_create()
 	opts.prefix = NULL;
 	opts.verbosity = 0;
 	opts.flags = 0x00;
+	opts.dump_format = 2;
 
 	opts.start = 0;
 	opts.end = -1; /* HEAD */
@@ -289,6 +290,11 @@ char dump(session_t *session, dump_options_t *opts)
 	char start_mid = 0, show_local_rev = 1;
 	svn_revnum_t global_rev, local_rev = -1;
 	int list_idx;
+
+	/* Dumping with deltas requires dump format version 3 */
+	if (opts->flags & DF_USE_DELTAS) {
+		opts->dump_format = 3;
+	}
 
 	if ((opts->flags & DF_INCREMENTAL) && (opts->start != 0)) {
 		start_mid = 1;
@@ -347,7 +353,7 @@ char dump(session_t *session, dump_options_t *opts)
 		logs = list_create(sizeof(log_revision_t));
 
 		/* Write dumpfile header */
-		printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER, 3);
+		printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER, opts->dump_format);
 		if ((opts->prefix == NULL) && (strlen(session->prefix) == 0)) {
 			const char *uuid;
 			if (dump_fetch_uuid(session, &uuid)) {

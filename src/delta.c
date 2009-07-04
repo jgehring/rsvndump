@@ -64,33 +64,33 @@ typedef enum {
 
 /* Main delta editor baton */
 typedef struct {
-	session_t		*session;
-	dump_options_t		*opts;
-	list_t			*logs;
-	log_revision_t		*log_revision;
-	apr_pool_t		*revision_pool;
-	apr_hash_t		*dumped_entries;
-	svn_revnum_t		local_revnum;
+	session_t         *session;
+	dump_options_t    *opts;
+	list_t            *logs;
+	log_revision_t    *log_revision;
+	apr_pool_t        *revision_pool;
+	apr_hash_t        *dumped_entries;
+	svn_revnum_t      local_revnum;
 } de_baton_t;
 
 
 /* Node baton */
 typedef struct {
-	de_baton_t		*de_baton;
-	apr_pool_t		*pool;
-	char			*path;
-	char			*filename;
-	char			*old_filename;
-	char			*delta_filename;
-	char			action;
-	svn_node_kind_t		kind;
-	apr_hash_t		*properties;
-	unsigned char		md5sum[MD5SUM_LENGTH+1];
-	char			*copyfrom_path;
-	svn_revnum_t		copyfrom_revision;
-	cp_info_t		cp_info;
-	char			applied_delta;
-	char			dumped;
+	de_baton_t        *de_baton;
+	apr_pool_t        *pool;
+	char              *path;
+	char              *filename;
+	char              *old_filename;
+	char              *delta_filename;
+	char              action;
+	svn_node_kind_t   kind;
+	apr_hash_t        *properties;
+	unsigned char     md5sum[MD5SUM_LENGTH+1];
+	char              *copyfrom_path;
+	svn_revnum_t      copyfrom_revision;
+	cp_info_t         cp_info;
+	char              applied_delta;
+	char              dumped;
 } de_node_baton_t;
 
 

@@ -50,6 +50,7 @@ typedef struct {
 	svn_revnum_t  end;
 	int           verbosity;
 	int           flags;
+	int           dump_format;
 } dump_options_t;
 
 
