@@ -132,7 +132,7 @@ char *utils_canonicalize_pstrdup(struct apr_pool_t *pool, char *path)
 void utils_handle_error(svn_error_t *error, FILE *stream, svn_boolean_t fatal, const char *prefix)
 {
 #ifndef WIN32
-	utils_handle_error(error, stream, fatal, prefix);
+	svn_handle_error2(error, stream, fatal, prefix);
 #else /* !WIN32 */
 	/*
 	 * When running under Windows, a custom error handler (very similar to the one

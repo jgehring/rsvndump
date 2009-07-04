@@ -30,7 +30,6 @@
 #include "session.h"
 
 
-/* Application-wide contants */
 #define HEAD_REIVISION (-1)
 
 
