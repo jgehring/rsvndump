@@ -194,6 +194,21 @@ static svn_error_t *delta_write_properties(de_node_baton_t *node)
 	dump_options_t *opts = node->de_baton->opts;
 	apr_pool_t *pool = svn_pool_create(node->pool);
 
+	/* Remove the properties that have been deleted from the hash */
+	for (hi = apr_hash_first(pool, node->del_properties); hi; hi = apr_hash_next(hi)) {
+		const char *key;
+		void *value;
+		apr_hash_this(hi, (const void **)(void *)&key, NULL, &value);
+		apr_hash_set(node->properties, key, APR_HASH_KEY_STRING, NULL);
+	}
+
+	/* We don't need to save anything if there are no properties */
+	if (apr_hash_count(node->properties) == 0) {
+		apr_hash_set(prop_hash, apr_pstrdup(prop_pool, node->path), APR_HASH_KEY_STRING, NULL);
+		svn_pool_destroy(pool);
+		return SVN_NO_ERROR;
+	}
+
 	/* Create a new temporary file */
 	filename = apr_palloc(node->pool, strlen(opts->temp_dir)+8);
 	sprintf(filename, "%s/XXXXXX", opts->temp_dir);
@@ -204,14 +219,6 @@ static svn_error_t *delta_write_properties(de_node_baton_t *node)
 		char *errbuf = apr_palloc(epool, ebsize);
 		svn_pool_destroy(pool);
 		return svn_error_create(status, NULL, apr_strerror(status, errbuf, ebsize));
-	}
-
-	/* Remove the properties that have been deleted from the hash */
-	for (hi = apr_hash_first(node->pool, node->del_properties); hi; hi = apr_hash_next(hi)) {
-		const char *key;
-		void *value;
-		apr_hash_this(hi, (const void **)(void *)&key, NULL, &value);
-		apr_hash_set(node->properties, key, APR_HASH_KEY_STRING, NULL);
 	}
 
 	property_hash_write(node->properties, file, pool);
