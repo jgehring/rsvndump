@@ -296,10 +296,6 @@ char dump(session_t *session, dump_options_t *opts)
 		opts->dump_format = 3;
 	}
 
-	/* TODO: Currently, properties are not saved across revisions,
-	   so non-delta property dumping does not work. */
-	opts->dump_format = 3;
-
 	if ((opts->flags & DF_INCREMENTAL) && (opts->start != 0)) {
 		start_mid = 1;
 	}

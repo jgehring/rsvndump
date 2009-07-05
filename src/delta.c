@@ -92,6 +92,7 @@ typedef struct {
 	cp_info_t         cp_info;
 	char              applied_delta;
 	char              dumped;
+	char              props_changed;
 } de_node_baton_t;
 
 
@@ -103,10 +104,15 @@ typedef struct {
 /*
  * If the dump output is not using deltas, we need to keep a local copy of
  * every file in the repository. The delta_hash hash defines a mapping
- * repository paths to temporary files for this purpose.
+ * repository paths to temporary files for this purpose. The prop_hash
+ * defines a mapping from repository files to temporary files filled
+ * with file/directory properties. The md5_hash is used to store the md5-sums
+ * of the file contents.
  */
 static apr_pool_t *delta_pool = NULL;
 static apr_hash_t *delta_hash = NULL;
+static apr_pool_t *prop_pool = NULL;
+static apr_hash_t *prop_hash = NULL;
 static apr_pool_t *md5_pool = NULL;
 static apr_hash_t *md5_hash = NULL;
 #ifdef USE_TIMING
@@ -139,6 +145,7 @@ static de_node_baton_t *delta_create_node(const char *path, de_node_baton_t *par
 	node->copyfrom_path = NULL;
 	node->applied_delta = 0;
 	node->dumped = 0;
+	node->props_changed = 0;
 	memset(node->md5sum, 0x00, sizeof(node->md5sum));
 
 	return node;
@@ -174,6 +181,86 @@ static void delta_mark_node(de_node_baton_t *node)
 			fprintf(stderr, _("done.\n"));
 		}
 	}
+}
+
+
+/* Writes the properties of a node to a temporary file */
+static svn_error_t *delta_write_properties(de_node_baton_t *node)
+{
+	char *filename;
+	apr_file_t *file = NULL;
+	apr_status_t status;
+	apr_hash_index_t *hi;
+	dump_options_t *opts = node->de_baton->opts;
+	apr_pool_t *pool = svn_pool_create(node->pool);
+
+	/* Create a new temporary file */
+	filename = apr_palloc(node->pool, strlen(opts->temp_dir)+8);
+	sprintf(filename, "%s/XXXXXX", opts->temp_dir);
+	status = apr_file_mktemp(&file, filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
+	if (status) {
+		const int ebsize = 512;
+		apr_pool_t *epool = svn_pool_create(NULL);
+		char *errbuf = apr_palloc(epool, ebsize);
+		svn_pool_destroy(pool);
+		return svn_error_create(status, NULL, apr_strerror(status, errbuf, ebsize));
+	}
+
+	/* Remove the properties that have been deleted from the hash */
+	for (hi = apr_hash_first(node->pool, node->del_properties); hi; hi = apr_hash_next(hi)) {
+		const char *key;
+		void *value;
+		apr_hash_this(hi, (const void **)(void *)&key, NULL, &value);
+		apr_hash_set(node->properties, key, APR_HASH_KEY_STRING, NULL);
+	}
+
+	property_hash_write(node->properties, file, pool);
+	apr_file_close(file);
+
+	apr_hash_set(prop_hash, apr_pstrdup(prop_pool, node->path), APR_HASH_KEY_STRING, apr_pstrdup(prop_pool, filename));
+
+	svn_pool_destroy(pool);
+	return SVN_NO_ERROR;
+}
+
+
+/* Loads the properties of a node to a temporary file */
+static svn_error_t *delta_load_properties(de_node_baton_t *node)
+{
+	char *filename;
+	apr_file_t *file = NULL;
+	apr_status_t status;
+	apr_pool_t *pool = svn_pool_create(node->pool);
+
+	filename = apr_hash_get(prop_hash, node->path, APR_HASH_KEY_STRING);
+	if (filename == NULL) {
+		/* No properties is ok, too */
+		svn_pool_destroy(pool);
+		return SVN_NO_ERROR;
+	}
+
+	status = apr_file_open(&file, filename, APR_READ, 0600, pool);
+	if (status) {
+		const int ebsize = 512;
+		apr_pool_t *epool = svn_pool_create(NULL);
+		char *errbuf = apr_palloc(epool, ebsize);
+		svn_pool_destroy(pool);
+		return svn_error_create(status, NULL, apr_strerror(status, errbuf, ebsize));
+	}
+
+	if (property_hash_load(node->properties, file, node->pool)) {
+		apr_file_close(file);
+		DEBUG_MSG("ERROR reading from %s\n", filename);
+		return svn_error_create(1, NULL, "Error reading properties file");
+	}
+	apr_file_close(file);
+
+	/* Delete the old file if it exists */
+	apr_file_remove(filename, pool);
+	apr_hash_set(prop_hash, node->path, APR_HASH_KEY_STRING, NULL);
+
+	svn_pool_destroy(pool);
+	return SVN_NO_ERROR;
 }
 
 
@@ -380,8 +467,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 
 	/* If the node is a directory and no properties have been changed,
 	   we don't need to dump it */
-	if ((node->action == 'M') && (node->kind == svn_node_dir) &&
-	   (apr_hash_count(node->properties) == 0) && (apr_hash_count(node->del_properties) == 0)) {
+	if ((node->action == 'M') && (node->kind == svn_node_dir) && (!node->props_changed)) {
 		node->dumped = 1;
 		return SVN_NO_ERROR;
 	}
@@ -513,6 +599,10 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		const char *key;
 		svn_string_t *value;
 		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
+		/* Don't dump the property if it has been deleted */
+		if (apr_hash_get(node->del_properties, key, APR_HASH_KEY_STRING) != NULL) {
+			continue;
+		}
 		prop_len += property_strlen(node->pool, key, value->data);
 	}
 	/* In dump format version 3, deleted properties should be dumped, too */
@@ -524,7 +614,10 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 			prop_len += property_del_strlen(node->pool, key);
 		}
 	}
-	if ((prop_len > 0) || (node->action == 'A')) {
+	if ((prop_len > 0)) {
+		node->props_changed = 1;
+	}
+	if ((node->props_changed) || (node->action == 'A')) {
 		if (opts->dump_format == 3) {
 			printf("%s: true\n", SVN_REPOS_DUMPFILE_PROP_DELTA);
 		}
@@ -555,11 +648,15 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	printf("%s: %lu\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, (unsigned long)prop_len+content_len);
 
 	/* Dump properties */
-	if ((prop_len > 0) || (node->action == 'A')) {
+	if ((node->props_changed) || (node->action == 'A')) {
 		for (hi = apr_hash_first(node->pool, node->properties); hi; hi = apr_hash_next(hi)) {
 			const char *key;
 			svn_string_t *value;
 			apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
+			/* Don't dump the property if it has been deleted */
+			if (apr_hash_get(node->del_properties, key, APR_HASH_KEY_STRING) != NULL) {
+				continue;
+			}
 			property_dump(key, value->data);
 		}
 		/* In dump format version 3, deleted properties should be dumped, too */
@@ -672,6 +769,19 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 			apr_hash_set(delta_hash, npath, APR_HASH_KEY_STRING, NULL);
 		}
 	}
+	for (hi = apr_hash_first(pool, prop_hash); hi; hi = apr_hash_next(hi)) {
+		const char *npath;
+		char *filename;
+		apr_hash_this(hi, (const void **)(void *)&npath, NULL, (void **)(void *)&filename);
+		/* TODO: This is a small hack to make sure the node is a directory */
+		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
+#ifndef DUMP_DEBUG
+			apr_file_remove(filename, node->pool);
+#endif
+			DEBUG_MSG("deleting %s from prop_hash\n", npath);
+			apr_hash_set(prop_hash, npath, APR_HASH_KEY_STRING, NULL);
+		}
+	}
 	for (hi = apr_hash_first(pool, md5_hash); hi; hi = apr_hash_next(hi)) {
 		const char *npath;
 		char *md5sum;
@@ -762,7 +872,9 @@ static svn_error_t *de_open_directory(const char *path, void *parent_baton, svn_
 	node->action = 'M';
 
 	*child_baton = node;
-	return SVN_NO_ERROR;
+
+	/* Load previous properties if possible */
+	return delta_load_properties(node);
 }
 
 
@@ -783,6 +895,7 @@ static svn_error_t *de_change_dir_prop(void *dir_baton, const char *name, const 
 	} else {
 		apr_hash_set(node->del_properties, apr_pstrdup(node->pool, name), APR_HASH_KEY_STRING, (void *)0x1);
 	}
+	node->props_changed = 1;
 
 	return SVN_NO_ERROR;
 }
@@ -801,7 +914,8 @@ static svn_error_t *de_close_directory(void *dir_baton, apr_pool_t *pool)
 		}
 	}
 
-	return SVN_NO_ERROR;
+	/* Save the property hash */
+	return delta_write_properties(node);
 }
 
 
@@ -907,7 +1021,9 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 	node->action = 'M';
 
 	*file_baton = node;
-	return SVN_NO_ERROR;
+
+	/* Load previous properties if possible */
+	return delta_load_properties(node);
 }
 
 
@@ -972,6 +1088,7 @@ static svn_error_t *de_change_file_prop(void *file_baton, const char *name, cons
 	} else {
 		apr_hash_set(node->del_properties, apr_pstrdup(node->pool, name), APR_HASH_KEY_STRING, (void *)0x1);
 	}
+	node->props_changed = 1;
 
 	return SVN_NO_ERROR;
 }
@@ -997,7 +1114,8 @@ static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, a
 	}
 #endif
 
-	return SVN_NO_ERROR;
+	/* Save the property hash */
+	return delta_write_properties(node);
 }
 
 
@@ -1104,6 +1222,8 @@ void delta_setup_editor(session_t *session, dump_options_t *options, list_t *log
 	baton->dumped_entries = apr_hash_make(baton->revision_pool);
 	*editor_baton = baton;
 
+	/* TODO: Merge these three */
+
 	/* Check if the global md5sum hash needs to be created */
 	if (md5_pool == NULL) {
 		md5_pool = svn_pool_create(session->pool);
@@ -1114,5 +1234,11 @@ void delta_setup_editor(session_t *session, dump_options_t *options, list_t *log
 	if (delta_pool == NULL) {
 		delta_pool = svn_pool_create(session->pool);
 		delta_hash = apr_hash_make(delta_pool);
+	}
+
+	/* Check if the global property hash needs to be created */
+	if (prop_pool == NULL) {
+		prop_pool = svn_pool_create(session->pool);
+		prop_hash = apr_hash_make(prop_pool);
 	}
 }

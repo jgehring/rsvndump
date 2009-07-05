@@ -26,7 +26,10 @@
 #include <string.h>
 
 #include <svn_pools.h>
+#include <svn_string.h>
 
+#include <apr_file_io.h>
+#include <apr_hash.h>
 #include <apr_strings.h>
 
 #include "property.h"
@@ -72,6 +75,7 @@ size_t property_del_strlen(struct apr_pool_t *pool, const char *key)
 /* Dumps a property to stdout */
 void property_dump(const char *key, const char *value)
 {
+	/* NOTE: This is duplicated in property_hash_write */
 	if (key == NULL) {
 		return;
 	}
@@ -94,4 +98,85 @@ void property_del_dump(const char *key)
 	}
 	printf("D %lu\n", (unsigned long)strlen(key));
 	printf("%s\n", key);
+}
+
+
+/* Writes a hash of properties to a given file */
+void property_hash_write(struct apr_hash_t *hash, struct apr_file_t *file, struct apr_pool_t *pool)
+{
+	apr_hash_index_t *hi;
+	for (hi = apr_hash_first(pool, hash); hi; hi = apr_hash_next(hi)) {
+		const char *key;
+		svn_string_t *value;
+		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
+
+		/* NOTE: This is the same as property_dump() */
+		if (key == NULL) {
+			return;
+		}
+		apr_file_printf(file, "K %lu\n", (unsigned long)strlen(key));
+		apr_file_printf(file, "%s\n", key);
+		if (value != NULL) {
+			apr_file_printf(file, "V %lu\n", (unsigned long)strlen(value->data));
+			apr_file_printf(file, "%s\n", value->data);
+		} else {
+			apr_file_printf(file, "V 0\n\n");
+		}
+	}
+}
+
+
+/* Loads a hash of properties from a given file, storing the properties using the given pool */
+char property_hash_load(struct apr_hash_t *hash, struct apr_file_t *file, struct apr_pool_t *pool)
+{
+	apr_pool_t *subpool = svn_pool_create(pool);
+	apr_off_t skip = 1;
+	const int maxlen = 512;
+	char *buffer = apr_palloc(subpool, maxlen+1);
+
+	while (apr_file_eof(file) != APR_EOF) {
+		unsigned long dlen;
+		char end; /* Used for EOL detection */
+		char *keybuffer, *valbuffer;
+
+		/* Read key */
+		if (apr_file_gets(buffer, maxlen, file) != APR_SUCCESS) {
+			break;
+		}
+		if ((sscanf(buffer, "K %lu%c", &dlen, &end) != 2) || (end != '\n')) {
+			break;
+		}
+		keybuffer = apr_pcalloc(subpool, dlen+1);
+		if (apr_file_read(file, keybuffer, (apr_size_t *)&dlen) != APR_SUCCESS) {
+			break;
+		}
+
+		/* Skip newline */
+		apr_file_seek(file, APR_CUR, &skip);
+		skip = 1;
+
+		/* Read value */
+		if (apr_file_gets(buffer, maxlen, file) != APR_SUCCESS) {
+			break;
+		}
+		if ((sscanf(buffer, "V %lu%c", &dlen, &end) != 2) || (end != '\n')) {
+			break;
+		}
+		if (dlen == 0) {
+			apr_hash_set(hash, apr_pstrdup(pool, keybuffer), APR_HASH_KEY_STRING, svn_string_ncreate("", 0, pool));
+		} else {
+			valbuffer = apr_pcalloc(subpool, dlen+1);
+			if (apr_file_read(file, valbuffer, (apr_size_t *)&dlen) != APR_SUCCESS) {
+				break;
+			}
+			apr_hash_set(hash, apr_pstrdup(pool, keybuffer), APR_HASH_KEY_STRING, svn_string_create(valbuffer, pool));
+		}
+
+		/* Skip newline */
+		apr_file_seek(file, APR_CUR, &skip);
+		skip = 1;
+	}
+
+	svn_pool_destroy(subpool);
+	return (apr_file_eof(file) != APR_EOF);
 }
