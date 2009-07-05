@@ -134,7 +134,7 @@ char property_hash_load(struct apr_hash_t *hash, struct apr_file_t *file, struct
 	const int maxlen = 512;
 	char *buffer = apr_palloc(subpool, maxlen+1);
 
-	while (apr_file_eof(file) != APR_EOF) {
+	while (!APR_STATUS_IS_EOF(apr_file_eof(file))) {
 		unsigned long dlen;
 		char end; /* Used for EOL detection */
 		char *keybuffer, *valbuffer;
@@ -178,5 +178,5 @@ char property_hash_load(struct apr_hash_t *hash, struct apr_file_t *file, struct
 	}
 
 	svn_pool_destroy(subpool);
-	return (apr_file_eof(file) != APR_EOF);
+	return !APR_STATUS_IS_EOF(apr_file_eof(file));
 }
