@@ -352,7 +352,14 @@ char dump(session_t *session, dump_options_t *opts)
 	} else {
 		logs = list_create(sizeof(log_revision_t));
 
-		/* Write dumpfile header */
+		/* There arent' any subdirectories at revision 0 */
+		if ((strlen(session->prefix) > 0) && opts->start == 0) {
+			opts->start = 1;
+		}
+	}
+
+	/* Write dumpfile header */
+	if (!(opts->flags & DF_NO_INCREMENTAL_HEADER) || !start_mid) {
 		printf("%s: %d\n\n", SVN_REPOS_DUMPFILE_MAGIC_HEADER, opts->dump_format);
 		if ((opts->prefix == NULL) && (strlen(session->prefix) == 0)) {
 			const char *uuid;
@@ -361,11 +368,6 @@ char dump(session_t *session, dump_options_t *opts)
 				return 1;
 			}
 			printf("UUID: %s\n\n", uuid);
-		}
-
-		/* There arent' any subdirectories at revision 0 */
-		if ((strlen(session->prefix) > 0) && opts->start == 0) {
-			opts->start = 1;
 		}
 	}
 

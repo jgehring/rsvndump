@@ -47,7 +47,7 @@ print("done\n");
 print(">> Preforming incremental dump... ");
 my $start = 0;
 my $end = $steps;
-while (system("../src/rsvndump --incremental -r $start:$end $args $url >> .dumps/incremental 2>> .dumps/incremental.log") == 0) {
+while (system("../src/rsvndump --incremental --no-incremental-header -r $start:$end $args $url >> .dumps/incremental 2>> .dumps/incremental.log") == 0) {
 	$start = $end+1;
 	$end += $steps;
 	if ($end > $head) {

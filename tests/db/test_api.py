@@ -113,9 +113,9 @@ def dump_rsvndump_incremental(id, stepsize, args, repos = None):
 	while True:
 		try:
 			if not platform.system() == "Windows":
-				run("../../src/rsvndump", uri("file://"+repos), "--incremental", "--revision", str(start)+":"+str(end), extra_args = tuple(args), output = dump, error = test.log(id))
+				run("../../src/rsvndump", uri("file://"+repos), "--incremental", "--no-incremental-header", "--revision", str(start)+":"+str(end), extra_args = tuple(args), output = dump, error = test.log(id))
 			else:
-				run("../../bin/rsvndump.exe", uri("file://"+repos), "--incremental", "--revision", str(start)+":"+str(end), extra_args = tuple(args), output = dump, error = test.log(id))
+				run("../../bin/rsvndump.exe", uri("file://"+repos), "--incremental", "--no-incremental-header", "--revision", str(start)+":"+str(end), extra_args = tuple(args), output = dump, error = test.log(id))
 			start = end+1
 			end = start+stepsize
 		except:

@@ -80,6 +80,9 @@ static void print_usage()
 	printf(_("    --keep-revnums            keep the dumped revision numbers in sync with\n" \
 	         "                              the repository by using empty revisions for\n" \
 	         "                              padding\n"));
+	printf(_("    --no-incremental-header   don't print the dumpfile header when dumping\n"));
+	printf(_("                              with --incrementals and not starting at\n"));
+	printf(_("                              revision 0\n"));
 	printf("\n");
 	printf("Report bugs to <"PACKAGE_BUGREPORT">\n");
 }
@@ -198,6 +201,8 @@ int main(int argc, char **argv)
 			session.flags |= SF_NON_INTERACTIVE;
 		} else if (!strcmp(argv[i], "--keep-revnums")) {
 			opts.flags |= DF_KEEP_REVNUMS;
+		} else if (!strcmp(argv[i], "--no-incremental-header")) {
+			opts.flags |= DF_NO_INCREMENTAL_HEADER;
 		} else if (!strcmp(argv[i], "--deltas")) {
 			opts.flags |= DF_USE_DELTAS;
 		} else if (!strcmp(argv[i], "--incremental")) {
