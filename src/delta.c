@@ -402,12 +402,12 @@ static svn_error_t *delta_cat_file(apr_pool_t *pool, const char *path)
 	apr_status_t status;
 	apr_file_t *in_file = NULL;
 	svn_stream_t *in, *out;
-	apr_pool_t *epool = svn_pool_create(NULL);
-	const int ebsize = 512;
-	char *errbuf = apr_palloc(epool, ebsize);
 
 	status = apr_file_open(&in_file, path, APR_READ, 0600, pool);
 	if (status) {
+		apr_pool_t *epool = svn_pool_create(NULL);
+		const int ebsize = 512;
+		char *errbuf = apr_palloc(epool, ebsize);
 		return svn_error_create(status, NULL, apr_strerror(status, errbuf, ebsize));
 	}
 	in = svn_stream_from_aprfile2(in_file, FALSE, pool);

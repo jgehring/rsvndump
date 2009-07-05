@@ -39,7 +39,7 @@ enum dump_flags {
 	DF_KEEP_REVNUMS = 0x02,
 	DF_INCREMENTAL = 0x04,
 	DF_DRY_RUN = 0x08,
-	DF_NO_INCREMENTAL_HEADER = 0x10,
+	DF_NO_INCREMENTAL_HEADER = 0x10
 };
 
 /* Data structure to bundle information related to the dumping process */
