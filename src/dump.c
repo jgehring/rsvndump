@@ -458,8 +458,12 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 		DEBUG_MSG("global = %ld, diff = %ld, start = %ld\n", global_rev, diff_rev, opts->start);
 
-		if (opts->verbosity > 0 && !(opts->flags & DF_DRY_RUN)) {
-			fprintf(stderr, _(">>> Dumping new revision, based on original revision %ld\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
+		if (opts->verbosity > 0) {
+			if (!(opts->flags & DF_DRY_RUN)) {
+				fprintf(stderr, _(">>> Dumping new revision, based on original revision %ld\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
+			} else {
+				fprintf(stderr, _("Fetching base revision... "));
+			}
 		}
 
 		/* Setup the delta editor and run a diff */
@@ -475,8 +479,12 @@ char dump(session_t *session, dump_options_t *opts)
 			} else {
 				fprintf(stderr, _("* Dumped revision %ld.\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
 			}
-		} else if (opts->verbosity > 0 && !(opts->flags & DF_DRY_RUN)) {
-			fprintf(stderr, _("\n------ Dumped revision %ld <<<\n\n"), local_rev);
+		} else if (opts->verbosity > 0) {
+			if (!(opts->flags & DF_DRY_RUN)) {
+				fprintf(stderr, _("\n------ Dumped revision %ld <<<\n\n"), local_rev);
+			} else {
+				fprintf(stderr, _("done\n"));
+			}
 		}
 
 		global_rev = ((log_revision_t *)logs.elements)[list_idx].revision+1;

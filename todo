@@ -1,6 +1,5 @@
 == Schedule for 0.5.1 ==
 > In delta.c:delta_cat_file. Why allocate 512 on every run if it is needed only on errors?
-> Output "Fetching base revision..." for incremental dumps
 > Test ideas for new property handling:
   > Are properties saved accross moves, copies etc.?
 
