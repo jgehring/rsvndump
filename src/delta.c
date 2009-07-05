@@ -36,6 +36,7 @@
 #include "list.h"
 #include "log.h"
 #include "property.h"
+#include "rhash.h"
 #include "session.h"
 #include "utils.h"
 
@@ -109,12 +110,10 @@ typedef struct {
  * with file/directory properties. The md5_hash is used to store the md5-sums
  * of the file contents.
  */
-static apr_pool_t *delta_pool = NULL;
-static apr_hash_t *delta_hash = NULL;
-static apr_pool_t *prop_pool = NULL;
-static apr_hash_t *prop_hash = NULL;
-static apr_pool_t *md5_pool = NULL;
-static apr_hash_t *md5_hash = NULL;
+static char hashes_created = 0;
+static rhash_t *delta_hash = NULL;
+static rhash_t *prop_hash = NULL;
+static rhash_t *md5_hash = NULL;
 #ifdef USE_TIMING
  static float tm_de_apply_textdelta = 0.0f;
 #endif
@@ -170,7 +169,7 @@ static void delta_mark_node(de_node_baton_t *node)
 	de_baton_t *de_baton = node->de_baton;
 	apr_hash_set(de_baton->dumped_entries, apr_pstrdup(de_baton->revision_pool, node->path), APR_HASH_KEY_STRING, de_baton /* The value doesn't matter */);
 	if (node->kind == svn_node_file) {
-		apr_hash_set(md5_hash, apr_pstrdup(md5_pool, node->path), APR_HASH_KEY_STRING, apr_pmemdup(md5_pool, node->md5sum, MD5SUM_LENGTH));
+		rhash_set(md5_hash, node->path, APR_HASH_KEY_STRING, node->md5sum, MD5SUM_LENGTH);
 		DEBUG_MSG("md5_hash += %s : %s\n", node->path, svn_md5_digest_to_cstring(node->md5sum, node->pool));
 	}
 	node->dumped = 1;
@@ -204,7 +203,7 @@ static svn_error_t *delta_write_properties(de_node_baton_t *node)
 
 	/* We don't need to save anything if there are no properties */
 	if (apr_hash_count(node->properties) == 0) {
-		apr_hash_set(prop_hash, apr_pstrdup(prop_pool, node->path), APR_HASH_KEY_STRING, NULL);
+		rhash_set(prop_hash, node->path, APR_HASH_KEY_STRING, NULL, 0);
 		svn_pool_destroy(pool);
 		return SVN_NO_ERROR;
 	}
@@ -224,7 +223,7 @@ static svn_error_t *delta_write_properties(de_node_baton_t *node)
 	property_hash_write(node->properties, file, pool);
 	apr_file_close(file);
 
-	apr_hash_set(prop_hash, apr_pstrdup(prop_pool, node->path), APR_HASH_KEY_STRING, apr_pstrdup(prop_pool, filename));
+	rhash_set(prop_hash, node->path, APR_HASH_KEY_STRING, filename, RHASH_VAL_STRING);
 
 	svn_pool_destroy(pool);
 	return SVN_NO_ERROR;
@@ -239,7 +238,7 @@ static svn_error_t *delta_load_properties(de_node_baton_t *node)
 	apr_status_t status;
 	apr_pool_t *pool = svn_pool_create(node->pool);
 
-	filename = apr_hash_get(prop_hash, node->path, APR_HASH_KEY_STRING);
+	filename = rhash_get(prop_hash, node->path, APR_HASH_KEY_STRING);
 	if (filename == NULL) {
 		/* No properties is ok, too */
 		svn_pool_destroy(pool);
@@ -264,7 +263,7 @@ static svn_error_t *delta_load_properties(de_node_baton_t *node)
 
 	/* Delete the old file if it exists */
 	apr_file_remove(filename, pool);
-	apr_hash_set(prop_hash, node->path, APR_HASH_KEY_STRING, NULL);
+	rhash_set(prop_hash, node->path, APR_HASH_KEY_STRING, NULL, 0);
 
 	svn_pool_destroy(pool);
 	return SVN_NO_ERROR;
@@ -552,7 +551,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 
 		/* Maybe we don't need to dump the contents */
 		if (node->action == 'A') {
-			unsigned char *prev_md5 = apr_hash_get(md5_hash, node->copyfrom_path+offset, APR_HASH_KEY_STRING);
+			unsigned char *prev_md5 = rhash_get(md5_hash, node->copyfrom_path+offset, APR_HASH_KEY_STRING);
 			if (prev_md5 && !memcmp(node->md5sum, prev_md5, MD5SUM_LENGTH)) {
 				DEBUG_MSG("md5sum matches\n");
 				dump_content = 0;
@@ -763,39 +762,39 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 
 	/* This node might be a directory, so clear the data of all children */
 	pathlen = strlen(node->path);
-	for (hi = apr_hash_first(pool, delta_hash); hi; hi = apr_hash_next(hi)) {
+	for (hi = rhash_first(pool, delta_hash); hi; hi = rhash_next(hi)) {
 		const char *npath;
 		char *filename;
-		apr_hash_this(hi, (const void **)(void *)&npath, NULL, (void **)(void *)&filename);
+		rhash_this(hi, (const void **)(void *)&npath, NULL, (void **)(void *)&filename);
 		/* TODO: This is a small hack to make sure the node is a directory */
 		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
 #ifndef DUMP_DEBUG
 			apr_file_remove(filename, node->pool);
 #endif
 			DEBUG_MSG("deleting %s from delta_hash\n", npath);
-			apr_hash_set(delta_hash, npath, APR_HASH_KEY_STRING, NULL);
+			rhash_set(delta_hash, npath, APR_HASH_KEY_STRING, NULL, 0);
 		}
 	}
-	for (hi = apr_hash_first(pool, prop_hash); hi; hi = apr_hash_next(hi)) {
+	for (hi = rhash_first(pool, prop_hash); hi; hi = rhash_next(hi)) {
 		const char *npath;
 		char *filename;
-		apr_hash_this(hi, (const void **)(void *)&npath, NULL, (void **)(void *)&filename);
+		rhash_this(hi, (const void **)(void *)&npath, NULL, (void **)(void *)&filename);
 		/* TODO: This is a small hack to make sure the node is a directory */
 		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
 #ifndef DUMP_DEBUG
 			apr_file_remove(filename, node->pool);
 #endif
 			DEBUG_MSG("deleting %s from prop_hash\n", npath);
-			apr_hash_set(prop_hash, npath, APR_HASH_KEY_STRING, NULL);
+			rhash_set(prop_hash, npath, APR_HASH_KEY_STRING, NULL, 0);
 		}
 	}
-	for (hi = apr_hash_first(pool, md5_hash); hi; hi = apr_hash_next(hi)) {
+	for (hi = rhash_first(pool, md5_hash); hi; hi = rhash_next(hi)) {
 		const char *npath;
 		char *md5sum;
-		apr_hash_this(hi, (const void **)(void *)&npath, NULL, (void **)(void *)&md5sum);
+		rhash_this(hi, (const void **)(void *)&npath, NULL, (void **)(void *)&md5sum);
 		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
 			DEBUG_MSG("deleting %s from md5_hash\n", npath);
-			apr_hash_set(md5_hash, npath, APR_HASH_KEY_STRING, NULL);
+			rhash_set(md5_hash, npath, APR_HASH_KEY_STRING, NULL, 0);
 		}
 	}
 
@@ -1055,7 +1054,7 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 	dest_stream = svn_stream_from_aprfile2(dest_file, FALSE, pool);
 
 	/* Update the local copy */
-	filename = apr_hash_get(delta_hash, node->path, APR_HASH_KEY_STRING);
+	filename = rhash_get(delta_hash, node->path, APR_HASH_KEY_STRING);
 	if (filename == NULL) {
 		src_stream = svn_stream_empty(pool);
 	} else {
@@ -1064,7 +1063,7 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 	}
 
 	svn_txdelta_apply(src_stream, dest_stream, node->md5sum, node->path, pool, handler, handler_baton);
-	apr_hash_set(delta_hash, apr_pstrdup(delta_pool, node->path), APR_HASH_KEY_STRING, apr_pstrdup(delta_pool, node->filename));
+	rhash_set(delta_hash, node->path, APR_HASH_KEY_STRING, node->filename, RHASH_VAL_STRING);
 	node->old_filename = filename;
 
 	DEBUG_MSG("applied delta: %s -> %s\n", filename, node->filename);
@@ -1152,12 +1151,12 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 		DEBUG_MSG("Checking %s (%c)\n", path, log->action);
 		if (log->action == 'D') {
 			/* We can unlink a possible temporary file now */
-			char *filename = apr_hash_get(delta_hash, path, APR_HASH_KEY_STRING);
+			char *filename = rhash_get(delta_hash, path, APR_HASH_KEY_STRING);
 			if (filename) {
 #ifndef DUMP_DEBUG
 				apr_file_remove(filename, pool);
 #endif
-				apr_hash_set(delta_hash, path, APR_HASH_KEY_STRING, NULL);
+				rhash_set(delta_hash, path, APR_HASH_KEY_STRING, NULL, 0);
 			}
 
 			if (apr_hash_get(de_baton->dumped_entries, path, APR_HASH_KEY_STRING) == NULL) {
@@ -1229,23 +1228,27 @@ void delta_setup_editor(session_t *session, dump_options_t *options, list_t *log
 	baton->dumped_entries = apr_hash_make(baton->revision_pool);
 	*editor_baton = baton;
 
-	/* TODO: Merge these three */
+	/* Create global hashes if needed */
+	if (!hashes_created) {
+		apr_pool_t *hash_pool = svn_pool_create(session->pool);
 
-	/* Check if the global md5sum hash needs to be created */
-	if (md5_pool == NULL) {
-		md5_pool = svn_pool_create(session->pool);
-		md5_hash = apr_hash_make(md5_pool);
+		md5_hash = rhash_make(hash_pool);
+		delta_hash = rhash_make(hash_pool);
+		prop_hash = rhash_make(hash_pool);
+		
+		hashes_created = 1;
 	}
+}
 
-	/* Check if the global file hash needs to be created */
-	if (delta_pool == NULL) {
-		delta_pool = svn_pool_create(session->pool);
-		delta_hash = apr_hash_make(delta_pool);
-	}
 
-	/* Check if the global property hash needs to be created */
-	if (prop_pool == NULL) {
-		prop_pool = svn_pool_create(session->pool);
-		prop_hash = apr_hash_make(prop_pool);
+/* Cleans up global resources */
+void delta_cleanup()
+{
+	if (hashes_created) {
+		rhash_clear(md5_hash);
+		rhash_clear(delta_hash);
+		rhash_clear(prop_hash);
+
+		hashes_created = 0;
 	}
 }

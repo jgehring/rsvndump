@@ -1,8 +1,7 @@
 == Schedule for 0.5.1 ==
 > In delta.c:delta_cat_file. Why allocate 512 on every run if it is needed only on errors?
-> Test ideas for new property handling:
+> More test cases for new property handling (extend props test):
   > Are properties saved accross moves, copies etc.?
-> Try to reduce memory usage of the global hashs
 
 
 == Schedule for 0.5.x ==

@@ -6,6 +6,7 @@ rsvndump_SOURCES = \
 	log.c log.h \
 	main.c main.h \
 	property.c property.h \
+	rhash.c rhash.h \
 	session.c session.h \
 	utils.c utils.h
 

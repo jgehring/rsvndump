@@ -497,6 +497,7 @@ char dump(session_t *session, dump_options_t *opts)
 		apr_pool_destroy(revpool);
 	} while (global_rev <= opts->end);
 
+	delta_cleanup();
 	list_free(&logs);
 	return ret;
 }
