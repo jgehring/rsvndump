@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 #	Web page distribution script for rsvndump
-#	written by Jonas Gehring <jonas.gehring@boolsoft.org>
+#	written by Jonas Gehring
 #
 #	Usage: ./makeweb <root> <version>
 #	root is the root directory of the rsvndump source 
