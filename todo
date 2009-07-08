@@ -1,7 +1,3 @@
-== Schedule for 0.5.1 ==
-> In delta.c:delta_cat_file. Why allocate 512 on every run if it is needed only on errors?
-
-
 == Schedule for 0.5.x ==
 > Add --no-stop-on-copy option
 > Don't dump properties on copy operations if they didn't change

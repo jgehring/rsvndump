@@ -81,7 +81,7 @@ static void print_usage()
 	         "                              the repository by using empty revisions for\n" \
 	         "                              padding\n"));
 	printf(_("    --no-incremental-header   don't print the dumpfile header when dumping\n"));
-	printf(_("                              with --incrementals and not starting at\n"));
+	printf(_("                              with --incremental and not starting at\n"));
 	printf(_("                              revision 0\n"));
 	printf("\n");
 	printf("Report bugs to <"PACKAGE_BUGREPORT">\n");
@@ -294,7 +294,7 @@ int main(int argc, char **argv)
 	}
 	opts.temp_dir = mkdtemp(opts.temp_dir);
 	if (opts.temp_dir == NULL) {
-		fprintf(stderr, _("ERROR: Unable to create download directory.\n"));
+		fprintf(stderr, _("ERROR: Unable to create temporary directory.\n"));
 		session_free(&session);
 		dump_options_free(&opts);
 		return EXIT_FAILURE;
@@ -310,7 +310,7 @@ int main(int argc, char **argv)
 	opts.temp_dir = utils_canonicalize_pstrdup(session.pool, apr_psprintf(session.pool, "%s/"PACKAGE"XXXXXX", tdir));
 	opts.temp_dir = _mktemp(opts.temp_dir);
 	if ((opts.temp_dir == NULL) || (apr_dir_make(opts.temp_dir, 0700, session.pool) != APR_SUCCESS)) {
-		fprintf(stderr, _("ERROR: Unable to create download directory.\n"));
+		fprintf(stderr, _("ERROR: Unable to create temporary directory.\n"));
 		session_free(&session);
 		dump_options_free(&opts);
 		return EXIT_FAILURE;

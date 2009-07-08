@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.5\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-05-26 01:35+0200\n"
+"POT-Creation-Date: 2009-07-08 10:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,69 +16,74 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/delta.c:173
+#: src/delta.c:179
 #, c-format
 msgid "COPIED ... done.\n"
 msgstr ""
 
-#: src/delta.c:175
+#: src/delta.c:181
 #, c-format
 msgid "done.\n"
 msgstr ""
 
-#: src/delta.c:396 src/delta.c:850
+#: src/delta.c:486 src/delta.c:997
 #, c-format
 msgid "     * adding path : %s ... "
 msgstr ""
 
-#: src/delta.c:620
+#: src/delta.c:744
 #, c-format
 msgid "     * deleting path : %s ... "
 msgstr ""
 
-#: src/delta.c:866
+#: src/delta.c:1013
 #, c-format
 msgid "     * editing path : %s ... "
 msgstr ""
 
-#: src/dump.c:204
+#: src/dump.c:203
 #, c-format
 msgid "ERROR: URL '%s' not found in HEAD revision\n"
 msgstr ""
 
-#: src/dump.c:310
+#: src/dump.c:315
 #, c-format
 msgid "ERROR: URL '%s' not found in revision %ld\n"
 msgstr ""
 
-#: src/dump.c:416
+#: src/dump.c:423
 #, c-format
 msgid "* Padded revision %ld.\n"
 msgstr ""
 
-#: src/dump.c:418
+#: src/dump.c:425
 #, c-format
 msgid ""
 "------ Padded revision %ld <<<\n"
 "\n"
 msgstr ""
 
-#: src/dump.c:455
+#: src/dump.c:463
 #, c-format
 msgid ">>> Dumping new revision, based on original revision %ld\n"
 msgstr ""
 
-#: src/dump.c:467
+#: src/dump.c:465
+#, c-format
+msgid "Fetching base revision... "
+msgstr ""
+
+#: src/dump.c:478
 #, c-format
 msgid "* Dumped revision %ld (local %ld).\n"
 msgstr ""
 
-#: src/dump.c:469
+#: src/dump.c:480
 #, c-format
 msgid "* Dumped revision %ld.\n"
 msgstr ""
 
-#: src/dump.c:472
+#: src/dump.c:484
 #, c-format
 msgid ""
 "\n"
@@ -86,14 +91,14 @@ msgid ""
 "\n"
 msgstr ""
 
+#: src/dump.c:486 src/log.c:179 src/log.c:254
+#, c-format
+msgid "done\n"
+msgstr ""
+
 #: src/log.c:166
 #, c-format
 msgid "Determining start end end revision... "
-msgstr ""
-
-#: src/log.c:179 src/log.c:254
-#, c-format
-msgid "done\n"
 msgstr ""
 
 #: src/log.c:239
@@ -101,85 +106,85 @@ msgstr ""
 msgid "Fetching logs... "
 msgstr ""
 
-#: src/main.c:58
+#: src/main.c:64
 #, c-format
 msgid "USAGE:"
 msgstr ""
 
-#: src/main.c:60
+#: src/main.c:66
 #, c-format
 msgid ""
 "[options] <url>\n"
 "\n"
 msgstr ""
 
-#: src/main.c:61
+#: src/main.c:67
 #, c-format
 msgid "Valid options:\n"
 msgstr ""
 
-#: src/main.c:62
+#: src/main.c:68
 #, c-format
 msgid "    -h [--help]               print a nice help screen\n"
 msgstr ""
 
-#: src/main.c:63
+#: src/main.c:69
 #, c-format
 msgid "    --version                 print the program name and version\n"
 msgstr ""
 
-#: src/main.c:64
+#: src/main.c:70
 #, c-format
 msgid "    -q [--quiet]              be quiet\n"
 msgstr ""
 
-#: src/main.c:65
+#: src/main.c:71
 #, c-format
 msgid "    -v [--verbose]            print extra progress\n"
 msgstr ""
 
-#: src/main.c:66
+#: src/main.c:72
 #, c-format
 msgid "    -u [--username] arg       username\n"
 msgstr ""
 
-#: src/main.c:67
+#: src/main.c:73
 #, c-format
 msgid "    -p [--password] arg       password\n"
 msgstr ""
 
-#: src/main.c:68
+#: src/main.c:74
 #, c-format
 msgid "    -r [--revision] arg       specify revision number (or X:Y range)\n"
 msgstr ""
 
-#: src/main.c:69
+#: src/main.c:75
 #, c-format
 msgid "    --deltas                  use deltas in dump output\n"
 msgstr ""
 
-#: src/main.c:70
+#: src/main.c:76
 #, c-format
 msgid "    --incremental             dump incrementally\n"
 msgstr ""
 
-#: src/main.c:71
+#: src/main.c:77
 #, c-format
 msgid "    --no-auth-cache           do not cache authentication tokens\n"
 msgstr ""
 
-#: src/main.c:72
+#: src/main.c:78
 #, c-format
 msgid "    --non-interactive         do no interactive prompting\n"
 msgstr ""
 
-#: src/main.c:73
+#: src/main.c:79
 #, c-format
 msgid ""
 "    --prefix arg              prepend arg to the path that is being dumped\n"
 msgstr ""
 
-#: src/main.c:74
+#: src/main.c:80
 #, c-format
 msgid ""
 "    --keep-revnums            keep the dumped revision numbers in sync with\n"
@@ -187,12 +192,28 @@ msgid ""
 "                              padding\n"
 msgstr ""
 
-#: src/main.c:188
+#: src/main.c:83
+#, c-format
+msgid ""
+"    --no-incremental-header   don't print the dumpfile header when dumping\n"
+msgstr ""
+
+#: src/main.c:84
+#, c-format
+msgid "                              with --incremental and not starting at\n"
+msgstr ""
+
+#: src/main.c:85
+#, c-format
+msgid "                              revision 0\n"
+msgstr ""
+
+#: src/main.c:212
 #, c-format
 msgid "ERROR: invalid revision range '%s'.\n"
 msgstr ""
 
-#: src/main.c:215
+#: src/main.c:239
 #, c-format
 msgid ""
 "WARNING: the '--stop' option is deprated. Please use '--revision'.\n"
@@ -201,39 +222,44 @@ msgid ""
 "subdirectory.\n"
 msgstr ""
 
-#: src/main.c:220
+#: src/main.c:244
 #, c-format
 msgid "ERROR: invalid revision number '%s'.\n"
 msgstr ""
 
-#: src/main.c:226 src/main.c:228
+#: src/main.c:250 src/main.c:252
 #, c-format
 msgid "WARNING: the '%s' option is deprecated.\n"
 msgstr ""
 
-#: src/main.c:231 src/main.c:233
+#: src/main.c:255 src/main.c:257
 #, c-format
 msgid "WARNING: the '%s' option is deprecated and will be IGNORED!.\n"
 msgstr ""
 
-#: src/main.c:239
+#: src/main.c:263
 #, c-format
 msgid "ERROR: multiple URLs detected.\n"
 msgstr ""
 
-#: src/main.c:246
+#: src/main.c:270
 #, c-format
 msgid "ERROR: Unkown argument or malformed url '%s'.\n"
 msgstr ""
 
-#: src/main.c:247
+#: src/main.c:271
 #, c-format
 msgid "Type %s --help for usage information.\n"
 msgstr ""
 
-#: src/main.c:275
+#: src/main.c:297 src/main.c:313
 #, c-format
-msgid "ERROR: Unable to create download directory.\n"
+msgid "ERROR: Unable to create temporary directory.\n"
+msgstr ""
+
+#: src/main.c:305
+#, c-format
+msgid "ERROR: Unable to find a suitable temporary directory.\n"
 msgstr ""
 
 #: src/session.c:192
