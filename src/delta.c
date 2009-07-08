@@ -48,6 +48,7 @@
 #endif
 
 #define MD5SUM_LENGTH 32
+#define ERRBUFFER_SIZE 512
 
 
 /*---------------------------------------------------------------------------*/
@@ -213,11 +214,10 @@ static svn_error_t *delta_write_properties(de_node_baton_t *node)
 	sprintf(filename, "%s/XXXXXX", opts->temp_dir);
 	status = apr_file_mktemp(&file, filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
 	if (status) {
-		const int ebsize = 512;
 		apr_pool_t *epool = svn_pool_create(NULL);
-		char *errbuf = apr_palloc(epool, ebsize);
+		char *errbuf = apr_palloc(epool, ERRBUFFER_SIZE);
 		svn_pool_destroy(pool);
-		return svn_error_create(status, NULL, apr_strerror(status, errbuf, ebsize));
+		return svn_error_create(status, NULL, apr_strerror(status, errbuf, ERRBUFFER_SIZE));
 	}
 
 	property_hash_write(node->properties, file, pool);
@@ -247,11 +247,10 @@ static svn_error_t *delta_load_properties(de_node_baton_t *node)
 
 	status = apr_file_open(&file, filename, APR_READ, 0600, pool);
 	if (status) {
-		const int ebsize = 512;
 		apr_pool_t *epool = svn_pool_create(NULL);
-		char *errbuf = apr_palloc(epool, ebsize);
+		char *errbuf = apr_palloc(epool, ERRBUFFER_SIZE);
 		svn_pool_destroy(pool);
-		return svn_error_create(status, NULL, apr_strerror(status, errbuf, ebsize));
+		return svn_error_create(status, NULL, apr_strerror(status, errbuf, ERRBUFFER_SIZE));
 	}
 
 	if (property_hash_load(node->properties, file, node->pool)) {
@@ -406,9 +405,8 @@ static svn_error_t *delta_cat_file(apr_pool_t *pool, const char *path)
 	status = apr_file_open(&in_file, path, APR_READ, 0600, pool);
 	if (status) {
 		apr_pool_t *epool = svn_pool_create(NULL);
-		const int ebsize = 512;
-		char *errbuf = apr_palloc(epool, ebsize);
-		return svn_error_create(status, NULL, apr_strerror(status, errbuf, ebsize));
+		char *errbuf = apr_palloc(epool, ERRBUFFER_SIZE);
+		return svn_error_create(status, NULL, apr_strerror(status, errbuf, ERRBUFFER_SIZE));
 	}
 	in = svn_stream_from_aprfile2(in_file, FALSE, pool);
 	if ((err = svn_stream_for_stdout(&out, pool))) {
