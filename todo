@@ -1,11 +1,10 @@
 == Schedule for 0.5.1 ==
 > In delta.c:delta_cat_file. Why allocate 512 on every run if it is needed only on errors?
-> More test cases for new property handling (extend props test):
-  > Are properties saved accross moves, copies etc.?
 
 
 == Schedule for 0.5.x ==
 > Add --no-stop-on-copy option
+> Don't dump properties on copy operations if they didn't change
 > Check if revision range determnination can be done faster
 > Re-implement dumping of single files?
 > Output help on missing arguments, i.e. s.th. like "rsvndump --stop"

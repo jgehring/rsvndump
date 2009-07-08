@@ -49,6 +49,18 @@ def setup(step, log):
 	elif step == 7:
 		test_api.run("svn", "propdel", "copyright", "dir1/file1", output = log)
 		return True
+	elif step == 8:
+		test_api.run("svn", "cp", "dir1", "dir3", output = log)
+		return True
+	elif step == 9:
+		test_api.run("svn", "up", output = log)
+		test_api.run("svn", "mv", "dir1", "dir4", output = log)
+		test_api.run("svn", "propset", "svn:ignore", "*.[oa]", "dir4", output = log)
+		return True
+	elif step == 10:
+		test_api.run("svn", "up", output = log)
+		test_api.run("svn", "mv", "dir4/file1", "dir4/file2", output = log)
+		return True
 	else:
 		return False
 

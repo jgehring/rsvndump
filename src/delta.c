@@ -550,7 +550,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		}
 
 		/* Maybe we don't need to dump the contents */
-		if (node->action == 'A') {
+		if ((node->action == 'A') && (node->kind == svn_node_file)) {
 			unsigned char *prev_md5 = rhash_get(md5_hash, node->copyfrom_path+offset, APR_HASH_KEY_STRING);
 			if (prev_md5 && !memcmp(node->md5sum, prev_md5, MD5SUM_LENGTH)) {
 				DEBUG_MSG("md5sum matches\n");
@@ -566,7 +566,8 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 				dump_content = 1;
 			}
 		}
-		if (!dump_content) {
+
+		if (!dump_content && !node->props_changed) {
 			printf("\n\n");
 			delta_mark_node(node);
 			return 0;
