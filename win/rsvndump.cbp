@@ -99,6 +99,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\src\property.h" />
+		<Unit filename="..\src\rhash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\src\rhash.h" />
 		<Unit filename="..\src\session.c">
 			<Option compilerVar="CC" />
 		</Unit>
