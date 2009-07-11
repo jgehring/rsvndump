@@ -12,6 +12,8 @@ autom4te.cache
 config.h
 config.h.in
 config.log
+config.guess
+config.sub
 config.status
 configure
 depcomp

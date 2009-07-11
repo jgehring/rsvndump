@@ -162,10 +162,6 @@ Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 3
 Node-copyfrom-path: sdir2
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
 
 
 Revision-number: 5
