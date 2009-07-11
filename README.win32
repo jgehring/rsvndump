@@ -30,8 +30,11 @@ Prerequesits:
 
 	- CodeBlocks (>= 8.02, not tested below)
 
-If everything is set up correctly, the project should be build using the
-CodeBlocks project file provided in the "win" directory.
+The CodeBlocks project file can be found in the top-level "win" directory.
+
+In CodeBlocks, you should add the include directory of the Windows SDK. The
+project file contains the directory path on my XP machine, but it may be
+different on your machine.
 
 In order to run the test suite (located in "tests\db\"), you need to have
 Python (>= 2.5) and Subversion (the command line tools, not TurtoiseSVN)
