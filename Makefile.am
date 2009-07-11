@@ -3,6 +3,8 @@ SUBDIRS = po $(COMPAT_SUBDIRS) src $(DOC_SUBDIRS)
 EXTRA_DIST = \
              config.rpath \
              autogen.sh \
+             README.win32 \
+             win/rsvndump.cbp \
              lib/Makefile.am \
              lib/gettext.h \
              lib/lstat.h \
