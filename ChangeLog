@@ -1,3 +1,12 @@
+2009-07-11  --  version 0.5.1
+
+	* Fixed dumping of file and directory properties
+	* Fixed memory leaks
+	* Include the dump file header in incremental dumps
+	  (Added --no-incremental-header flag to restore the old behaviour)
+	* Use dump format version "3" only when dumping with --deltas
+	* The program can be built and run on Windows now
+
 2009-06-01  --  version 0.5
 
 	* Added support for dumping file content deltas
