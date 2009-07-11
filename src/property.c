@@ -49,9 +49,9 @@ size_t property_strlen(struct apr_pool_t *pool, const char *key, const char *val
 		return 0;
 	}
 	if (value == NULL) {
-		len = strlen(apr_psprintf(pool, "K %d\n%s\nV 0\n\n", strlen(key), key));
+		len = strlen(apr_psprintf(pool, "K %lu\n%s\nV 0\n\n", (unsigned long)strlen(key), key));
 	} else {
-		len = strlen(apr_psprintf(pool, "K %d\n%s\nV %d\n%s\n", strlen(key), key, strlen(value), value));
+		len = strlen(apr_psprintf(pool, "K %lu\n%s\nV %lu\n%s\n", (unsigned long)strlen(key), key, (unsigned long)strlen(value), value));
 	}
 
 	return len;
@@ -66,7 +66,7 @@ size_t property_del_strlen(struct apr_pool_t *pool, const char *key)
 	if (key == NULL) {
 		return 0;
 	}
-	len = strlen(apr_psprintf(pool, "D %d\n%s\n", strlen(key), key));
+	len = strlen(apr_psprintf(pool, "D %lu\n%s\n", (unsigned long)strlen(key), key));
 
 	return len;
 }

@@ -639,7 +639,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 			DEBUG_MSG("dump_delta_node: FATAL: cannot stat %s\n", node->filename);
 			return svn_error_create(1, NULL, apr_psprintf(session->pool, "Cannot stat %s", node->filename));
 		}
-		content_len = info->size;
+		content_len = (unsigned long)info->size;
 
 		if (opts->flags & DF_USE_DELTAS) {
 			printf("%s: true\n", SVN_REPOS_DUMPFILE_TEXT_DELTA);
