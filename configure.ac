@@ -32,6 +32,7 @@ AC_HEADER_DIRENT
 AC_HEADER_STDBOOL
 AC_HEADER_STDC
 AC_HEADER_TIME
+AC_CHECK_HEADERS([fcntl.h locale.h])
 AC_CHECK_HEADERS([sys/time.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -40,13 +41,14 @@ AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
 AC_STRUCT_TM
 
-AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_MALLOC
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([strchr], ,[AC_MSG_ERROR([Sorry, unable to compile this program without these functions])])
 USE_COMPAT="no"
 AC_CHECK_FUNCS([memset], ,[AC_LIBOBJ([memset]) USE_COMPAT="yes"])
 AC_CHECK_FUNCS([memcmp], ,[AC_LIBOBJ([memcmp]) USE_COMPAT="yes"])
+AC_CHECK_FUNCS([strdup], ,[AC_LIBOBJ([strdup]) USE_COMPAT="yes"])
+AC_CHECK_FUNCS([setlocale], , USE_NLS="no")
 AC_CHECK_FUNCS([atexit strtol gettimeofday])
 if test "$USE_COMPAT" = "yes"; then
 	COMPAT_LIBS="../lib/libcompat.a"
