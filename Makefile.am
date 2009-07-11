@@ -7,12 +7,13 @@ EXTRA_DIST = \
              win/rsvndump.cbp \
              lib/Makefile.am \
              lib/gettext.h \
-             lib/lstat.h \
              lib/lstat.c \
+             lib/lstat.h \
              lib/malloc.c \
              lib/memcmp.c \
              lib/memset.c \
              lib/rmdir.c \
+             lib/strdup.c \
              doc/Makefile.in \
              doc/Makefile.am \
              doc/rsvndump.txt
