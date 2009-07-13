@@ -7,10 +7,24 @@ h2 {
 	text-align: center;
 }
 
-div.main {
+div.body {
 	padding: 10px;
 	border: 1px solid #000000;
 	background-color: #FFFFFF;
+}
+
+div.sflogo {
+	border: 1px solid #000000;
+	float: right;
+}
+
+div.index {
+	margin: 1px;
+	float: left;
+}
+
+div.main {
+	clear: both;
 }
 
 a {

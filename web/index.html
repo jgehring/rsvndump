@@ -11,140 +11,148 @@
   <body>
     <h2>rsvndump - remote Subversion repository dump</h2>
 
-    <div class="main">
-      <ul>
-        <li><a href="#about">About</a></li>
-        <li><a href="#news">News</a></li>
-        <li><a href="#content">Content</a></li>
-      </ul>
+    <div class="body">
+      <div class="sflogo">
+        <a href="http://sourceforge.net/projects/rsvndump"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=268687&amp;type=16" width="150" height="40" alt="Get rsvndump at SourceForge.net. Fast, secure and Free Open Source software downloads" /></a>
+      </div>
 
-      <hr />
-      <a name="about"><h3>About</h3></a>
-      <p>rsvndump is a command line tool that is able to dump a
-      Subversion repository that resides on a remote server.
-      All data is dumped in the format that can be read an written by
-      <i>svnadmin load/dump</i>, so the data which is produced
-      can easily be imported into a new Subversion repository.</p>
+      <div class="index">
+        <ul>
+          <li><a href="#about">About</a></li>
+          <li><a href="#news">News</a></li>
+          <li><a href="#content">Content</a></li>
+        </ul>
+      </div>
 
-      <p>rsvndump supports most of the functionality of the normal
-      <i>svn</i> client program and <i>svnadmin</i>, e.g. authentication,
-      SSL-support, incremental dumps and support for dumping text
-      deltas instead of fulltext.</p>
+      <div class="main">
+        <hr />
+        <a name="about"><h3>About</h3></a>
+        <p>rsvndump is a command line tool that is able to dump a
+        Subversion repository that resides on a remote server.
+        All data is dumped in the format that can be read an written by
+        <i>svnadmin load/dump</i>, so the data which is produced
+        can easily be imported into a new Subversion repository.</p>
 
-      <hr />
-      <a name="news"><h3>News</h3></a>
-      <ul>
-		<li><h4>July 11th, 2009</h4>
-        <p>rsvndump 0.5.1 is now <a href="#content">available</a>,
-		fixing a bug that caused properties to get dropped silently and some
-		memory leaks. Additionally, rsvndump will now build successfully using
-		the MSVC compiler on Windows. A corresponding CodeBlocks project file
-		is included in the source distribution, which is now available in zip
-		format, too.<br />
-        A more detailed description of the changes can be found in the
-        <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
-        is available as a tarball compressed using either gzip or bzip2.
-		The Debian packages have been updated, too.<br />
-		On a side note, the web page and its "About" section have been
-		updated and are now hosted on <a href="http://sourceforge.net">SourceForge.net</a>.
-		All previous releases of rsvndump are now available at the
-		<a href="downloads-archive.html">downloads archive</a>.
+        <p>rsvndump supports most of the functionality of the normal
+        <i>svn</i> client program and <i>svnadmin</i>, e.g. authentication,
+        SSL-support, incremental dumps and support for dumping text
+        deltas instead of fulltext.</p>
 
-        <li><h4>June 1st, 2009</h4>
-        <p>rsvndump 0.5 is now <a href="#content">available</a>.
-        This is again a complete rewrite of the program and introduces
-        new features as well as bugfixes. The most important features
-        are the ability to perform incremental dumps and the support
-        for dumping text deltas instead of the usual fulltext. The
-        authentication system has been been improved, too. The bugfixes
-        include a fix for missing file contents if a file has been copied
-        and changed in the same revision file, which could occur under
-        certain circumstances.<br />
-        Some of the command line switches of the 0.4-series have become
-        obsolete now. You will get a warning message if you use them,
-        so you should probably do a manual run if you invoke rsvndump
-        via a different program, e.g. as a cronjob.<br />
-        A more detailed description of the changes can be found in the
-        <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
-        is available as a tarball compressed using either gzip or bzip2.
-        The Debian packages have been updated, too.<br />
-        I have also uploaded my local repository to
-        <a href="http://github.com/jgehring/rsvndump">github.org</a>,
-        so please feel free to clone it.</p></li>
+        <hr />
+        <a name="news"><h3>News</h3></a>
+        <ul>
+        <li><h4>July 11th, 2009</h4>
+          <p>rsvndump 0.5.1 is now <a href="#content">available</a>,
+          fixing a bug that caused properties to get dropped silently and some
+          memory leaks. Additionally, rsvndump will now build successfully using
+          the MSVC compiler on Windows. A corresponding CodeBlocks project file
+          is included in the source distribution, which is now available in zip
+          format, too.<br />
+          A more detailed description of the changes can be found in the
+          <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
+          is available as a tarball compressed using either gzip or bzip2.
+          The Debian packages have been updated, too.<br />
+          On a side note, the web page and its "About" section have been
+          updated and are now hosted on <a href="http://sourceforge.net">SourceForge.net</a>.
+          All previous releases of rsvndump are now available at the
+          <a href="downloads-archive.html">downloads archive</a>.
 
-        <li><h4>April 15th, 2009</h4>
-        <p>rsvndump 0.4.4-1 is now <a href="#content">available</a>,
-        fixing build issues with Subversion 1.6.1. Please note that you
-        will see warnings about deprecated functions when compiling
-        the package, but it should build without errors.<br />
-        As usual, the source package is available as a tarball compressed
-        using either gzip or bzip2. The Debian packages have been updated,
-        too.</p></li>
+          <li><h4>June 1st, 2009</h4>
+          <p>rsvndump 0.5 is now <a href="#content">available</a>.
+          This is again a complete rewrite of the program and introduces
+          new features as well as bugfixes. The most important features
+          are the ability to perform incremental dumps and the support
+          for dumping text deltas instead of the usual fulltext. The
+          authentication system has been been improved, too. The bugfixes
+          include a fix for missing file contents if a file has been copied
+          and changed in the same revision file, which could occur under
+          certain circumstances.<br />
+          Some of the command line switches of the 0.4-series have become
+          obsolete now. You will get a warning message if you use them,
+          so you should probably do a manual run if you invoke rsvndump
+          via a different program, e.g. as a cronjob.<br />
+          A more detailed description of the changes can be found in the
+          <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
+          is available as a tarball compressed using either gzip or bzip2.
+          The Debian packages have been updated, too.<br />
+          I have also uploaded my local repository to
+          <a href="http://github.com/jgehring/rsvndump">github.org</a>,
+          so please feel free to clone it.</p></li>
 
-        <li><h4>March 30th, 2009</h4>
-        <p>rsvndump 0.4.4 is now <a href="#content">available</a>. This
-        release adds a command line option to disable the need for manually
-        accepting a SSL certificate (<i>--no-check-certificate</i>), which
-        is useful when calling rsvndump from within a script. Additionally,
-        the program has been made translatable using
-        <a href="http://www.gnu.org/software/gettext/">GNU gettext</a>.
-        A German translation of all output strings is already included.<br />
-        As usual, the source package is available as a tarball compressed
-        using either gzip or bzip2. The Debian packages have been updated,
-        too.</p></li>
+          <li><h4>April 15th, 2009</h4>
+          <p>rsvndump 0.4.4-1 is now <a href="#content">available</a>,
+          fixing build issues with Subversion 1.6.1. Please note that you
+          will see warnings about deprecated functions when compiling
+          the package, but it should build without errors.<br />
+          As usual, the source package is available as a tarball compressed
+          using either gzip or bzip2. The Debian packages have been updated,
+          too.</p></li>
 
-        <li><h4>November 21th, 2008</h4>
-        <p>rsvndump 0.4.3 is now <a href="#content">available</a>.
-        This release includes new features as well as bugfixes: the
-        command line option <i>--dump-uuid</i> has been added, which
-        dumps the uuid of a repository and is useful if repositories
-        should be cloned. A bug which could occur when dumping a
-        sub-directory via a file://-url has been fixed. As a minor change,
-        the svn dump format produces has been changed to version "2"
-        because <i>svndumpfilter</i> refuses to read dump files with
-        format "3" in current versions (currently, this does not affect
-        the rsvndump's output except for a number at the start).<br />
-        A more detailed description of the changes can be found in the
-        <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
-        available as a tarball compressed using either gzip or bzip2.
-        The Debian packages have been updated, too.</p></li>
-      </ul>
-      <p>Older news items can be found in the <a href="news-archive.html">news archive</a>.</p>
+          <li><h4>March 30th, 2009</h4>
+          <p>rsvndump 0.4.4 is now <a href="#content">available</a>. This
+          release adds a command line option to disable the need for manually
+          accepting a SSL certificate (<i>--no-check-certificate</i>), which
+          is useful when calling rsvndump from within a script. Additionally,
+          the program has been made translatable using
+          <a href="http://www.gnu.org/software/gettext/">GNU gettext</a>.
+          A German translation of all output strings is already included.<br />
+          As usual, the source package is available as a tarball compressed
+          using either gzip or bzip2. The Debian packages have been updated,
+          too.</p></li>
 
-      <hr />
-      <a name="content"><h3>Content</h3></a>
-      <ul>
-        <li><h4>Downloads:</h4>
-          <ul>
-            <li><b><a href="rsvndump-0.5.1.tar.gz">rsvndump-0.5.1.tar.gz</a></b> - Source code distribution</li>
-            <li><b><a href="rsvndump-0.5.1.tar.bz2">rsvndump-0.5.1.tar.bz2</a></b> - Source code distribution</li>
-            <li><b><a href="rsvndump-0.5.1.zip">rsvndump-0.5.1.zip</a></b> - Source code distribution</li>
-            <li><b><a href="rsvndump_0.5.1_i386.deb">rsvndump_0.5.1_i386.deb</a></b> - Debian binary package (x86)</li>
-            <li><b><a href="rsvndump_0.5.1_arm.deb">rsvndump_0.5.1_arm.deb</a></b> - Debian binary package (ARM)</li>
-			<li><b><a href="http://www.freshports.org/devel/rsvndump/">FreeBSD port</a></b></li>
-			<li><b><a href="http://download.opensuse.org/repositories/Subversion/">openSUSE packages</a></b> (however, they haven't been updated to the 0.5 series yet)</li>
-          </ul>
-          <p>Previous releases can be found in the <a href="downloads-archive.html">downloads archive</a>.</p>
-        </li>
+          <li><h4>November 21th, 2008</h4>
+          <p>rsvndump 0.4.3 is now <a href="#content">available</a>.
+          This release includes new features as well as bugfixes: the
+          command line option <i>--dump-uuid</i> has been added, which
+          dumps the uuid of a repository and is useful if repositories
+          should be cloned. A bug which could occur when dumping a
+          sub-directory via a file://-url has been fixed. As a minor change,
+          the svn dump format produces has been changed to version "2"
+          because <i>svndumpfilter</i> refuses to read dump files with
+          format "3" in current versions (currently, this does not affect
+          the rsvndump's output except for a number at the start).<br />
+          A more detailed description of the changes can be found in the
+          <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
+          available as a tarball compressed using either gzip or bzip2.
+          The Debian packages have been updated, too.</p></li>
+        </ul>
+        <p>Older news items can be found in the <a href="news-archive.html">news archive</a>.</p>
 
-        <li><h4>Documentation:</h4>
-          <ul>
-            <li><a href="README">README</a> - Requirements and general information</li>
-            <li><a href="manpage.html">man page</a> - Online version of the man page</li>
-            <li><a href="ChangeLog">ChangeLog</a> - The rsvndump change log</li>
-            <li><a href="http://www.gnu.org/licenses/gpl-3.0.txt">COPYING</a> - The GPL v3, under which rsvndump is released</li>
-          </ul>
-        </li>
+        <hr />
+        <a name="content"><h3>Content</h3></a>
+        <ul>
+          <li><h4>Downloads:</h4>
+            <ul>
+              <li><b><a href="rsvndump-0.5.1.tar.gz">rsvndump-0.5.1.tar.gz</a></b> - Source code distribution</li>
+              <li><b><a href="rsvndump-0.5.1.tar.bz2">rsvndump-0.5.1.tar.bz2</a></b> - Source code distribution</li>
+              <li><b><a href="rsvndump-0.5.1.zip">rsvndump-0.5.1.zip</a></b> - Source code distribution</li>
+              <li><b><a href="rsvndump_0.5.1_i386.deb">rsvndump_0.5.1_i386.deb</a></b> - Debian binary package (x86)</li>
+              <li><b><a href="rsvndump_0.5.1_arm.deb">rsvndump_0.5.1_arm.deb</a></b> - Debian binary package (ARM)</li>
+              <li><b><a href="http://www.freshports.org/devel/rsvndump/">FreeBSD port</a></b></li>
+              <li><b><a href="http://download.opensuse.org/repositories/Subversion/">openSUSE packages</a></b> (however, they haven't been updated to the 0.5 series yet)</li>
+            </ul>
+            <p>Previous releases can be found in the <a href="downloads-archive.html">downloads archive</a>.</p>
+          </li>
 
-        <li><h4>Hosted:</h4>
-          <ul>
-            <li>The <a href="http://github.com/jgehring/rsvndump">Git repository</a> at github.com</li>
-            <li>The <a href="http://sourceforge.net/projects/rsvndump">project page</a> at SourceForge, including forums and a bug tracker</li>
-            <li>The <a href="http://freshmeat.net/projects/rsvndump">project page</a> at Freshmeat</li>
-            <li>The <a href="http://ohloh.net/p/rsvndump">project page</a> at Ohloh</li>
-          </ul>
-        </li>
-      </ul>
+          <li><h4>Documentation:</h4>
+            <ul>
+              <li><a href="README">README</a> - Requirements and general information</li>
+              <li><a href="manpage.html">man page</a> - Online version of the man page</li>
+              <li><a href="ChangeLog">ChangeLog</a> - The rsvndump change log</li>
+              <li><a href="http://www.gnu.org/licenses/gpl-3.0.txt">COPYING</a> - The GPL v3, under which rsvndump is released</li>
+            </ul>
+          </li>
+
+          <li><h4>Hosted:</h4>
+            <ul>
+              <li>The <a href="http://github.com/jgehring/rsvndump">Git repository</a> at github.com</li>
+              <li>The <a href="http://sourceforge.net/projects/rsvndump">project page</a> at SourceForge, including forums and a bug tracker</li>
+              <li>The <a href="http://freshmeat.net/projects/rsvndump">project page</a> at Freshmeat</li>
+              <li>The <a href="http://ohloh.net/p/rsvndump">project page</a> at Ohloh</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
 
       <hr />
       <table width="100%">
