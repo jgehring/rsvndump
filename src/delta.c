@@ -313,7 +313,7 @@ static char delta_check_copy(de_node_baton_t *node)
 		   This will work, because if we have not dumped the requested
 		   revision itself, the source of the copy has not changed between
 		   the best matching and the requested revision. */
-		for (r = local_revnum-1; r > 0; r--) {
+		for (r = local_revnum-2; r > 0; r--) {
 			/* Yes, the +1 is needed */
 			svn_revnum_t d = (node->copyfrom_revision - (((log_revision_t *)logs->elements)[r].revision))+1;
 			DEBUG_MSG("delta_check_copy: req: %ld cur: %ld, local: %ld\n", node->copyfrom_revision, (((log_revision_t *)logs->elements)[r].revision), r);
