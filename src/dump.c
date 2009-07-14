@@ -138,7 +138,7 @@ static void dump_create_user_prefix(dump_options_t *opts, apr_pool_t *pool)
 
 
 /* Runs a diff against two revisions */
-static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest, char start_empty, const svn_delta_editor_t *editor, void *editor_baton, apr_pool_t *pool)
+static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest, int start_empty, const svn_delta_editor_t *editor, void *editor_baton, apr_pool_t *pool)
 {
 	const svn_ra_reporter2_t *reporter;
 	void *report_baton;
@@ -148,7 +148,7 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 	stopwatch_t watch = stopwatch_create();
 #endif
 
-	DEBUG_MSG("diffing %d against %d (start_empty = %d)\n", dest, src, (int)start_empty);
+	DEBUG_MSG("diffing %d against %d (start_empty = %d)\n", dest, src, start_empty);
 #ifdef USE_SINGLEFILE_DUMP
 	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, (session->file ? session->file : ""), TRUE, TRUE, TRUE, session->encoded_url, editor, editor_baton, subpool);
 #else
