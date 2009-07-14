@@ -343,16 +343,18 @@ char dump(session_t *session, dump_options_t *opts)
 			++local_rev;
 		}
 
-		/* The first revision is a dry run
+		/* The first revision is a dry run.
 		   This is because we need to get the data of the previous
 		   revision first */
 		opts->flags |= DF_DRY_RUN;
-		--local_rev;
+		if (strlen(session->prefix) == 0) {
+			--local_rev;
+		}
 		opts->start = ((log_revision_t *)logs.elements)[local_rev].revision;
 	} else {
 		logs = list_create(sizeof(log_revision_t));
 
-		/* There arent' any subdirectories at revision 0 */
+		/* There aren't any subdirectories at revision 0 */
 		if ((strlen(session->prefix) > 0) && opts->start == 0) {
 			opts->start = 1;
 		}
@@ -385,9 +387,6 @@ char dump(session_t *session, dump_options_t *opts)
 		list_idx = local_rev-1;
 		if (opts->flags & DF_KEEP_REVNUMS) {
 			local_rev = opts->start;
-		} else if (strlen(session->prefix)) {
-			/* Adjustment for missing revision 0 */
-			++local_rev;
 		}
 	}
 
