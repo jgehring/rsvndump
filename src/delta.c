@@ -294,12 +294,13 @@ static char delta_check_copy(de_node_baton_t *node)
 		return 0;
 	}
 
-	/* Check if the source is reachable, i.e. can be found under
-	   the current session root and the target revision is within
-	   the selected revision range */
+	/*
+	 * Check if the source is reachable, i.e. can be found under
+	 * the current session root and the target revision is within
+	 * the selected revision range
+	 */
 	if (((opts->flags & DF_INCREMENTAL) || (opts->start <= node->copyfrom_revision)) && !strncmp(session->prefix, node->copyfrom_path, strlen(session->prefix))) {
-		svn_revnum_t r, rr = -1;
-		svn_revnum_t mind = LONG_MAX;
+		svn_revnum_t rev;
 
 		/* If we sync the revision numbers, the copy-from revision is correct */
 		if (opts->flags & DF_KEEP_REVNUMS) {
@@ -309,30 +310,35 @@ static char delta_check_copy(de_node_baton_t *node)
 
 		DEBUG_MSG("local_revnum = %ld\n", local_revnum);
 
-		/* Find the best matching revision.
-		   This will work, because if we have not dumped the requested
-		   revision itself, the source of the copy has not changed between
-		   the best matching and the requested revision. */
-		for (r = local_revnum-2; r > 0; r--) {
-			/* Yes, the +1 is needed */
-			svn_revnum_t d = (node->copyfrom_revision - (((log_revision_t *)logs->elements)[r].revision))+1;
-			DEBUG_MSG("delta_check_copy: req: %ld cur: %ld, local: %ld\n", node->copyfrom_revision, (((log_revision_t *)logs->elements)[r].revision), r);
-			/* TODO: This can be optimized: Once we notice that the distance to the
-			   requested revision gets bigger, it should be safe to break out of this
-			   loop. */
-			if (d >= 0 && d < mind) {
-				mind = d;
-				rr = r;
-				if (d <= 1) {
-					break;
-				}
+		/*
+		 * Loop backwards through the revision list, starting at the previous
+		 * revision ,in order to find the best matching revision for the copy.
+		 * NOTE: This algorithm assumes that list indexes are equal to their
+		 * respective local revision numbers. This is ensured in dump()
+		 */
+		rev = logs->size-1;
+		while (--rev >= 0) {
+			log_revision_t *logrev = ((log_revision_t *)logs->elements) + rev;
+			DEBUG_MSG("node->copyfrom = %ld, logrev->revision = %ld, rev = %ld\n",  node->copyfrom_revision, logrev->revision, rev);
+			if (node->copyfrom_revision == logrev->revision) {
+				/* This is ideal, there's an exact match */
+				DEBUG_MSG("-> equal, using %ld\n", rev);
+				break;
+			} else if (logrev->revision < node->copyfrom_revision)  {
+				/* The revision in question has not been dumped as we've just
+				   missed it. Therefore, simply use this revision (since
+				   node->copyfrom_revision has not been dumped, the node contents
+				   haven't changed between this revision and
+				   node->copyfrom_revision) */
+				DEBUG_MSG("-> smaller , using %ld\n", rev);
+				break;
 			}
 		}
 
-		if (r > 0) {
-			node->copyfrom_revision = rr;
+		if (rev > 0) {
+			node->copyfrom_revision = rev;
 			node->cp_info = CPI_COPY;
-			DEBUG_MSG("delta_check_copy: using local %ld\n", rr);
+			DEBUG_MSG("delta_check_copy: using local %ld\n", rev);
 		} else {
 			node->action = 'A';
 			node->cp_info = CPI_FAILED;

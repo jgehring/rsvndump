@@ -327,6 +327,21 @@ char dump(session_t *session, dump_options_t *opts)
 		return 1;
 	}
 
+	logs = list_create(sizeof(log_revision_t));
+	/*
+	 * delta_check_copy() assumes list indexes and local revisions to be equal,
+	 * so insert a empty revision '0' if a subdirectory is being dumped
+	 */
+	if (strlen(session->prefix) > 0) {
+		log_revision_t dummy;
+		dummy.revision = 0;
+		dummy.author = NULL;
+		dummy.date = NULL;
+		dummy.message = NULL;
+		dummy.changed_paths = NULL;
+		list_append(&logs, &dummy);
+	}
+
 	/*
 	 * Decide wether the whole repositry log should be fetched
 	 * prior to dumping.
@@ -352,8 +367,6 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 		opts->start = ((log_revision_t *)logs.elements)[local_rev].revision;
 	} else {
-		logs = list_create(sizeof(log_revision_t));
-
 		/* There aren't any subdirectories at revision 0 */
 		if ((strlen(session->prefix) > 0) && opts->start == 0) {
 			opts->start = 1;

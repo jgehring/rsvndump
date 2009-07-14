@@ -230,7 +230,6 @@ char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, lis
 	paths = apr_array_make(pool, 1, sizeof (const char *));
 	APR_ARRAY_PUSH(paths, const char *) = svn_path_canonicalize(".", pool);
 
-	*list = list_create(sizeof(log_revision_t));
 	baton.list = list;
 	baton.session = session;
 	baton.pool = session->pool;
