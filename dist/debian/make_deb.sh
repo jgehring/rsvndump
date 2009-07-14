@@ -12,7 +12,7 @@ fi
 PROGRAM="rsvndump"
 VERSION=$1
 ARCH=`dpkg-architecture -l|grep DEB_HOST_ARCH=|sed "s/.*=\(.*\)\$/\1/"`
-MIRROR="http://saubue.boolsoft.org/projects/rsvndump"
+MIRROR="http://rsvndump.sourceforge.net"
 
 #echo -n "Fetching tag $VERSION..."
 #svn export svn://slug/rsvndump/tags/rsvndump-$VERSION "rsvndump-$VERSION"
