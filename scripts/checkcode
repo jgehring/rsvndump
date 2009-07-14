@@ -1,0 +1,20 @@
+#!/bin/sh
+#
+#	Do some static code checks for rsvndump
+#	written by Jonas Gehring
+#
+
+if [ -n "${1}" ]; then
+	cd "${1}"
+fi
+
+echo ">> configuring with --enable-man ..."
+make distclean &> /dev/null
+./configure --enable-man > /dev/null || exit 1
+
+echo ">> checking for compile warnings ..."
+make -s
+
+echo ">> checking for -ansi -pedantic warnings ..."
+make -s clean
+make -s CFLAGS+="-ansi -pedantic -Wno-long-long"
