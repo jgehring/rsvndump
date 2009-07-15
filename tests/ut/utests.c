@@ -87,7 +87,7 @@ static char test_parse_revnum()
 	return ret;
 }
 
-static inline int intcmp(const void *a, const void *b) {
+static int intcmp(const void *a, const void *b) {
 	return *(long *)a - *(long *)b;
 }
 
