@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.4.4\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-07-11 17:39+0200\n"
+"POT-Creation-Date: 2009-07-16 00:39+0200\n"
 "PO-Revision-Date: 2009-02-22 03:00+0100\n"
 "Last-Translator:  <jonas.gehring@boolsoft.org>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -27,17 +27,17 @@ msgstr "KOPIERT ... erledigt.\n"
 msgid "done.\n"
 msgstr "erledigt.\n"
 
-#: src/delta.c:486 src/delta.c:997
+#: src/delta.c:492 src/delta.c:1003
 #, c-format
 msgid "     * adding path : %s ... "
 msgstr "     * Füge Pfad hinzu: %s ... "
 
-#: src/delta.c:744
+#: src/delta.c:750
 #, c-format
 msgid "     * deleting path : %s ... "
 msgstr "     * Lösche Pfad: %s ... "
 
-#: src/delta.c:1013
+#: src/delta.c:1019
 #, c-format
 msgid "     * editing path : %s ... "
 msgstr "     * Bearbeite Pfad: %s ... "
@@ -52,12 +52,12 @@ msgstr "FEHLER: URL '%s' wurde in der HEAD-Revision nicht gefunden\n"
 msgid "ERROR: URL '%s' not found in revision %ld\n"
 msgstr "FEHLER: URL '%s' wurde in Revision %ld nicht gefunden\n"
 
-#: src/dump.c:423
+#: src/dump.c:435
 #, c-format
 msgid "* Padded revision %ld.\n"
 msgstr "* Revision %ld aufgefüllt.\n"
 
-#: src/dump.c:425
+#: src/dump.c:437
 #, c-format
 msgid ""
 "------ Padded revision %ld <<<\n"
@@ -66,27 +66,27 @@ msgstr ""
 "------  Revision %ld aufgefüllt <<<\n"
 "\n"
 
-#: src/dump.c:463
+#: src/dump.c:475
 #, c-format
 msgid ">>> Dumping new revision, based on original revision %ld\n"
 msgstr ">>> Dumpe neue Revision basierend auf Originalrevision %ld\n"
 
-#: src/dump.c:465
+#: src/dump.c:477
 #, c-format
 msgid "Fetching base revision... "
 msgstr "Hole Basisrevision... "
 
-#: src/dump.c:478
+#: src/dump.c:490
 #, c-format
 msgid "* Dumped revision %ld (local %ld).\n"
 msgstr "* Revision %ld gedumpt (lokal: %ld).\n"
 
-#: src/dump.c:480
+#: src/dump.c:492
 #, c-format
 msgid "* Dumped revision %ld.\n"
 msgstr " * Revision %ld gedumpt.\n"
 
-#: src/dump.c:484
+#: src/dump.c:496
 #, c-format
 msgid ""
 "\n"
@@ -97,7 +97,7 @@ msgstr ""
 "------ Revision %ld gedumpt <<<\n"
 "\n"
 
-#: src/dump.c:486 src/log.c:179 src/log.c:254
+#: src/dump.c:498 src/log.c:179 src/log.c:253
 #, c-format
 msgid "done\n"
 msgstr "fertig\n"
@@ -107,7 +107,7 @@ msgstr "fertig\n"
 msgid "Determining start end end revision... "
 msgstr "Bestimme Anfangs- und Endrevision... "
 
-#: src/log.c:239
+#: src/log.c:238
 #, c-format
 msgid "Fetching logs... "
 msgstr "Frage Logs ab... "
@@ -223,12 +223,12 @@ msgstr ""
 msgid "                              revision 0\n"
 msgstr "                              wurde\n"
 
-#: src/main.c:212
+#: src/main.c:207
 #, c-format
 msgid "ERROR: invalid revision range '%s'.\n"
 msgstr "FEHLER: Ungültiger Revisions-Bereich '%s'.\n"
 
-#: src/main.c:239
+#: src/main.c:234
 #, c-format
 msgid ""
 "WARNING: the '--stop' option is deprated. Please use '--revision'.\n"
@@ -240,42 +240,42 @@ msgstr ""
 "         Der erzeugte dump wird von einem mit einer älteren Version\n"
 "         erzeugten ABWEICHEN, wenn sie ein Untervezeichnis dumpen.\n"
 
-#: src/main.c:244
+#: src/main.c:239
 #, c-format
 msgid "ERROR: invalid revision number '%s'.\n"
 msgstr "FEHLER: Ungültige Revisions-Nummer '%s'.\n"
 
-#: src/main.c:250 src/main.c:252
+#: src/main.c:245 src/main.c:247
 #, c-format
 msgid "WARNING: the '%s' option is deprecated.\n"
 msgstr "ACHTUNG: Die Option '%s' ist veraltet.\n"
 
-#: src/main.c:255 src/main.c:257
+#: src/main.c:250 src/main.c:252
 #, c-format
 msgid "WARNING: the '%s' option is deprecated and will be IGNORED!.\n"
 msgstr "ACHTUNG: Die Option '%s'ist veraltet und wird IGNORIERT!.\n"
 
-#: src/main.c:263
+#: src/main.c:258
 #, c-format
 msgid "ERROR: multiple URLs detected.\n"
 msgstr "FEHLER: Meherere URLs entdeckt.\n"
 
-#: src/main.c:270
+#: src/main.c:265
 #, c-format
 msgid "ERROR: Unkown argument or malformed url '%s'.\n"
 msgstr "FEHLER: Ungültiges Argument oder ungültige URL '%s'.\n"
 
-#: src/main.c:271
+#: src/main.c:266
 #, c-format
 msgid "Type %s --help for usage information.\n"
 msgstr "Rufen sie %s --help auf, um Informationen zur Benutzung zu erhalten.\n"
 
-#: src/main.c:297 src/main.c:313
+#: src/main.c:292 src/main.c:308
 #, c-format
 msgid "ERROR: Unable to create temporary directory.\n"
 msgstr "FEHLER: Erstellen eines temporären Verzeichnisses nicht möglich.\n"
 
-#: src/main.c:305
+#: src/main.c:300
 #, c-format
 msgid "ERROR: Unable to find a suitable temporary directory.\n"
 msgstr ""
