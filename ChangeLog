@@ -1,3 +1,12 @@
+2009-07-17  --  version 0.5.2
+
+	* Fixed Node-copyfrom-rev revision number calculation when dumping
+	  subdirectories
+	* Fixed segmentation fault that occured when dumping a subdirectory in
+	  incremental mode and starting at revision 1
+	* Fixed a few minor issues with revision number and range parsing
+	* Added a simple unit test environment
+
 2009-07-11  --  version 0.5.1
 
 	* Fixed dumping of file and directory properties
@@ -17,7 +26,6 @@
 	  "online" diff calls)
 	* Fixed dumping of file copies which include modifications
 	* Again, a complete rewrite
-
 
 2009-04-15  --  version 0.4.4-1
 
