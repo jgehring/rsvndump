@@ -28,14 +28,14 @@ need asciidoc ( http://www.methods.co.nz/asciidoc/ ) and xmlto
 ( https://fedorahosted.org/xmlto/ ) for generating the man page from the
 asciidoc source.
 An HTML-version of the man page can also be found online at
-http://saubue.boolsoft.org/projects/rsvndump/manpage.html
+http://rsvndump.sourceforge.net/manpage.html
 
 
 CREDITS
 =======
 rsvndump 0.5.2
 written by Jonas Gehring
-http://saubue.boolsoft.org/projects/rsvndump
+http://rsvndump.sourceforge.net
 
 rsvndump uses autoconf macros from APR which are licensed under the Apache
 License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
