@@ -15,9 +15,9 @@ sinclude(build/rsvndump_conf.m4)
 
 # Optional features
 USE_MAN="no"
-AC_ARG_ENABLE(man, [  --enable-man            generate the man page], USE_MAN="yes", USE_MAN="no")
+AC_ARG_ENABLE(man, [  --enable-man            generate the man page], USE_MAN="$enableval", USE_MAN="no")
 USE_UT="no"
-AC_ARG_ENABLE(tests, [  --enable-tests          enable unit tests], USE_UT="yes", USE_UT="no")
+AC_ARG_ENABLE(tests, [  --enable-tests          enable unit tests], USE_UT="$enableval", USE_UT="no")
 
 # Checks for programs.
 AC_PROG_INSTALL
