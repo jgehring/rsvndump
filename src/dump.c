@@ -296,6 +296,11 @@ char dump(session_t *session, dump_options_t *opts)
 		opts->dump_format = 3;
 	}
 
+	/*
+	 * If start_mid is set, it is assumed we start somewhere (not at the beginning)
+	 * of the history and don't need information about prior revisions inside
+	 * the dump.
+	 */
 	if ((opts->flags & DF_INCREMENTAL) && (opts->start != 0)) {
 		start_mid = 1;
 	}
@@ -343,7 +348,7 @@ char dump(session_t *session, dump_options_t *opts)
 	}
 
 	/*
-	 * Decide wether the whole repositry log should be fetched
+	 * Decide whether the whole repository log should be fetched
 	 * prior to dumping.
 	 */
 	if (start_mid) {
@@ -360,7 +365,7 @@ char dump(session_t *session, dump_options_t *opts)
 
 		/* The first revision is a dry run.
 		   This is because we need to get the data of the previous
-		   revision first */
+		   revision first in order to properly apply the received deltas. */
 		opts->flags |= DF_DRY_RUN;
 		if (strlen(session->prefix) == 0) {
 			--local_rev;
