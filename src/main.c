@@ -52,7 +52,7 @@ static void print_version()
 {
 	printf(PACKAGE" "PACKAGE_VERSION"\n");
 	printf("Copyright (C) 2008-2009 "PACKAGE_AUTHOR"\n");
-	printf("Released under the GNU General Public License.\n");
+	printf(_("Released under the GNU General Public License.\n"));
 }
 
 
