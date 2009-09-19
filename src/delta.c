@@ -210,8 +210,7 @@ static svn_error_t *delta_write_properties(de_node_baton_t *node)
 	}
 
 	/* Create a new temporary file */
-	filename = apr_palloc(node->pool, strlen(opts->temp_dir)+8);
-	sprintf(filename, "%s/XXXXXX", opts->temp_dir);
+	filename = apr_psprintf(node->pool, "%s/XXXXXX", opts->temp_dir);
 	status = apr_file_mktemp(&file, filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
 	if (status) {
 		apr_pool_t *epool = svn_pool_create(NULL);
@@ -383,8 +382,7 @@ static svn_error_t *delta_deltify_node(de_node_baton_t *node)
 	}
 
 	/* Open temporary output file */
-	node->delta_filename = apr_palloc(node->pool, strlen(opts->temp_dir)+8);
-	sprintf(node->delta_filename, "%s/XXXXXX", opts->temp_dir);
+	node->delta_filename = apr_psprintf(node->pool, "%s/XXXXXX", opts->temp_dir);
 	apr_file_mktemp(&dest_file, node->delta_filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
 	dest = svn_stream_from_aprfile2(dest_file, FALSE, pool);
 
@@ -1053,8 +1051,7 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 	DEBUG_MSG("de_apply_textdelta(%s)\n", node->path);
 
 	/* Create a new temporary file to write to */
-	node->filename = apr_palloc(pool, strlen(opts->temp_dir)+8);
-	sprintf(node->filename, "%s/XXXXXX", opts->temp_dir);
+	node->filename = apr_psprintf(pool, "%s/XXXXXX", opts->temp_dir);
 	apr_file_mktemp(&dest_file, node->filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
 	dest_stream = svn_stream_from_aprfile2(dest_file, FALSE, pool);
 
