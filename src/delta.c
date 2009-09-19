@@ -28,8 +28,9 @@
 #include <svn_props.h>
 #include <svn_repos.h>
 
-#include <apr_hash.h>
 #include <apr_file_io.h>
+#include <apr_hash.h>
+#include <apr_md5.h>
 
 #include "main.h"
 #include "dump.h"
@@ -47,7 +48,6 @@
  #define SVN_REPOS_DUMPFILE_TEXT_CONTENT_MD5 SVN_REPOS_DUMPFILE_TEXT_CONTENT_CHECKSUM
 #endif
 
-#define MD5SUM_LENGTH 32
 #define ERRBUFFER_SIZE 512
 
 
@@ -88,7 +88,7 @@ typedef struct {
 	svn_node_kind_t   kind;
 	apr_hash_t        *properties;
 	apr_hash_t        *del_properties; /* Value is always 0x1 */
-	unsigned char     md5sum[MD5SUM_LENGTH+1];
+	unsigned char     md5sum[APR_MD5_DIGESTSIZE];
 	char              *copyfrom_path;
 	svn_revnum_t      copyfrom_revision;
 	cp_info_t         cp_info;
@@ -170,7 +170,7 @@ static void delta_mark_node(de_node_baton_t *node)
 	de_baton_t *de_baton = node->de_baton;
 	apr_hash_set(de_baton->dumped_entries, apr_pstrdup(de_baton->revision_pool, node->path), APR_HASH_KEY_STRING, de_baton /* The value doesn't matter */);
 	if (node->kind == svn_node_file) {
-		rhash_set(md5_hash, node->path, APR_HASH_KEY_STRING, node->md5sum, MD5SUM_LENGTH);
+		rhash_set(md5_hash, node->path, APR_HASH_KEY_STRING, node->md5sum, APR_MD5_DIGESTSIZE);
 		DEBUG_MSG("md5_hash += %s : %s\n", node->path, svn_md5_digest_to_cstring(node->md5sum, node->pool));
 	}
 	node->dumped = 1;
@@ -556,7 +556,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		/* Maybe we don't need to dump the contents */
 		if ((node->action == 'A') && (node->kind == svn_node_file)) {
 			unsigned char *prev_md5 = rhash_get(md5_hash, node->copyfrom_path+offset, APR_HASH_KEY_STRING);
-			if (prev_md5 && !memcmp(node->md5sum, prev_md5, MD5SUM_LENGTH)) {
+			if (prev_md5 && !memcmp(node->md5sum, prev_md5, APR_MD5_DIGESTSIZE)) {
 				DEBUG_MSG("md5sum matches\n");
 				dump_content = 0;
 			} else {
