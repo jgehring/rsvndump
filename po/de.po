@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.4.4\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-07-16 23:32+0200\n"
+"POT-Creation-Date: 2009-09-24 15:35+0200\n"
 "PO-Revision-Date: 2009-02-22 03:00+0100\n"
 "Last-Translator:  <jonas.gehring@boolsoft.org>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -27,17 +27,17 @@ msgstr "KOPIERT ... erledigt.\n"
 msgid "done.\n"
 msgstr "erledigt.\n"
 
-#: src/delta.c:492 src/delta.c:1003
+#: src/delta.c:490 src/delta.c:1001
 #, c-format
 msgid "     * adding path : %s ... "
 msgstr "     * Füge Pfad hinzu: %s ... "
 
-#: src/delta.c:750
+#: src/delta.c:748
 #, c-format
 msgid "     * deleting path : %s ... "
 msgstr "     * Lösche Pfad: %s ... "
 
-#: src/delta.c:1019
+#: src/delta.c:1017
 #, c-format
 msgid "     * editing path : %s ... "
 msgstr "     * Bearbeite Pfad: %s ... "
@@ -47,17 +47,17 @@ msgstr "     * Bearbeite Pfad: %s ... "
 msgid "ERROR: URL '%s' not found in HEAD revision\n"
 msgstr "FEHLER: URL '%s' wurde in der HEAD-Revision nicht gefunden\n"
 
-#: src/dump.c:315
+#: src/dump.c:320
 #, c-format
 msgid "ERROR: URL '%s' not found in revision %ld\n"
 msgstr "FEHLER: URL '%s' wurde in Revision %ld nicht gefunden\n"
 
-#: src/dump.c:435
+#: src/dump.c:440
 #, c-format
 msgid "* Padded revision %ld.\n"
 msgstr "* Revision %ld aufgefüllt.\n"
 
-#: src/dump.c:437
+#: src/dump.c:442
 #, c-format
 msgid ""
 "------ Padded revision %ld <<<\n"
@@ -66,27 +66,27 @@ msgstr ""
 "------  Revision %ld aufgefüllt <<<\n"
 "\n"
 
-#: src/dump.c:475
+#: src/dump.c:480
 #, c-format
 msgid ">>> Dumping new revision, based on original revision %ld\n"
 msgstr ">>> Dumpe neue Revision basierend auf Originalrevision %ld\n"
 
-#: src/dump.c:477
+#: src/dump.c:482
 #, c-format
 msgid "Fetching base revision... "
 msgstr "Hole Basisrevision... "
 
-#: src/dump.c:490
+#: src/dump.c:495
 #, c-format
 msgid "* Dumped revision %ld (local %ld).\n"
 msgstr "* Revision %ld gedumpt (lokal: %ld).\n"
 
-#: src/dump.c:492
+#: src/dump.c:497
 #, c-format
 msgid "* Dumped revision %ld.\n"
 msgstr " * Revision %ld gedumpt.\n"
 
-#: src/dump.c:496
+#: src/dump.c:501
 #, c-format
 msgid ""
 "\n"
@@ -97,7 +97,7 @@ msgstr ""
 "------ Revision %ld gedumpt <<<\n"
 "\n"
 
-#: src/dump.c:498 src/log.c:179 src/log.c:253
+#: src/dump.c:503 src/log.c:179 src/log.c:253
 #, c-format
 msgid "done\n"
 msgstr "fertig\n"
@@ -111,6 +111,11 @@ msgstr "Bestimme Anfangs- und Endrevision... "
 #, c-format
 msgid "Fetching logs... "
 msgstr "Frage Logs ab... "
+
+#: src/main.c:55
+#, c-format
+msgid "Released under the GNU General Public License.\n"
+msgstr "Veröffentlicht unter der GNU General Public License.\n"
 
 #: src/main.c:64
 #, c-format
