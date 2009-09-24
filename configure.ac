@@ -9,9 +9,9 @@ test $prefix = NONE && prefix=/usr/local
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_LIBOBJ_DIR([lib])
 
-sinclude(build/find_apr.m4)
-sinclude(build/find_svn.m4)
-sinclude(build/rsvndump_conf.m4)
+sinclude(m4/find_apr.m4)
+sinclude(m4/find_svn.m4)
+sinclude(m4/rsvndump_conf.m4)
 
 # Optional features
 USE_MAN="no"
