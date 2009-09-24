@@ -1,3 +1,9 @@
+== Schedule for 0.5.3 ==
+> Direct dumping of deltas, thus elmiminating base revision fetching for
+  incremental dumps in delta mode
+> Check base MD5 in de_apply_textdelta for non-delta dumps
+
+
 == Schedule for 0.5.x ==
 > Add --no-stop-on-copy option
 > Don't dump properties on copy operations if they didn't change
