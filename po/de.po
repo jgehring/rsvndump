@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.4.4\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-09-24 15:35+0200\n"
+"POT-Creation-Date: 2009-09-24 15:51+0200\n"
 "PO-Revision-Date: 2009-02-22 03:00+0100\n"
 "Last-Translator:  <jonas.gehring@boolsoft.org>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -206,7 +206,7 @@ msgid ""
 "                              the repository by using empty revisions for\n"
 "                              padding\n"
 msgstr ""
-"    --keep-revnums            Revisions-Nummern nicht verändern, indem wenn\n"
+"    --keep-revnums            Revisions-Nummern beibehalten, indem falls\n"
 "                              nötig leere Revisionen eingefügt werden\n"
 
 #: src/main.c:83
@@ -227,6 +227,11 @@ msgstr ""
 #, c-format
 msgid "                              revision 0\n"
 msgstr "                              wurde\n"
+
+#: src/main.c:87
+#, c-format
+msgid "Report bugs to <%s>\n"
+msgstr "Fehlerberichte an <%s>\n"
 
 #: src/main.c:207
 #, c-format

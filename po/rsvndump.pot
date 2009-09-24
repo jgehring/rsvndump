@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.5.2\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-09-24 15:35+0200\n"
+"POT-Creation-Date: 2009-09-24 15:51+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -211,6 +211,11 @@ msgstr ""
 #: src/main.c:85
 #, c-format
 msgid "                              revision 0\n"
+msgstr ""
+
+#: src/main.c:87
+#, c-format
+msgid "Report bugs to <%s>\n"
 msgstr ""
 
 #: src/main.c:207

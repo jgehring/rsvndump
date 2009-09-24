@@ -84,7 +84,7 @@ static void print_usage()
 	printf(_("                              with --incremental and not starting at\n"));
 	printf(_("                              revision 0\n"));
 	printf("\n");
-	printf("Report bugs to <"PACKAGE_BUGREPORT">\n");
+	printf(_("Report bugs to <%s>\n"), PACKAGE_BUGREPORT);
 }
 
 
