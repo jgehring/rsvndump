@@ -32,7 +32,7 @@ def setup(step, log):
 	elif step == 3:
 		os.mkdir("dir2")
 		test_api.run("svn", "add", "dir2", output = log)
-		test_api.run("svn", "propset", "svn:externals", "ext/test    svn://slug/rsvndump/trunk/src", "dir2", output = log)
+		test_api.run("svn", "propset", "svn:externals", "ext/test    http://svn.collab.net/repos/svn/trunk/", "dir2", output = log)
 		return True
 	elif step == 4:
 		test_api.run("svn", "propset", "svn:eol-style", "native", "dir1/file1", output = log)
