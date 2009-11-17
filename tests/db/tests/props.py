@@ -35,32 +35,40 @@ def setup(step, log):
 		test_api.run("svn", "propset", "svn:externals", "ext/test    http://svn.collab.net/repos/svn/trunk/", "dir2", output = log)
 		return True
 	elif step == 4:
-		test_api.run("svn", "propset", "svn:eol-style", "native", "dir1/file1", output = log)
+		os.mkdir("dir3")
+		os.mkdir("dir3/subdir")
+		f = open("dir3/subdir/file1","wb")
+		print >>f, "hello1"
+		test_api.run("svn", "add", "dir3", output = log)
+		test_api.run("svn", "propset", "svn:externals", "ext/subversion    http://svn.collab.net/repos/svn/trunk/", "dir3", output = log)
 		return True
 	elif step == 5:
-		test_api.run("svn", "up", output = log)
-		test_api.run("svn", "propdel", "svn:ignore", "dir1", output = log)
+		test_api.run("svn", "propset", "svn:eol-style", "native", "dir1/file1", output = log)
 		return True
 	elif step == 6:
+		test_api.run("svn", "up", "--ignore-externals", output = log)
+		test_api.run("svn", "propdel", "svn:ignore", "dir1", output = log)
+		return True
+	elif step == 7:
 		f = open("dir1/file1","wb")
 		print >>f, "hello2"
 		test_api.run("svn", "propset", "svn:eol-style", "LF", "dir1/file1", output = log)
 		return True
-	elif step == 7:
+	elif step == 8:
 		test_api.run("svn", "propdel", "copyright", "dir1/file1", output = log)
 		return True
-	elif step == 8:
-		test_api.run("svn", "cp", "dir1", "dir3", output = log)
-		return True
-	elif step == 9:
-		test_api.run("svn", "up", output = log)
-		test_api.run("svn", "mv", "dir1", "dir4", output = log)
-		test_api.run("svn", "propset", "svn:ignore", "*.[oa]", "dir4", output = log)
-		return True
-	elif step == 10:
-		test_api.run("svn", "up", output = log)
-		test_api.run("svn", "mv", "dir4/file1", "dir4/file2", output = log)
-		return True
+#	elif step == 9:
+#		test_api.run("svn", "cp", "dir3", "dir4", output = log)
+#		return True
+#	elif step == 10:
+#		test_api.run("svn", "up", output = log)
+#		test_api.run("svn", "mv", "dir1", "dir4", output = log)
+#		test_api.run("svn", "propset", "svn:ignore", "*.[oa]", "dir4", output = log)
+#		return True
+#	elif step == 11:
+#		test_api.run("svn", "up", output = log)
+#		test_api.run("svn", "mv", "dir4/file1", "dir4/file2", output = log)
+#		return True
 	else:
 		return False
 
