@@ -464,12 +464,15 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	dump_options_t *opts = de_baton->opts;
 	char *path = node->path;
 	unsigned long prop_len, content_len;
-	char dump_content = 0;
+	char dump_content = 0, dump_props = 0;
 	apr_hash_index_t *hi;
+
+	DEBUG_MSG("delta_dump_node(%s): started\n", node->path);
 
 	/* Check if this is a dry run */
 	if (opts->flags & DF_DRY_RUN) {
 		node->dumped = 1;
+		DEBUG_MSG("delta_dump_node(%s): aborting: DF_DRY_RUN\n", node->path);
 		return SVN_NO_ERROR;
 	}
 
@@ -477,12 +480,14 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	   we don't need to dump it */
 	if ((node->action == 'M') && (node->kind == svn_node_dir) && (!node->props_changed)) {
 		node->dumped = 1;
+		DEBUG_MSG("delta_dump_node(%s): aborting: directory && action == 'M' && !props_changed\n", node->path);
 		return SVN_NO_ERROR;
 	}
 
 	/* If the node's parent has been copied, we don't need to dump it if its contents haven't changed */
 	if ((node->cp_info == CPI_COPY) && (node->action == 'A')) {
 		node->dumped = 1;
+		DEBUG_MSG("delta_dump_node(%s): aborting: cp_info == CPI_COPY && action == 'A'\n", node->path);
 		return SVN_NO_ERROR;
 	}
 
@@ -494,6 +499,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	delta_check_copy(node);
 	if (node->action == 'R') {
 		/* Special handling for replacements */
+		DEBUG_MSG("delta_dump_node(%s): running delta_dump_replace()\n", node->path);
 		return delta_dump_replace(node);
 	}
 
@@ -530,12 +536,20 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	if (node->action == 'D') {
 		printf("\n\n");
 		delta_mark_node(node);
+		DEBUG_MSG("delta_dump_node(%s): deleted -> return\n", node->path);
 		return SVN_NO_ERROR;
 	}
 
 	/* Check if the node content needs to be dumped */
 	if (node->kind == svn_node_file && node->applied_delta) {
+		DEBUG_MSG("delta_dump_node(%s): dump_content = 1\n", node->path);
 		dump_content = 1;
+	}
+
+	/* Check if the node properties need to be dumped */
+	if ((node->props_changed) || (node->action == 'A')) {
+		DEBUG_MSG("delta_dump_node(%s): dump_props = 1\n", node->path);
+		dump_props = 1;
 	}
 
 	/* Output copy information if neccessary */
@@ -581,7 +595,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	/* Deltify? */
 	if (dump_content && (opts->flags & DF_USE_DELTAS)) {
 		svn_error_t *err;
-		if ((err= delta_deltify_node(node))) {
+		if ((err = delta_deltify_node(node))) {
 			return err;
 		}
 	}
@@ -626,7 +640,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	if ((prop_len > 0)) {
 		node->props_changed = 1;
 	}
-	if ((node->props_changed) || (node->action == 'A')) {
+	if (dump_props) {
 		if (opts->dump_format == 3) {
 			printf("%s: true\n", SVN_REPOS_DUMPFILE_PROP_DELTA);
 		}
@@ -657,7 +671,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	printf("%s: %lu\n\n", SVN_REPOS_DUMPFILE_CONTENT_LENGTH, (unsigned long)prop_len+content_len);
 
 	/* Dump properties */
-	if ((node->props_changed) || (node->action == 'A')) {
+	if (dump_props) {
 		for (hi = apr_hash_first(node->pool, node->properties); hi; hi = apr_hash_next(hi)) {
 			const char *key;
 			svn_string_t *value;
@@ -914,6 +928,8 @@ static svn_error_t *de_change_dir_prop(void *dir_baton, const char *name, const 
 static svn_error_t *de_close_directory(void *dir_baton, apr_pool_t *pool)
 {
 	de_node_baton_t *node = (de_node_baton_t *)dir_baton;
+
+	DEBUG_MSG("de_close_directory(%s): dumped = %d\n", node->path, node->dumped);
 
 	/* Check if the this node needs to be dumped */
 	if (!node->dumped) {

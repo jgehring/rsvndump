@@ -3,6 +3,8 @@
 *~
 *.pyc
 *.*.swp
+*.orig
+*.log
 .deps
 Makefile
 Makefile.in
