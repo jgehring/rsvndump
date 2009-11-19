@@ -73,6 +73,7 @@ typedef struct {
 	apr_pool_t        *revision_pool;
 	apr_hash_t        *dumped_entries;
 	svn_revnum_t      local_revnum;
+	void              *root_node;
 } de_baton_t;
 
 
@@ -93,8 +94,10 @@ typedef struct {
 	svn_revnum_t      copyfrom_revision;
 	cp_info_t         cp_info;
 	char              applied_delta;
-	char              dumped;
+	char              dump_needed;
 	char              props_changed;
+	void              *parent;
+	apr_array_header_t *children;
 } de_node_baton_t;
 
 
@@ -130,23 +133,28 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node);
 
 
 /* Creates a new node baton */
-static de_node_baton_t *delta_create_node(const char *path, de_node_baton_t *parent, apr_pool_t *pool)
+static de_node_baton_t *delta_create_node(const char *path, de_node_baton_t *parent)
 {
-	de_node_baton_t *node = apr_palloc(pool, sizeof(de_node_baton_t));
-	node->path = apr_pstrdup(pool, path);
+	de_node_baton_t *node = apr_palloc(parent->pool, sizeof(de_node_baton_t));
+	node->pool = svn_pool_create(parent->pool);
+	node->path = apr_pstrdup(node->pool, path);
 	node->de_baton = parent->de_baton;
-	node->pool = pool;
-	node->properties = apr_hash_make(pool);
-	node->del_properties = apr_hash_make(pool);
+	node->properties = apr_hash_make(node->pool);
+	node->del_properties = apr_hash_make(node->pool);
 	node->filename = NULL;
 	node->old_filename = NULL;
 	node->delta_filename = NULL;
 	node->cp_info = parent->cp_info;
 	node->copyfrom_path = NULL;
 	node->applied_delta = 0;
-	node->dumped = 0;
+	node->dump_needed = 0;
 	node->props_changed = 0;
+	node->parent = parent;
+	node->children = apr_array_make(node->pool, 0, (sizeof(de_node_baton_t *)));
 	memset(node->md5sum, 0x00, sizeof(node->md5sum));
+
+	/* Register node in parent list */
+	APR_ARRAY_PUSH(parent->children, de_node_baton_t *) = node;
 
 	return node;
 }
@@ -155,16 +163,29 @@ static de_node_baton_t *delta_create_node(const char *path, de_node_baton_t *par
 /* Creates a new node baton without a parent */
 static de_node_baton_t *delta_create_node_no_parent(const char *path, de_baton_t *de_baton, apr_pool_t *pool)
 {
-	de_node_baton_t parent;
-	parent.path = NULL;
-	parent.de_baton = de_baton;
-	parent.copyfrom_path = NULL;
-	parent.cp_info = CPI_NONE;
-	return delta_create_node(path, &parent, pool);
+	de_node_baton_t *node = apr_palloc(pool, sizeof(de_node_baton_t));
+	node->pool = svn_pool_create(pool);
+	node->path = apr_pstrdup(node->pool, path);
+	node->de_baton = de_baton;
+	node->properties = apr_hash_make(node->pool);
+	node->del_properties = apr_hash_make(node->pool);
+	node->filename = NULL;
+	node->old_filename = NULL;
+	node->delta_filename = NULL;
+	node->cp_info = CPI_NONE;
+	node->copyfrom_path = NULL;
+	node->applied_delta = 0;
+	node->dump_needed = 0;
+	node->props_changed = 0;
+	node->parent = NULL;
+	node->children = apr_array_make(node->pool, 0, (sizeof(de_node_baton_t *)));
+	memset(node->md5sum, 0x00, sizeof(node->md5sum));
+
+	return node;
 }
 
 
-/* Marks a node as being dumped */
+/* Marks a node as being dumped, i.e. set dump_needed to 0 */
 static void delta_mark_node(de_node_baton_t *node)
 {
 	de_baton_t *de_baton = node->de_baton;
@@ -173,7 +194,7 @@ static void delta_mark_node(de_node_baton_t *node)
 		rhash_set(md5_hash, node->path, APR_HASH_KEY_STRING, node->md5sum, APR_MD5_DIGESTSIZE);
 		DEBUG_MSG("md5_hash += %s : %s\n", node->path, svn_md5_digest_to_cstring(node->md5sum, node->pool));
 	}
-	node->dumped = 1;
+	node->dump_needed = 0;
 	if ((de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
 		if (node->cp_info == CPI_COPY) {
 			fprintf(stderr, _("COPIED ... done.\n"));
@@ -467,11 +488,15 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	char dump_content = 0, dump_props = 0;
 	apr_hash_index_t *hi;
 
-	DEBUG_MSG("delta_dump_node(%s): started\n", node->path);
+	/* Check if the node needs to be dumped at all */
+	if (!node->dump_needed) {
+		DEBUG_MSG("delta_dump_node(%s): aborting: dump not needed\n", node->path);
+		return SVN_NO_ERROR;
+	}
 
 	/* Check if this is a dry run */
 	if (opts->flags & DF_DRY_RUN) {
-		node->dumped = 1;
+		node->dump_needed = 0;
 		DEBUG_MSG("delta_dump_node(%s): aborting: DF_DRY_RUN\n", node->path);
 		return SVN_NO_ERROR;
 	}
@@ -479,17 +504,20 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	/* If the node is a directory and no properties have been changed,
 	   we don't need to dump it */
 	if ((node->action == 'M') && (node->kind == svn_node_dir) && (!node->props_changed)) {
-		node->dumped = 1;
+		node->dump_needed = 0;
 		DEBUG_MSG("delta_dump_node(%s): aborting: directory && action == 'M' && !props_changed\n", node->path);
 		return SVN_NO_ERROR;
 	}
 
-	/* If the node's parent has been copied, we don't need to dump it if its contents haven't changed */
-	if ((node->cp_info == CPI_COPY) && (node->action == 'A')) {
-		node->dumped = 1;
+	/* If the node's parent has been copied, we don't need to dump it if its contents haven't changed.
+	   Addionally, make sure the node doesn't contain extra copyfrom information. */
+	if ((node->cp_info == CPI_COPY) && (node->action == 'A') && (node->copyfrom_path == NULL)) {
+		node->dump_needed = 0;
 		DEBUG_MSG("delta_dump_node(%s): aborting: cp_info == CPI_COPY && action == 'A'\n", node->path);
 		return SVN_NO_ERROR;
 	}
+
+	DEBUG_MSG("delta_dump_node(%s): started\n", node->path);
 
 	if ((node->kind == svn_node_dir) && (de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
 		fprintf(stderr, _("     * adding path : %s ... "), node->path);
@@ -638,7 +666,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		}
 	}
 	if ((prop_len > 0)) {
-		node->props_changed = 1;
+		dump_props = 1;
 	}
 	if (dump_props) {
 		if (opts->dump_format == 3) {
@@ -720,6 +748,46 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 }
 
 
+/* Dumps a node and all its children */
+static svn_error_t *delta_dump_node_recursive(de_node_baton_t *node)
+{
+	int i;
+	svn_error_t *err;
+
+	/*
+	 * The normal dumping order is parent prior to children. However,
+	 * deletions are handled bottom-up, i.e. first the children and finally
+	 * the parent.
+	 */
+	if (node->action != 'D') {
+		if ((err = delta_dump_node(node))) {
+			return err;
+		}
+	}
+
+	DEBUG_MSG("delta_dump_node_recursive(%s): dumping %d children\n", node->path, node->children->nelts);
+	for (i = 0; i < node->children->nelts; i++) {
+		de_node_baton_t *child = APR_ARRAY_IDX(node->children, i, de_node_baton_t *);
+
+		/* Propagate copy information obtained while dumping the parent node */
+		child->cp_info = node->cp_info;
+
+		if ((err = delta_dump_node_recursive(child))) {
+			return err;
+		}
+		svn_pool_destroy(child->pool);
+	}
+
+	if (node->action == 'D') {
+		if ((err = delta_dump_node(node))) {
+			return err;
+		}
+	}
+
+	return SVN_NO_ERROR;
+}
+
+
 /* Subversion delta editor callback */
 static svn_error_t *de_set_target_revision(void *edit_baton, svn_revnum_t target_revision, apr_pool_t *pool)
 {
@@ -732,14 +800,11 @@ static svn_error_t *de_set_target_revision(void *edit_baton, svn_revnum_t target
 /* Subversion delta editor callback */
 static svn_error_t *de_open_root(void *edit_baton, svn_revnum_t base_revision, apr_pool_t *dir_pool, void **root_baton)
 {
+	de_baton_t *de_baton = (de_baton_t *)edit_baton;
 	de_node_baton_t *node;
-	node = delta_create_node_no_parent("", (de_baton_t *)edit_baton, dir_pool);
+	node = delta_create_node_no_parent("", de_baton, de_baton->revision_pool);
+	de_baton->root_node = node;
 
-	/*
-	 * The revision header has already been dumped, so there's nothing to
-	 * do for the root node
-	 */
-	node->dumped = 1;
 	*root_baton = node;
 #ifdef USE_TIMING
 	tm_de_apply_textdelta = 0.0f;
@@ -754,7 +819,6 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 	de_node_baton_t *node;
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
 	apr_hash_index_t *hi;
-	svn_error_t *err;
 	int pathlen;
 
 	DEBUG_MSG("de_delete_entry(%s@%ld)\n", path, revision);
@@ -762,20 +826,25 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 		fprintf(stderr, _("     * deleting path : %s ... "), path);
 	}
 
+#if 0
 	/* Check if the parent dump needs to be dumped */
 	if (!parent->dumped) {
 		if ((err = delta_dump_node(parent))) {
 			return err;
 		}
 	}
+#endif
 
 	/* We can dump this entry directly */
-	node = delta_create_node(path, parent, pool);
+	node = delta_create_node(path, parent);
 	node->kind = svn_node_none;
 	node->action = 'D';
+	node->dump_needed = 1;
+#if 0
 	if ((err = delta_dump_node(node))) {
 		return err;
 	}
+#endif
 
 	/* This node might be a directory, so clear the data of all children */
 	pathlen = strlen(node->path);
@@ -826,6 +895,7 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 	de_node_baton_t *node;
 	svn_log_changed_path_t *log;
 
+#if 0
 	/* Check if the parent node needs to be dumped */
 	if (!parent->dumped) {
 		svn_error_t *err;
@@ -833,11 +903,13 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 			return err;
 		}
 	}
+#endif
 
 	DEBUG_MSG("de_add_directory(%s), copy = %d\n", path, (int)parent->cp_info);
 
-	node = delta_create_node(path, parent, dir_pool);
+	node = delta_create_node(path, parent);
 	node->kind = svn_node_dir;
+	node->dump_needed = 1;
 
 	log = apr_hash_get(node->de_baton->log_revision->changed_paths, path, APR_HASH_KEY_STRING);
 
@@ -859,7 +931,7 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 		 */
 		if (log->copyfrom_path != NULL) {
 			DEBUG_MSG("copyfrom_path = %s\n", log->copyfrom_path);
-			node->copyfrom_path = apr_pstrdup(dir_pool, log->copyfrom_path);
+			node->copyfrom_path = apr_pstrdup(node->pool, log->copyfrom_path);
 			node->copyfrom_revision = log->copyfrom_rev;
 		}
 		/*
@@ -882,6 +954,7 @@ static svn_error_t *de_open_directory(const char *path, void *parent_baton, svn_
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
 	de_node_baton_t *node;
 
+#if 0
 	/* Check if the parent node needs to be dumped */
 	if (!parent->dumped) {
 		svn_error_t *err;
@@ -889,9 +962,10 @@ static svn_error_t *de_open_directory(const char *path, void *parent_baton, svn_
 			return err;
 		}
 	}
+#endif
 
-	node = delta_create_node(path, parent, dir_pool);
-	node->kind = svn_node_dir;;
+	node = delta_create_node(path, parent);
+	node->kind = svn_node_dir;
 	node->action = 'M';
 
 	*child_baton = node;
@@ -920,6 +994,7 @@ static svn_error_t *de_change_dir_prop(void *dir_baton, const char *name, const 
 	}
 	node->props_changed = 1;
 
+	node->dump_needed = 1;
 	return SVN_NO_ERROR;
 }
 
@@ -929,8 +1004,9 @@ static svn_error_t *de_close_directory(void *dir_baton, apr_pool_t *pool)
 {
 	de_node_baton_t *node = (de_node_baton_t *)dir_baton;
 
-	DEBUG_MSG("de_close_directory(%s): dumped = %d\n", node->path, node->dumped);
+	DEBUG_MSG("de_close_directory(%s): dump_needed = %d\n", node->path, (int)node->dump_needed);
 
+#if 0
 	/* Check if the this node needs to be dumped */
 	if (!node->dumped) {
 		svn_error_t *err;
@@ -938,6 +1014,7 @@ static svn_error_t *de_close_directory(void *dir_baton, apr_pool_t *pool)
 			return err;
 		}
 	}
+#endif
 
 	/* Save the property hash */
 	return delta_write_properties(node);
@@ -959,6 +1036,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 	de_node_baton_t *node;
 	svn_log_changed_path_t *log;
 
+#if 0
 	/* Check if the parent node needs to be dumped */
 	if (!parent->dumped) {
 		svn_error_t *err;
@@ -966,11 +1044,13 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 			return err;
 		}
 	}
+#endif
 
 	DEBUG_MSG("de_add_file(%s), copy = %d\n", path, (int)parent->cp_info);
 
-	node = delta_create_node(path, parent, file_pool);
+	node = delta_create_node(path, parent);
 	node->kind = svn_node_file;
+	node->dump_needed = 1;
 
 	/* Get corresponding log entry */
 	log = apr_hash_get(node->de_baton->log_revision->changed_paths, path, APR_HASH_KEY_STRING);
@@ -993,7 +1073,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		 */
 		if (log->copyfrom_path != NULL) {
 			DEBUG_MSG("copyfrom_path = %s\n", log->copyfrom_path);
-			node->copyfrom_path = apr_pstrdup(file_pool, log->copyfrom_path);
+			node->copyfrom_path = apr_pstrdup(node->pool, log->copyfrom_path);
 			node->copyfrom_revision = log->copyfrom_rev;
 		}
 		/*
@@ -1033,6 +1113,7 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 		fprintf(stderr, _("     * editing path : %s ... "), path);
 	}
 
+#if 0
 	/* Check if the parent node needs to be dumped */
 	if (!parent->dumped) {
 		svn_error_t *err;
@@ -1040,8 +1121,9 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 			return err;
 		}
 	}
+#endif
 
-	node = delta_create_node(path, parent, file_pool);
+	node = delta_create_node(path, parent);
 	node->kind = svn_node_file;
 	node->action = 'M';
 
@@ -1067,7 +1149,7 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 	DEBUG_MSG("de_apply_textdelta(%s)\n", node->path);
 
 	/* Create a new temporary file to write to */
-	node->filename = apr_psprintf(pool, "%s/XXXXXX", opts->temp_dir);
+	node->filename = apr_psprintf(node->pool, "%s/XXXXXX", opts->temp_dir);
 	apr_file_mktemp(&dest_file, node->filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
 	dest_stream = svn_stream_from_aprfile2(dest_file, FALSE, pool);
 
@@ -1087,6 +1169,7 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 	DEBUG_MSG("applied delta: %s -> %s\n", filename, node->filename);
 
 	node->applied_delta = 1;
+	node->dump_needed = 1;
 
 #ifdef USE_TIMING
 	tm_de_apply_textdelta += stopwatch_elapsed(&watch);
@@ -1113,6 +1196,7 @@ static svn_error_t *de_change_file_prop(void *file_baton, const char *name, cons
 		apr_hash_set(node->del_properties, apr_pstrdup(node->pool, name), APR_HASH_KEY_STRING, (void *)0x1);
 	}
 	node->props_changed = 1;
+	node->dump_needed = 1;
 
 	return SVN_NO_ERROR;
 }
@@ -1123,6 +1207,7 @@ static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, a
 {
 	de_node_baton_t *node = (de_node_baton_t *)file_baton;
 
+#if 0
 	/* Check if the this node needs to be dumped */
 	if (!node->dumped) {
 		svn_error_t *err;
@@ -1130,6 +1215,7 @@ static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, a
 			return err;
 		}
 	}
+#endif
 
 	/* Remove the old file if neccessary */
 #ifndef DUMP_DEBUG
@@ -1155,6 +1241,12 @@ static svn_error_t *de_absent_file(const char *path, void *parent_baton, apr_poo
 static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 {
 	de_baton_t *de_baton = (de_baton_t *)edit_baton;
+	svn_error_t *err;
+
+	/* Recursively dump all nodes touched by this revision */
+	if ((err = delta_dump_node_recursive((de_node_baton_t *)de_baton->root_node))) {
+		return err;
+	}
 
 	/*
 	 * There are probably some delete nodes that haven't been dumped. This
@@ -1178,9 +1270,9 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 			}
 
 			if (apr_hash_get(de_baton->dumped_entries, path, APR_HASH_KEY_STRING) == NULL) {
-				svn_error_t *err;
 				de_node_baton_t *node = delta_create_node_no_parent(path, de_baton, pool);
 				node->action = log->action;
+				node->dump_needed = 1;
 
 				DEBUG_MSG("Post-dumping %s\n", path);
 				if ((err = delta_dump_node(node))) {

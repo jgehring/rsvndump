@@ -1,3 +1,6 @@
+== Current issues ==
+> Incremental test fails with '--deltas'
+
 == Schedule for 0.5.3 ==
 > Direct dumping of deltas, thus elmiminating base revision fetching for
   incremental dumps in delta mode
