@@ -1,7 +1,9 @@
-== Current issues ==
-> Incremental test fails with '--deltas'
-
 == Schedule for 0.5.3 ==
+> Examine memory usage and/or leaks of new dumping strategy
+> Fix #2898487
+
+
+== Schedule for 0.5.4 ==
 > Direct dumping of deltas, thus elmiminating base revision fetching for
   incremental dumps in delta mode
 > Check base MD5 in de_apply_textdelta for non-delta dumps
