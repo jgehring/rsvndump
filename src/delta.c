@@ -826,15 +826,6 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 		fprintf(stderr, _("     * deleting path : %s ... "), path);
 	}
 
-#if 0
-	/* Check if the parent dump needs to be dumped */
-	if (!parent->dumped) {
-		if ((err = delta_dump_node(parent))) {
-			return err;
-		}
-	}
-#endif
-
 	/* We can dump this entry directly */
 	node = delta_create_node(path, parent);
 	node->kind = svn_node_none;
@@ -895,16 +886,6 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 	de_node_baton_t *node;
 	svn_log_changed_path_t *log;
 
-#if 0
-	/* Check if the parent node needs to be dumped */
-	if (!parent->dumped) {
-		svn_error_t *err;
-		if ((err = delta_dump_node(parent))) {
-			return err;
-		}
-	}
-#endif
-
 	DEBUG_MSG("de_add_directory(%s), copy = %d\n", path, (int)parent->cp_info);
 
 	node = delta_create_node(path, parent);
@@ -954,16 +935,6 @@ static svn_error_t *de_open_directory(const char *path, void *parent_baton, svn_
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
 	de_node_baton_t *node;
 
-#if 0
-	/* Check if the parent node needs to be dumped */
-	if (!parent->dumped) {
-		svn_error_t *err;
-		if ((err = delta_dump_node(parent))) {
-			return err;
-		}
-	}
-#endif
-
 	node = delta_create_node(path, parent);
 	node->kind = svn_node_dir;
 	node->action = 'M';
@@ -1006,16 +977,6 @@ static svn_error_t *de_close_directory(void *dir_baton, apr_pool_t *pool)
 
 	DEBUG_MSG("de_close_directory(%s): dump_needed = %d\n", node->path, (int)node->dump_needed);
 
-#if 0
-	/* Check if the this node needs to be dumped */
-	if (!node->dumped) {
-		svn_error_t *err;
-		if ((err = delta_dump_node(node))) {
-			return err;
-		}
-	}
-#endif
-
 	/* Save the property hash */
 	return delta_write_properties(node);
 }
@@ -1035,16 +996,6 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
 	de_node_baton_t *node;
 	svn_log_changed_path_t *log;
-
-#if 0
-	/* Check if the parent node needs to be dumped */
-	if (!parent->dumped) {
-		svn_error_t *err;
-		if ((err = delta_dump_node(parent))) {
-			return err;
-		}
-	}
-#endif
 
 	DEBUG_MSG("de_add_file(%s), copy = %d\n", path, (int)parent->cp_info);
 
@@ -1112,16 +1063,6 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 	if ((parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
 		fprintf(stderr, _("     * editing path : %s ... "), path);
 	}
-
-#if 0
-	/* Check if the parent node needs to be dumped */
-	if (!parent->dumped) {
-		svn_error_t *err;
-		if ((err = delta_dump_node(parent))) {
-			return err;
-		}
-	}
-#endif
 
 	node = delta_create_node(path, parent);
 	node->kind = svn_node_file;
@@ -1207,16 +1148,6 @@ static svn_error_t *de_change_file_prop(void *file_baton, const char *name, cons
 static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, apr_pool_t *pool)
 {
 	de_node_baton_t *node = (de_node_baton_t *)file_baton;
-
-#if 0
-	/* Check if the this node needs to be dumped */
-	if (!node->dumped) {
-		svn_error_t *err;
-		if ((err = delta_dump_node(node))) {
-			return err;
-		}
-	}
-#endif
 
 	/* Remove the old file if neccessary */
 #ifndef DUMP_DEBUG
