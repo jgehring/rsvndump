@@ -1163,10 +1163,11 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 	}
 
 	svn_txdelta_apply(src_stream, dest_stream, node->md5sum, node->path, pool, handler, handler_baton);
-	rhash_set(delta_hash, node->path, APR_HASH_KEY_STRING, node->filename, RHASH_VAL_STRING);
-	node->old_filename = filename;
 
-	DEBUG_MSG("applied delta: %s -> %s\n", filename, node->filename);
+	node->old_filename = apr_pstrdup(node->pool, filename);
+	rhash_set(delta_hash, node->path, APR_HASH_KEY_STRING, node->filename, RHASH_VAL_STRING);
+
+	DEBUG_MSG("applied delta: %s -> %s\n", node->old_filename, node->filename);
 
 	node->applied_delta = 1;
 	node->dump_needed = 1;

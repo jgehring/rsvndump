@@ -20,21 +20,24 @@
  *      desc: Interface for apr_hash_t with special memory handling
  *
  *      The idea behind this data structure is that there are hashes in delta.c
- *      that store data not for which the pool allocation model is not suitable
+ *      that store data for which the pool allocation model is not suitable.
  *      Thus, this hash implements its own memory handling for both keys and
  *      values.
  *      However, this raises the need for manually clearing the hash contents
  *      (or calling rhash_clear()).
  *
- *      Th implementation uses an extra hash to store the pointers
+ *      The implementation uses an extra hash to store the pointers
  *      for the allocated key data.
  */
 
 
 #include <stdlib.h>
 
+#include <svn_error.h>
+
 #include <apr_strings.h>
 
+#include "main.h"
 #include "rhash.h"
 
 
@@ -101,8 +104,8 @@ void rhash_set(rhash_t *ht, const void *key, apr_ssize_t klen, const void *val, 
 		void *key_ptr = apr_hash_get(ht->key_pointers, key, klen);
 		void *val_ptr = apr_hash_get(ht->apr_hash, key, klen);
 
-		apr_hash_set(ht->apr_hash, key, klen, val);
 		if (val_ptr) {
+			apr_hash_set(ht->apr_hash, key, klen, NULL);
 			free(val_ptr);
 		}
 		if (key_ptr) {
@@ -114,8 +117,12 @@ void rhash_set(rhash_t *ht, const void *key, apr_ssize_t klen, const void *val, 
 
 	if (apr_hash_get(ht->apr_hash, key, klen) != NULL) {
 		/* Replacement: Free the old value */
-		void *val_ptr = apr_hash_get(ht->apr_hash, key, APR_HASH_KEY_STRING);
+		void *val_ptr = apr_hash_get(ht->apr_hash, key, klen);
 		void *val_dup;
+
+		if (vlen == -1) {
+			DEBUG_MSG("rhash_set(): replacing %s: %s -> %s (0x%X -> 0x%X)\n", (const char *)key, (const char *)val_ptr, (const char *)val, val_ptr, val);
+		}
 
 		if (vlen == RHASH_VAL_STRING) {
 			val_dup = strdup(val);
@@ -125,7 +132,8 @@ void rhash_set(rhash_t *ht, const void *key, apr_ssize_t klen, const void *val, 
 		}
 
 		apr_hash_set(ht->apr_hash, key, klen, val_dup);
-		if (val_ptr) {
+		if (val_ptr && val != val_ptr) {
+			DEBUG_MSG("freeing %X\n", (void *)val_ptr);
 			free(val_ptr);
 		}
 	} else {
@@ -144,9 +152,13 @@ void rhash_set(rhash_t *ht, const void *key, apr_ssize_t klen, const void *val, 
 			val_dup = malloc(vlen);
 			memcpy(val_dup, val, vlen);
 		}
+
+		if (vlen == -1) {
+			DEBUG_MSG("rhash_set(): setting %s: %s (0x%X)\n", (const char *)key, (const char *)val_dup, val_dup);
+		}
 		
-		apr_hash_set(ht->key_pointers, key_dup, APR_HASH_KEY_STRING, key_dup);
-		apr_hash_set(ht->apr_hash, key_dup, APR_HASH_KEY_STRING, val_dup);
+		apr_hash_set(ht->key_pointers, key_dup, klen, key_dup);
+		apr_hash_set(ht->apr_hash, key_dup, klen, val_dup);
 	}
 }
 
