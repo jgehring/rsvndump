@@ -35,6 +35,7 @@
 #include "delta.h"
 #include "list.h"
 #include "log.h"
+#include "path_hash.h"
 #include "property.h"
 #include "utils.h"
 
@@ -347,6 +348,8 @@ char dump(session_t *session, dump_options_t *opts)
 		list_append(&logs, &dummy);
 	}
 
+	path_hash_initialize(session->pool);
+
 	/*
 	 * Decide whether the whole repository log should be fetched
 	 * prior to dumping.
@@ -493,6 +496,9 @@ char dump(session_t *session, dump_options_t *opts)
 			ret = 1;
 			break;
 		}
+
+		/* Insert revision into path_hash */
+		path_hash_commit((log_revision_t *)logs.elements + list_idx, local_rev);
 
 		if (opts->verbosity == 0 && !(opts->flags & DF_DRY_RUN)) {
 			if (show_local_rev) {
