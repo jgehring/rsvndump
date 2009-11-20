@@ -381,6 +381,49 @@ static char delta_check_copy(de_node_baton_t *node)
 }
 
 
+/* Checks the parent relationship (dir-dir or dir-file) at a given revision */
+static char delta_check_parent(const char *parent, const char *child, svn_revnum_t revision)
+{
+	/* TODO */
+	return 1;
+}
+
+
+/* Propagates copy information from a parent to a child node */
+static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child)
+{
+	char *child_relpath;
+
+	/* Easy case first */
+	if (parent->cp_info != CPI_COPY || parent->copyfrom_path == NULL) {
+		child->cp_info = parent->cp_info;
+		return;
+	}
+
+	/*
+	 * The parent has already been copied. If the child has already been
+	 * a child of the parent's copy source, it has been copied, too.
+	 */
+
+	/* Build relative path for the child */
+	if (strncmp(parent->path, child->path, strlen(parent->path))) {
+		DEBUG_MSG("delta_propagate_copy(%s, %s): paths do not match!\n", parent->path, child->path);
+		return;
+	}
+	child_relpath = child->path + strlen(parent->path);
+	while (*child_relpath == '/') {
+		++child_relpath;
+	}
+
+	/* Check the old parent relationship */
+	if (delta_check_parent(parent->copyfrom_path, child_relpath, parent->copyfrom_revision)) {
+		child->cp_info = CPI_COPY;
+	} else {
+		child->cp_info = CPI_NONE;
+	}
+}
+
+
 /* Deltifies a node, i.e. generates a svndiff that can be dumped */
 static svn_error_t *delta_deltify_node(de_node_baton_t *node)
 {
@@ -567,7 +610,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	if (node->action == 'D') {
 		printf("\n\n");
 		delta_mark_node(node);
-		DEBUG_MSG("delta_dump_node(%s): deleted -> return\n", node->path);
+		DEBUG_MSG("delta_dump_node(%s): deleted -> finished\n", node->path);
 		return SVN_NO_ERROR;
 	}
 
@@ -773,7 +816,7 @@ static svn_error_t *delta_dump_node_recursive(de_node_baton_t *node)
 		de_node_baton_t *child = APR_ARRAY_IDX(node->children, i, de_node_baton_t *);
 
 		/* Propagate copy information obtained while dumping the parent node */
-		child->cp_info = node->cp_info;
+		delta_propagate_copy(node, child);
 
 		if ((err = delta_dump_node_recursive(child))) {
 			return err;
