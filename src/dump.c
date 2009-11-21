@@ -348,7 +348,7 @@ char dump(session_t *session, dump_options_t *opts)
 		list_append(&logs, &dummy);
 	}
 
-	path_hash_initialize(session->pool);
+	path_hash_initialize(session->prefix, session->pool);
 
 	/*
 	 * Decide whether the whole repository log should be fetched

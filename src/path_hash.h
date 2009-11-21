@@ -31,7 +31,10 @@
 
 
 /* Initializes the path hash using the given pool */
-extern void path_hash_initialize(apr_pool_t *parent_pool);
+extern void path_hash_initialize(const char *session_prefix, apr_pool_t *parent_pool);
+
+/* Manually adds a new path to the head revision (without committing it) */
+extern void path_hash_add_path(const char *path);
 
 /* Adds a new revision to the path hash */
 extern void path_hash_commit(log_revision_t *log, svn_revnum_t revnum);

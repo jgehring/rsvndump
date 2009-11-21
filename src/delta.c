@@ -301,6 +301,8 @@ static char delta_check_copy(de_node_baton_t *node)
 
 	/* If the parent could not be copied, this node won't be copied, too */
 	if (node->cp_info == CPI_FAILED) {
+		/* Inform the path_hash */
+		path_hash_add_path(node->path);
 		return 0;
 	}
 
@@ -378,6 +380,11 @@ static char delta_check_copy(de_node_baton_t *node)
 		DEBUG_MSG("delta_check_copy: resolving failed\n");
 	}
 
+	/* If a copy must be resolved "manually", we need to inform the path_hash */
+	if (node->cp_info == CPI_FAILED) {
+		path_hash_add_path(node->path);
+	}
+
 	return 0;
 }
 
@@ -387,6 +394,7 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 {
 	apr_pool_t *check_pool;
 	char *child_relpath;
+	int offset = strlen(parent->de_baton->session->prefix);
 
 	/* Easy case first */
 	if (parent->cp_info != CPI_COPY || parent->copyfrom_path == NULL) {
@@ -409,11 +417,17 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 		++child_relpath;
 	}
 
+	while (*(parent->copyfrom_path+offset) == '/') {
+		++offset;
+	}
+
 	/* Check the old parent relationship */
 	check_pool = svn_pool_create(child->pool);
-	if (path_hash_check_parent(parent->copyfrom_path, child_relpath, parent->copyfrom_revision, check_pool)) {
+	if (path_hash_check_parent(parent->copyfrom_path+offset, child_relpath, parent->copyfrom_revision, check_pool)) {
+		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld OK\n", parent->copyfrom_path, child_relpath, parent->copyfrom_revision);
 		child->cp_info = CPI_COPY;
 	} else {
+		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld FAIL\n", parent->copyfrom_path, child_relpath, parent->copyfrom_revision);
 		child->cp_info = CPI_NONE;
 	}
 	svn_pool_destroy(check_pool);
