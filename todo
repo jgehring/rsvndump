@@ -1,6 +1,5 @@
 == Schedule for 0.5.3 ==
 > Examine memory usage and/or leaks of new dumping strategy
-> Fix #2898487
 > Fix verbose output
 
 

@@ -41,9 +41,14 @@
 #include "path_hash.h"
 
 
+/* Interval for taking snapshots of the full tree */
+#define SNAPSHOT_DIST 256
+
+
 /*---------------------------------------------------------------------------*/
 /* Local data structures                                                     */
 /*---------------------------------------------------------------------------*/
+
 
 /* A tree delta structure */
 typedef struct {
@@ -61,6 +66,7 @@ typedef struct {
 /* Static variables                                                          */
 /*---------------------------------------------------------------------------*/
 
+
 /* Global pool */
 static apr_pool_t *ph_pool = NULL;
 
@@ -73,17 +79,21 @@ static const char *ph_session_prefix = "";
 /* The current (head) delta */
 static tree_delta_t *ph_head = NULL;
 
+/* Full-tree snapshots */
+static apr_array_header_t *ph_snapshots = NULL;
+
 
 /*---------------------------------------------------------------------------*/
 /* Static functions                                                          */
 /*---------------------------------------------------------------------------*/
 
 
-/* Adds a path to a tree */
+/* Adds a path to a tree, using the tree's hash and pool for temporary allcations */
 static apr_hash_t *path_hash_add(apr_hash_t *tree, const char *path, apr_pool_t *pool)
 {
 	const char *parent, *child;
 	apr_hash_t *parent_tree, *child_tree;
+	apr_pool_t *hash_pool = apr_hash_pool_get(tree);
 
 	/* Determine tree of parent node via recursion */
 	svn_path_split(path, &parent, &child, pool);
@@ -95,33 +105,10 @@ static apr_hash_t *path_hash_add(apr_hash_t *tree, const char *path, apr_pool_t 
 	/* Add the node to the parent tree if neede */
 	child_tree = apr_hash_get(parent_tree, child, APR_HASH_KEY_STRING);
 	if (child_tree == NULL) {
-		child_tree = apr_hash_make(ph_pool);
-		apr_hash_set(parent_tree, apr_pstrdup(ph_pool, child), APR_HASH_KEY_STRING, child_tree);
+		child_tree = apr_hash_make(hash_pool);
+		apr_hash_set(parent_tree, apr_pstrdup(hash_pool, child), APR_HASH_KEY_STRING, child_tree);
 	}
 	DEBUG_MSG("/%s", child);
-	return child_tree;
-}
-
-
-/* Adds a path to a tree, allocating everything in pool */
-static apr_hash_t *path_hash_add_local(apr_hash_t *tree, const char *path, apr_pool_t *pool)
-{
-	const char *parent, *child;
-	apr_hash_t *parent_tree, *child_tree;
-
-	/* Determine tree of parent node via recursion */
-	svn_path_split(path, &parent, &child, pool);
-	if (!strcmp(parent, child)) {
-		return tree;
-	}
-	parent_tree = path_hash_add_local(tree, parent, pool);
-
-	/* Add the node to the parent tree if neede */
-	child_tree = apr_hash_get(parent_tree, child, APR_HASH_KEY_STRING);
-	if (child_tree == NULL) {
-		child_tree = apr_hash_make(pool);
-		apr_hash_set(parent_tree, apr_pstrdup(pool, child), APR_HASH_KEY_STRING, child_tree);
-	}
 	return child_tree;
 }
 
@@ -167,13 +154,34 @@ static void path_hash_delete(apr_hash_t *tree, const char *path, apr_pool_t *poo
 }
 
 
+/* Recursively copies the contents of one hash to another */
+static void path_hash_copy_deep(apr_hash_t *dest, apr_hash_t *source, apr_pool_t *pool)
+{
+	apr_hash_index_t *hi;
+	apr_pool_t *hash_pool = apr_hash_pool_get(dest);
+
+	for (hi = apr_hash_first(pool, source); hi; hi = apr_hash_next(hi)) {
+		const char *key;
+		apr_hash_t *child_source, *child_dest;
+		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&child_source);
+
+		/* Create a new child hash under the same name and copy its contents */
+		child_dest = apr_hash_make(hash_pool);
+		path_hash_copy_deep(child_dest, child_source, pool);
+
+		apr_hash_set(dest, apr_pstrdup(hash_pool, key), APR_HASH_KEY_STRING, child_dest);
+	}
+}
+
+
 /* Reconstructs the complete tree at the given revision, allocated in pool */
 static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 {
 	apr_hash_t *tree;
 	apr_array_header_t *stack, *path;
 	apr_hash_index_t *hi;
-	int i, j;
+	apr_pool_t *temp_pool = svn_pool_create(pool);
+	int i, j, snapshot_idx = (rev / SNAPSHOT_DIST);
 
 	if (ph_revisions->nelts < rev) {
 		DEBUG_MSG("path_hash_reconstruct(%ld): revision not available\n");
@@ -181,10 +189,17 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 	}
 
 	tree = apr_hash_make(pool);
-	stack = apr_array_make(pool, 0, sizeof(apr_hash_t *));
-	path = apr_array_make(pool, 0, sizeof(const char *));
+	stack = apr_array_make(temp_pool, 0, sizeof(apr_hash_t *));
+	path = apr_array_make(temp_pool, 0, sizeof(const char *));
 
-	for (i = 0; i <= rev; i++) {
+	/* Restore the tree from the last snapshot if possible */
+	i = 0;
+	if (ph_snapshots->nelts > snapshot_idx) {
+		path_hash_copy_deep(tree, APR_ARRAY_IDX(ph_snapshots, snapshot_idx, apr_hash_t *), temp_pool);
+		i = snapshot_idx + 1; 
+	}
+
+	while (i <= rev) {
 		tree_delta_t *delta = APR_ARRAY_IDX(ph_revisions, i, tree_delta_t *);
 
 		/* Skip padding revisions */
@@ -210,41 +225,25 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 			 * added automatically
 			 */
 			if (apr_hash_count(top_hash) == 0) {
-				path_hash_add_local(tree, top_path, pool);
+				path_hash_add(tree, top_path, pool);
 				continue;
 			}
 
-			for (hi = apr_hash_first(pool, top_hash); hi; hi = apr_hash_next(hi)) {
+			for (hi = apr_hash_first(temp_pool, top_hash); hi; hi = apr_hash_next(hi)) {
 				const char *key;
 				apr_hash_t *value;
 				apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
 
 				APR_ARRAY_PUSH(stack, apr_hash_t *) = value;
-				APR_ARRAY_PUSH(path, const char *) = svn_path_join(top_path, key, pool);
+				APR_ARRAY_PUSH(path, const char *) = svn_path_join(top_path, key, temp_pool);
 			}
 		}
+
+		++i;
 	}
 
+	svn_pool_destroy(temp_pool);
 	return tree;
-}
-
-
-/* Recursively copies the contents of one hash to another */
-static void path_hash_copy_deep(apr_hash_t *dest, apr_hash_t *source, apr_pool_t *pool)
-{
-	apr_hash_index_t *hi;
-
-	for (hi = apr_hash_first(pool, source); hi; hi = apr_hash_next(hi)) {
-		const char *key;
-		apr_hash_t *child_source, *child_dest;
-		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&child_source);
-
-		/* Create a new child hash under the same name and copy its contents */
-		child_dest = apr_hash_make(ph_pool);
-		path_hash_copy_deep(child_dest, child_source, pool);
-
-		apr_hash_set(dest, apr_pstrdup(ph_pool, key), APR_HASH_KEY_STRING, child_dest);
-	}
 }
 
 
@@ -322,6 +321,7 @@ void path_hash_initialize(const char *session_prefix, apr_pool_t *parent_pool)
 		ph_pool = svn_pool_create(parent_pool);
 		ph_revisions = apr_array_make(ph_pool, 0, sizeof(tree_delta_t *));
 		ph_session_prefix = apr_pstrdup(ph_pool, session_prefix);
+		ph_snapshots = apr_array_make(ph_pool, 0, sizeof(apr_hash_t *));
 	}
 }
 
@@ -394,6 +394,12 @@ void path_hash_commit(log_revision_t *log, svn_revnum_t revnum)
 	}
 	APR_ARRAY_PUSH(ph_revisions, tree_delta_t *) = ph_head;
 	ph_head = NULL;
+
+	/* Add regular snapshots to speed up path reconstructions */ 
+	if ((revnum % SNAPSHOT_DIST) == 0) {
+		apr_hash_t *snapshot = path_hash_reconstruct(revnum, ph_pool);
+		APR_ARRAY_PUSH(ph_snapshots, apr_hash_t *) = snapshot;
+	}
 
 #if 0 && defined(DEBUG)
 	DEBUG_MSG("path_hash: for revision %ld:\n", revnum);
