@@ -42,7 +42,7 @@
 
 
 /* Interval for taking snapshots of the full tree */
-#define SNAPSHOT_DIST 256
+#define SNAPSHOT_DIST 512
 
 /* Cache size for reconstructed repositories */
 #define CACHE_SIZE 4
@@ -205,17 +205,6 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 	}
 
 	tree = apr_hash_make(pool);
-
-	/* Check if the tree is already cached */
-	for (i = 0; i < CACHE_SIZE; i++) {
-		cached_tree_t *entry = &APR_ARRAY_IDX(ph_cache, i, cached_tree_t);
-		if (entry->tree != NULL && entry->revnum == rev) {
-			path_hash_copy_deep(tree, entry->tree, temp_pool);
-			svn_pool_destroy(temp_pool);
-			return tree;
-		}
-	}
-
 	stack = apr_array_make(temp_pool, 0, sizeof(apr_hash_t *));
 	path = apr_array_make(temp_pool, 0, sizeof(const char *));
 
@@ -267,26 +256,6 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 		}
 
 		++i;
-	}
-
-	/* Insert the tree into the cache */
-	{
-		cached_tree_t *entry = &APR_ARRAY_IDX(ph_cache, ph_cache_pos, cached_tree_t);
-
-		/* Clear old entry if neccessary */
-		if (entry->tree) {
-			svn_pool_destroy(entry->pool);
-		}
-
-		entry->revnum = rev;
-		entry->pool = svn_pool_create(ph_pool);
-		entry->tree = apr_hash_make(entry->pool);
-		path_hash_copy_deep(entry->tree, tree, temp_pool);
-
-		/* Move to next cache entry */
-		if (++ph_cache_pos >= CACHE_SIZE) {
-			ph_cache_pos = 0;
-		}
 	}
 
 	svn_pool_destroy(temp_pool);
@@ -469,13 +438,43 @@ void path_hash_commit(log_revision_t *log, svn_revnum_t revnum)
 /* Checks the parent relation of two paths at a given revision */
 char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t revnum, apr_pool_t *pool)
 {
-	apr_hash_t *recon, *subtree;
+	int i;
+	apr_hash_t *recon = NULL, *subtree;
 
-	/* First, reconstruct tree at the given revision */
-	recon = path_hash_reconstruct(revnum, pool);
+	/* Check the cache first */
+	for (i = 0; i < CACHE_SIZE; i++) {
+		cached_tree_t *entry = &APR_ARRAY_IDX(ph_cache, i, cached_tree_t);
+		if (entry->tree != NULL && entry->revnum == revnum) {
+			recon = entry->tree;
+			break;
+		}
+	}
+
+	/* If it isn't cached, reconstruct the tree at the given revision */
 	if (recon == NULL) {
-		DEBUG_MSG("path_hash: unable to reconstruct hash for revision %ld\n", revnum);
-		return 0;
+		recon = path_hash_reconstruct(revnum, pool);
+		if (recon == NULL) {
+			DEBUG_MSG("path_hash: unable to reconstruct hash for revision %ld\n", revnum);
+			return 0;
+		} else {
+			/* Insert the tree into the cache */
+			cached_tree_t *entry = &APR_ARRAY_IDX(ph_cache, ph_cache_pos, cached_tree_t);
+
+			/* Clear old entry if neccessary */
+			if (entry->tree) {
+				svn_pool_destroy(entry->pool);
+			}
+
+			entry->revnum = revnum;
+			entry->pool = svn_pool_create(ph_pool);
+			entry->tree = apr_hash_make(entry->pool);
+			path_hash_copy_deep(entry->tree, recon, pool);
+
+			/* Move to next cache entry */
+			if (++ph_cache_pos >= CACHE_SIZE) {
+				ph_cache_pos = 0;
+			}
+		}
 	}
 
 	/* Find the subtree of the parent node */
