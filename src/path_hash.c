@@ -44,6 +44,9 @@
 /* Interval for taking snapshots of the full tree */
 #define SNAPSHOT_DIST 256
 
+/* Cache size for reconstructed repositories */
+#define CACHE_SIZE 4
+
 
 /*---------------------------------------------------------------------------*/
 /* Local data structures                                                     */
@@ -59,6 +62,14 @@ typedef struct {
 	apr_hash_t *added;
 	apr_array_header_t *deleted;
 } tree_delta_t;
+
+
+/* Full-tree cache structure */
+typedef struct {
+	apr_pool_t *pool;
+	svn_revnum_t revnum;
+	apr_hash_t *tree;
+} cached_tree_t;
 
 
 
@@ -81,6 +92,10 @@ static tree_delta_t *ph_head = NULL;
 
 /* Full-tree snapshots */
 static apr_array_header_t *ph_snapshots = NULL;
+
+/* Full-tree Cache */
+static apr_array_header_t *ph_cache = NULL;
+static int ph_cache_pos = 0;
 
 
 /*---------------------------------------------------------------------------*/
@@ -185,10 +200,22 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 
 	if (ph_revisions->nelts < rev) {
 		DEBUG_MSG("path_hash_reconstruct(%ld): revision not available\n");
+		svn_pool_destroy(temp_pool);
 		return NULL;
 	}
 
 	tree = apr_hash_make(pool);
+
+	/* Check if the tree is already cached */
+	for (i = 0; i < CACHE_SIZE; i++) {
+		cached_tree_t *entry = &APR_ARRAY_IDX(ph_cache, i, cached_tree_t);
+		if (entry->tree != NULL && entry->revnum == rev) {
+			path_hash_copy_deep(tree, entry->tree, temp_pool);
+			svn_pool_destroy(temp_pool);
+			return tree;
+		}
+	}
+
 	stack = apr_array_make(temp_pool, 0, sizeof(apr_hash_t *));
 	path = apr_array_make(temp_pool, 0, sizeof(const char *));
 
@@ -240,6 +267,26 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 		}
 
 		++i;
+	}
+
+	/* Insert the tree into the cache */
+	{
+		cached_tree_t *entry = &APR_ARRAY_IDX(ph_cache, ph_cache_pos, cached_tree_t);
+
+		/* Clear old entry if neccessary */
+		if (entry->tree) {
+			svn_pool_destroy(entry->pool);
+		}
+
+		entry->revnum = rev;
+		entry->pool = svn_pool_create(ph_pool);
+		entry->tree = apr_hash_make(entry->pool);
+		path_hash_copy_deep(entry->tree, tree, temp_pool);
+
+		/* Move to next cache entry */
+		if (++ph_cache_pos >= CACHE_SIZE) {
+			ph_cache_pos = 0;
+		}
 	}
 
 	svn_pool_destroy(temp_pool);
@@ -318,10 +365,19 @@ static void path_hash_dump(apr_hash_t *tree, apr_pool_t *pool)
 void path_hash_initialize(const char *session_prefix, apr_pool_t *parent_pool)
 {
 	if (ph_pool == NULL) {
+		int i;
+
+		/* Allocate global storage */
 		ph_pool = svn_pool_create(parent_pool);
 		ph_revisions = apr_array_make(ph_pool, 0, sizeof(tree_delta_t *));
 		ph_session_prefix = apr_pstrdup(ph_pool, session_prefix);
 		ph_snapshots = apr_array_make(ph_pool, 0, sizeof(apr_hash_t *));
+		ph_cache = apr_array_make(ph_pool, CACHE_SIZE, sizeof(cached_tree_t));
+
+		/* Initialize cache */
+		for (i = 0; i < CACHE_SIZE; i++) {
+			APR_ARRAY_IDX(ph_cache, i, cached_tree_t).tree = NULL;
+		}
 	}
 }
 
