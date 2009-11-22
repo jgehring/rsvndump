@@ -802,7 +802,8 @@ static svn_error_t *de_open_root(void *edit_baton, svn_revnum_t base_revision, a
 {
 	de_baton_t *de_baton = (de_baton_t *)edit_baton;
 	de_node_baton_t *node;
-	node = delta_create_node_no_parent("", de_baton, de_baton->revision_pool);
+	node = delta_create_node_no_parent("/", de_baton, de_baton->revision_pool);
+	node->action = 'M';
 	de_baton->root_node = node;
 
 	*root_baton = node;
