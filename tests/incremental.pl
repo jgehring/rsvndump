@@ -43,15 +43,30 @@ system("../src/rsvndump $args $url > .dumps/normal 2> .dumps/normal.log") == 0 |
 print("done\n");
 
 
+# Fetch commits for incremental dump
+print(">> Fetching logs... ");
+system("svn log --xml $url | grep -E 'revision=\"[0-9]{1,}\">' | tac > .dumps/revisions") == 0 || die $!;
+print("done\n");
+
+
 # Run incremental dumps
 print(">> Preforming incremental dump... ");
-my $start = 0;
-my $end = $steps;
-while (system("../src/rsvndump --incremental --no-incremental-header -r $start:$end $args $url >> .dumps/incremental 2>> .dumps/incremental.log") == 0) {
-	$start = $end+1;
-	$end += $steps;
-	if ($end > $head) {
-		$end = $head;
+open(in, "< .dumps/revisions") || die $!;
+my $last = 0;
+my $n = 0;
+while (<in>) {
+	my $rev;
+	if (m/\"([0-9]*)\"/) {
+		$rev = $1;
 	}
+
+	# Stick to given step width
+	if (($n % $steps) != 0) {
+		next;
+	}
+
+	system("../src/rsvndump --incremental --no-incremental-header -r $last:$rev $args $url >> .dumps/incremental 2>> .dumps/incremental.log") == 0 || die $!;
+	$last = $rev;
 }
+close(in);
 print("done\n");

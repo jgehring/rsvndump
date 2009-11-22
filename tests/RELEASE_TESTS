@@ -1,0 +1,20 @@
+Test that should be run priot to a release
+==========================================
+
+> Test database:
+  - ./tdb.py all
+  - ./tdb.py all --verbose
+  - ./tdb.py all --deltas
+  - ./tdb.py all --deltas --keep-revnums
+  - ./tdb.py all --keep-revnums
+
+> Other tests:
+  - configure with --enable-tests and run 'make test'
+  - ./incremental.pl $REPO and ./incremental.pl $REPO/subdir
+    > compare .dumps/{normal,incremental}
+    > compare svnadmin dumps of repositories constructed using
+      .dumps/{normal,incremental}
+    Please not that it's normal that files in the incremental dump
+    may be dumped with their contents even through their full copies.
+    The incremental dump simply don't has informations about checksums
+    of files in previous revisions

@@ -11,6 +11,7 @@
 
 
 == Schedule for 0.5.x ==
+> Get rid of list_t and use the APR array struct
 > Add --no-stop-on-copy option
 > Don't dump properties on copy operations if they didn't change
 > Check if revision range determnination can be done faster
