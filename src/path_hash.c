@@ -378,36 +378,38 @@ void path_hash_commit(log_revision_t *log, svn_revnum_t revnum)
 		return;
 	}
 
-	if (ph_head == NULL) {
-		ph_head = apr_palloc(ph_pool, sizeof(tree_delta_t));
-		ph_head->added = apr_hash_make(ph_pool);
-		ph_head->deleted = apr_array_make(ph_pool, 0, sizeof(const char *));
-	}
+	if (log->changed_paths != NULL) {
+		if (ph_head == NULL) {
+			ph_head = apr_palloc(ph_pool, sizeof(tree_delta_t));
+			ph_head->added = apr_hash_make(ph_pool);
+			ph_head->deleted = apr_array_make(ph_pool, 0, sizeof(const char *));
+		}
 
-	/* Iterate over the changed paths of this revision and store them
-	 * in the current tree delta */
-	for (hi = apr_hash_first(pool, log->changed_paths); hi; hi = apr_hash_next(hi)) {
-		const char *path;
-		svn_log_changed_path_t *info;
-		apr_hash_this(hi, (const void **)(void *)&path, NULL, (void **)(void *)&info);
+		/* Iterate over the changed paths of this revision and store them
+		 * in the current tree delta */
+		for (hi = apr_hash_first(pool, log->changed_paths); hi; hi = apr_hash_next(hi)) {
+			const char *path;
+			svn_log_changed_path_t *info;
+			apr_hash_this(hi, (const void **)(void *)&path, NULL, (void **)(void *)&info);
 
-		if (info->action == 'A') {
-			if (info->copyfrom_path) {
-				int offset = strlen(ph_session_prefix);
-				while (*(info->copyfrom_path+offset) == '/') {
-					++offset;
+			if (info->action == 'A') {
+				if (info->copyfrom_path) {
+					int offset = strlen(ph_session_prefix);
+					while (*(info->copyfrom_path+offset) == '/') {
+						++offset;
+					}
+
+					DEBUG_MSG("path_hash: +++ %s@%d -> %s [prefix = %s]\n", info->copyfrom_path, info->copyfrom_rev, path, ph_session_prefix);
+					path_hash_copy(ph_head->added, path, info->copyfrom_path + offset, info->copyfrom_rev, pool);
+				} else {
+					DEBUG_MSG("path_hash: +++ ");
+					path_hash_add(ph_head->added, path, pool);
+					DEBUG_MSG("\n");
 				}
-
-				DEBUG_MSG("path_hash: +++ %s@%d -> %s [prefix = %s]\n", info->copyfrom_path, info->copyfrom_rev, path, ph_session_prefix);
-				path_hash_copy(ph_head->added, path, info->copyfrom_path + offset, info->copyfrom_rev, pool);
-			} else {
-				DEBUG_MSG("path_hash: +++ ");
-				path_hash_add(ph_head->added, path, pool);
-				DEBUG_MSG("\n");
+			} else if (info->action == 'D') {
+				DEBUG_MSG("path_hash: --- %s\n", path);
+				APR_ARRAY_PUSH(ph_head->deleted, const char *) = apr_pstrdup(ph_pool, path);
 			}
-		} else if (info->action == 'D') {
-			DEBUG_MSG("path_hash: --- %s\n", path);
-			APR_ARRAY_PUSH(ph_head->deleted, const char *) = apr_pstrdup(ph_pool, path);
 		}
 	}
 

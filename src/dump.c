@@ -360,9 +360,10 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 		logs_fetched = 1;
 
-		/* Set local revision number */
+		/* Jump to local revision and fill the path hash for previous revisions */
 		local_rev = 0;
 		while ((local_rev < (long int)logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
+			path_hash_commit((log_revision_t *)logs.elements + local_rev, local_rev);
 			++local_rev;
 		}
 
