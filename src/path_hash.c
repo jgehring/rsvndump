@@ -216,7 +216,7 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 	}
 
 	while (i <= rev) {
-		tree_delta_t *delta = APR_ARRAY_IDX(ph_revisions, i, tree_delta_t *);
+		tree_delta_t *delta = APR_ARRAY_IDX(ph_revisions, i++, tree_delta_t *);
 
 		/* Skip padding revisions */
 		if (delta == NULL) {
@@ -254,8 +254,6 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 				APR_ARRAY_PUSH(path, const char *) = svn_path_join(top_path, key, temp_pool);
 			}
 		}
-
-		++i;
 	}
 
 	svn_pool_destroy(temp_pool);

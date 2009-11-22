@@ -1,4 +1,5 @@
 == Schedule for 0.5.3 ==
+> Does the path_hash work with incremental dumps starting "anywhere"?
 > Examine memory usage and/or leaks of new dumping strategy
 > Fix verbose output
 
