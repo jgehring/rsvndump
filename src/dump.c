@@ -287,7 +287,7 @@ char dump(session_t *session, dump_options_t *opts)
 {
 	list_t logs;
 	char logs_fetched = 0, ret = 0;
-	char start_mid = 0, show_local_rev = 1;
+	char start_mid = 0, show_local_rev = 1, user_prefix_dumped = 0;
 	svn_revnum_t global_rev, local_rev = -1;
 	int list_idx;
 
@@ -450,8 +450,9 @@ char dump(session_t *session, dump_options_t *opts)
 			dump_revision_header(revpool, (log_revision_t *)logs.elements + list_idx, local_rev, opts);
 
 			/* The first revision also sets up the user prefix */
-			if (local_rev == 1) {
+			if (local_rev >= 1 && user_prefix_dumped == 0) {
 				dump_create_user_prefix(opts, session->pool);
+				user_prefix_dumped = 1;
 			}
 		}
 
