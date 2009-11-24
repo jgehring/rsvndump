@@ -92,6 +92,7 @@ typedef struct {
 	unsigned char     md5sum[APR_MD5_DIGESTSIZE];
 	char              *copyfrom_path;
 	svn_revnum_t      copyfrom_revision;
+	svn_revnum_t      copyfrom_rev_local;
 	cp_info_t         cp_info;
 	char              applied_delta;
 	char              dump_needed;
@@ -310,6 +311,7 @@ static char delta_check_copy(de_node_baton_t *node)
 
 	/* Check if we can use the information we already have */
 	if ((strlen(session->prefix) == 0) && ((opts->start == 0) || (opts->flags & DF_INCREMENTAL))) {
+		node->copyfrom_rev_local = node->copyfrom_revision;
 		node->cp_info = CPI_COPY;
 		return 0;
 	}
@@ -325,6 +327,7 @@ static char delta_check_copy(de_node_baton_t *node)
 		/* If we sync the revision numbers, the copy-from revision is correct */
 		if (opts->flags & DF_KEEP_REVNUMS) {
 			node->cp_info = CPI_COPY;
+			node->copyfrom_rev_local = node->copyfrom_revision;
 			return 0;
 		}
 
@@ -356,7 +359,7 @@ static char delta_check_copy(de_node_baton_t *node)
 		}
 
 		if (rev > 0) {
-			node->copyfrom_revision = rev;
+			node->copyfrom_rev_local = rev;
 			node->cp_info = CPI_COPY;
 			DEBUG_MSG("delta_check_copy: using local %ld\n", rev);
 		} else {
@@ -586,7 +589,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		while (*(node->copyfrom_path+offset) == '/') {
 			++offset;
 		}
-		printf("%s: %ld\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_REV, node->copyfrom_revision);
+		printf("%s: %ld\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_REV, node->copyfrom_rev_local);
 		if (opts->prefix != NULL) {
 			printf("%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, opts->prefix, node->copyfrom_path+offset);
 		} else {
