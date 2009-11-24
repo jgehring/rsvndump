@@ -4,7 +4,7 @@
 #
 
 
-import os, platform, shutil, subprocess
+import os, platform, re, shutil, subprocess
 
 import test, cache
 
@@ -22,6 +22,23 @@ def run(*args, **misc):
 		redirections['stdin'] = open(input, "r")
 	if output:
 		redirections['stdout'] = open(output, "a+")
+	if error:
+		redirections['stderr'] = open(error, "a+")
+	subprocess.check_call(args, **redirections)
+
+# Runs a external program
+def run_noa(*args, **misc):
+	redirections = {}
+	extra_args = misc.pop("extra_args", None)
+	input = misc.pop("input", None)
+	output = misc.pop("output", None)
+	error = misc.pop("error", None)
+	if extra_args:
+		args += extra_args
+	if input:
+		redirections['stdin'] = open(input, "r")
+	if output:
+		redirections['stdout'] = open(output, "w+")
 	if error:
 		redirections['stderr'] = open(error, "a+")
 	subprocess.check_call(args, **redirections)
@@ -60,6 +77,7 @@ def setup_repos(id, setup_fn):
 	repo = test.repo(id)
 	wc = test.wc(id)
 	cache.load_repos(id, test.name(id), repo, wc, setup_fn, test.log(id))
+	return repo
 
 
 # Dumps the repository using svnadmin and returns the dumpfile path
@@ -123,6 +141,17 @@ def dump_rsvndump_incremental(id, stepsize, args, repos = None):
 	return dump
 
 
+# Loads the specified dumpfile into a temporary repository and returns a path to it
+def repos_load(id, dumpfile):
+	log(id, "\n*** repos_load ("+str(id)+")\n")
+
+	tmp = test.mkdtemp(id)
+	run("svnadmin", "create", tmp, output = test.log(id))
+	run("svnadmin", "load", tmp, input = dumpfile, output = test.log(id))
+
+	return tmp 
+
+
 # Loads the specified dumpfile into a temporary repository and dumps it
 def dump_reload(id, dumpfile):
 	log(id, "\n*** dump_reload ("+str(id)+")\n")
@@ -168,6 +197,74 @@ def dump_reload_rsvndump_sub(id, dumpfile, path, args):
 	else:
 		run("../../bin/rsvndump.exe", uri("file://"+tmp+"/"+path), extra_args = tuple(args), output = dump, error = test.log(id))
 	return dump
+
+
+# Compares two subversion repositories using "svnlook"
+def diff_repos(id, repo1, sub1, repo2, sub2):
+	log(id, "\n*** compare_repos ("+str(id)+")\n")
+
+	# Retrieve log messages
+	log1 = test.mktemp(id)
+	log2 = test.mktemp(id)
+	run("svnlook", "history", repo1, sub1, output = log1, error = test.log(id))
+	run("svnlook", "history", repo2, sub2, output = log2, error = test.log(id))
+
+	f1 = open(log1, "r")
+	rev1 = f1.readlines()
+	rev1.reverse()
+	f1.close()
+	f2 = open(log2, "r")
+	rev2 = f2.readlines()
+	rev2.reverse()
+	f2.close()
+
+	# Filter logs
+	regex = re.compile(" *[0-9]*   \/"+sub1+"$", re.IGNORECASE)
+	rev1 = [rev for rev in rev1 if regex.search(rev)]
+	regex = re.compile(" *[0-9]*   \/"+sub2+"$", re.IGNORECASE)
+	rev2 = [rev for rev in rev2 if regex.search(rev)]
+
+	if len(rev1) != len(rev2):
+		log(id, "\n"+str(rev1))
+		log(id, "\n"+str(rev2))
+		return False
+
+	# Compare trees & file contents
+	out1 = mktemp(id)
+	out2 = mktemp(id)
+	fout1 = mktemp(id)
+	fout2 = mktemp(id)
+	diff = test.log(id)+".diff"
+	rx1 = re.compile(" *([0-9]*)", re.IGNORECASE)
+	for rev in zip(rev1, rev2):
+		r1 = int(rx1.match(rev[0]).group())
+		r2 = int(rx1.match(rev[1]).group())
+		run_noa("svnlook", "tree", "--full-paths", "-r", str(r1), repo1, sub1, output = out1, error = test.log(id))
+		run_noa("svnlook", "tree", "--full-paths", "-r", str(r2), repo2, sub2, output = out2, error = test.log(id))
+		log(id, "comparing trees at revision "+str(r1)+" and "+str(r2))
+		try:
+			run("diff", "-Naur", out1, out2, output = diff)
+		except:
+			return False
+
+		# Compare files
+		f = open(out1, "r")
+		for line in f.readlines():
+			file = line.lstrip()[:-1]
+			if file.endswith("/"): # Skip directories
+				continue
+
+			run_noa("svnlook", "cat", "-r", str(r1), repo1, file, output = fout1, error = test.log(id))
+			run_noa("svnlook", "cat", "-r", str(r2), repo2, file, output = fout2, error = test.log(id))
+			try:
+				run("diff", "-Naur", fout1, fout2, output = diff)
+			except:
+				log(id, "  failed, file "+file+" differs!")
+				return False
+
+		f.close()
+
+	return True
 
 
 # Creates a temporary file and returns a reference to it

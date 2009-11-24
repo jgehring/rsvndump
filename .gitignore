@@ -5,6 +5,9 @@
 *.*.swp
 *.orig
 *.log
+*.gcda
+*.gcov
+*.gcno
 .deps
 Makefile
 Makefile.in
