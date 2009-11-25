@@ -140,6 +140,46 @@ def dump_rsvndump_incremental(id, stepsize, args, repos = None):
 			break
 	return dump
 
+# Dumps the reopsitory incremental using rsvndump and returns the dumpfile path
+def dump_rsvndump_incremental_sub(id, path, stepsize, args, repos = None):
+	log(id, "\n*** dump_rsvndump_incremental ("+str(id)+")\n")
+
+	if not repos:
+		repos = test.repo(id)
+	dump = test.dumps(id)+"/rsvndump.dump"
+
+	# Fetch history
+	history = mktemp(id)
+	run("svnlook", "history", repos, path, output = history, error = test.log(id))
+	f = open(history, "r")
+	hist = f.readlines()
+	f.close()
+	hist.reverse()
+
+	# Filter history
+	regex = re.compile(" *[0-9]*   \/"+path+"$", re.IGNORECASE)
+	hist = [h for h in hist if regex.search(h)]
+
+	# Iteratve over history
+	regex = re.compile(" *([0-9]*)", re.IGNORECASE)
+	start = 0
+	end = 0
+	for h in hist:
+		match = regex.match(h)
+		if not match:
+			break
+		end = int(match.group())
+		if end-start < stepsize:
+			continue
+
+		if not platform.system() == "Windows":
+			run("../../src/rsvndump", uri("file://"+repos+"/"+path), "--incremental", "--no-incremental-header", "--revision", str(start)+":"+str(end), extra_args = tuple(args), output = dump, error = test.log(id))
+		else:
+			run("../../bin/rsvndump", uri("file://"+repos+"/"+path), "--incremental", "--no-incremental-header", "--revision", str(start)+":"+str(end), extra_args = tuple(args), output = dump, error = test.log(id))
+		start = int(match.group())
+
+	return dump
+
 
 # Loads the specified dumpfile into a temporary repository and returns a path to it
 def repos_load(id, dumpfile):
@@ -212,11 +252,11 @@ def diff_repos(id, repo1, sub1, repo2, sub2):
 	f1 = open(log1, "r")
 	rev1 = f1.readlines()
 	rev1.reverse()
-	f1.close()
 	f2 = open(log2, "r")
 	rev2 = f2.readlines()
-	rev2.reverse()
 	f2.close()
+	f1.close()
+	rev2.reverse()
 
 	# Filter logs
 	regex = re.compile(" *[0-9]*   \/"+sub1+"$", re.IGNORECASE)

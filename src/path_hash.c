@@ -199,7 +199,7 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 	int i, j, snapshot_idx = (rev / SNAPSHOT_DIST);
 
 	if (ph_revisions->nelts < rev) {
-		DEBUG_MSG("path_hash_reconstruct(%ld): revision not available\n");
+		DEBUG_MSG("path_hash_reconstruct(%ld): revision not available (max = %d)\n", rev, ph_revisions->nelts);
 		svn_pool_destroy(temp_pool);
 		return NULL;
 	}
@@ -379,6 +379,7 @@ void path_hash_commit(log_revision_t *log, svn_revnum_t revnum)
 	apr_pool_t *pool = svn_pool_create(ph_pool);
 
 	if (ph_revisions->nelts > revnum) {
+		DEBUG_MSG("path_hash: not commiting previous revision %ld\n", revnum);
 		return;
 	}
 
@@ -435,6 +436,7 @@ void path_hash_commit(log_revision_t *log, svn_revnum_t revnum)
 	path_hash_dump(path_hash_reconstruct(revnum, pool), pool);
 #endif
 
+	DEBUG_MSG("path_hash: commited revision %ld\n", revnum);
 	svn_pool_destroy(pool);
 }
 
