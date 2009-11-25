@@ -291,7 +291,9 @@ static void path_hash_copy(apr_hash_t *tree, const char *path, const char *from,
 }
 
 
-/* Mainly used for debugging */
+#ifdef DEBUG
+
+/* Debugging */
 static void path_hash_dump(apr_hash_t *tree, apr_pool_t *pool)
 {
 	apr_hash_index_t *hi;
@@ -321,6 +323,8 @@ static void path_hash_dump(apr_hash_t *tree, apr_pool_t *pool)
 	}
 	DEBUG_MSG("path_hash: ----------------------------------------------\n");
 }
+
+#endif
 
 
 /*---------------------------------------------------------------------------*/
