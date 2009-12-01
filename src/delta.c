@@ -1177,6 +1177,7 @@ static svn_error_t *de_absent_file(const char *path, void *parent_baton, apr_poo
 static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 {
 	de_baton_t *de_baton = (de_baton_t *)edit_baton;
+	apr_hash_index_t *hi;
 	svn_error_t *err;
 
 	/* Recursively dump all nodes touched by this revision */
@@ -1189,7 +1190,6 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 	 * will happen if nodes whose parent is a copy destination have been
 	 * deleted.
 	 */
-	apr_hash_index_t *hi;
 	for (hi = apr_hash_first(pool, de_baton->log_revision->changed_paths); hi; hi = apr_hash_next(hi)) {
 		const char *path;
 		svn_log_changed_path_t *log;
