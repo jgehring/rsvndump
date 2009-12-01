@@ -40,8 +40,10 @@
 
 #include "main.h"
 
-#include "path_hash.h"
+#include "delta.h"
 #include "utils.h"
+
+#include "path_hash.h"
 
 
 /* Interval for taking snapshots of the full tree */
@@ -490,8 +492,9 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 
 			if (info->action == 'A') {
 				if (info->copyfrom_path) {
-					if (strncmp(info->copyfrom_path, ph_session_prefix, strlen(ph_session_prefix))) {
-						/* The copy source is not inside the session root, so add the tree manually */
+					const char *copyfrom_path = delta_get_local_copyfrom_path(ph_session_prefix, info->copyfrom_path);
+					if (copyfrom_path == NULL) {
+						/* The copy source is not under the session root, so add the tree manually */
 						if (path_hash_add_tree(session, ph_head->added, path, log->revision, pool)) {
 							return 1;
 						}
@@ -501,8 +504,8 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 							++offset;
 						}
 
-						DEBUG_MSG("path_hash: +++ %s@%d -> %s [prefix = %s]\n", info->copyfrom_path, info->copyfrom_rev, path, ph_session_prefix);
-						if (path_hash_copy(ph_head->added, path, info->copyfrom_path + offset, info->copyfrom_rev, pool)) {
+						DEBUG_MSG("path_hash: +++ %s@%d -> %s\n", copyfrom_path, info->copyfrom_rev, path, ph_session_prefix);
+						if (path_hash_copy(ph_head->added, path, copyfrom_path, info->copyfrom_rev, pool)) {
 							/*
 							 * The copy source could not be determined. However, it is
 							 * important to have a consistent history, so add the whole tree

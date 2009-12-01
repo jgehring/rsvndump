@@ -291,47 +291,6 @@ static svn_error_t *delta_load_properties(de_node_baton_t *node)
 }
 
 
-/* Determines the local copyfrom_revision number */
-static svn_revnum_t delta_get_local_copyfrom_rev(svn_revnum_t original, dump_options_t *opts, list_t *logs, svn_revnum_t local_revnum)
-{
-	svn_revnum_t rev;
-
-	/* If we sync the revision numbers, the original one is correct */
-	if (opts->flags & DF_KEEP_REVNUMS) {
-		return original;
-	}
-
-	DEBUG_MSG("local_revnum = %ld\n", local_revnum);
-
-	/*
-	 * Loop backwards through the revision list, starting at the previous
-	 * revision ,in order to find the best matching revision for the copy.
-	 * NOTE: This algorithm assumes that list indexes are equal to their
-	 * respective local revision numbers. This is ensured in dump()
-	 */
-	rev = logs->size-1;
-	while (--rev >= 0) {
-		log_revision_t *logrev = ((log_revision_t *)logs->elements) + rev;
-		DEBUG_MSG("node->copyfrom = %ld, logrev->revision = %ld, rev = %ld\n",  original, logrev->revision, rev);
-		if (original == logrev->revision) {
-			/* This is ideal, there's an exact match */
-			DEBUG_MSG("-> equal, using %ld\n", rev);
-			break;
-		} else if (logrev->revision < original)  {
-			/* The revision in question has not been dumped as we've just
-			   missed it. Therefore, simply use this revision (since
-			   node->copyfrom_revision has not been dumped, the node contents
-			   haven't changed between this revision and
-			   node->copyfrom_revision) */
-			DEBUG_MSG("-> smaller , using %ld\n", rev);
-			break;
-		}
-	}
-
-	return rev;
-}
-
-
 /* Checks if a node can be dumped as a copy */
 static char delta_check_copy(de_node_baton_t *node)
 {
@@ -400,8 +359,8 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 {
 	apr_pool_t *check_pool;
 	char *child_relpath;
+	const char *path;
 	svn_revnum_t revision;
-	int offset = strlen(parent->de_baton->session->prefix);
 
 	/* Easy case first */
 	if (parent->cp_info != CPI_COPY || parent->copyfrom_path == NULL) {
@@ -424,20 +383,23 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 		++child_relpath;
 	}
 
-	/* TODO: Check if prefix doesn't match!! */
-	while (*(parent->copyfrom_path+offset) == '/') {
-		++offset;
+	/* Determine copy information */
+	path = delta_get_local_copyfrom_path(parent->de_baton->session->prefix, parent->copyfrom_path);
+	if (path == NULL) {
+		DEBUG_MSG("delta_propagate_copy(%s, %s): copyfrom_path (%s) is out of scope\n", parent->copyfrom_path);
+		child->cp_info = CPI_NONE;
+		return;
 	}
 
 	revision = delta_get_local_copyfrom_rev(parent->copyfrom_revision, parent->de_baton->opts, parent->de_baton->logs, parent->de_baton->local_revnum);
 
 	/* Check the old parent relationship */
 	check_pool = svn_pool_create(child->pool);
-	if (path_hash_check_parent(parent->copyfrom_path+offset, child_relpath, revision, check_pool)) {
-		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld OK\n", parent->copyfrom_path, child_relpath, parent->copyfrom_revision);
+	if (path_hash_check_parent(path, child_relpath, revision, check_pool)) {
+		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld OK\n", path, child_relpath, parent->copyfrom_revision);
 		child->cp_info = CPI_COPY;
 	} else {
-		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld FAIL\n", parent->copyfrom_path, child_relpath, parent->copyfrom_revision);
+		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld FAIL\n", path, child_relpath, parent->copyfrom_revision);
 		child->cp_info = CPI_NONE;
 	}
 	svn_pool_destroy(check_pool);
@@ -648,20 +610,18 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 
 	/* Output copy information if neccessary */
 	if (node->cp_info == CPI_COPY) {
-		int offset = strlen(session->prefix);
-		while (*(node->copyfrom_path+offset) == '/') {
-			++offset;
-		}
+		const char *copyfrom_path = delta_get_local_copyfrom_path(session->prefix, node->copyfrom_path);
+
 		printf("%s: %ld\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_REV, node->copyfrom_rev_local);
 		if (opts->prefix != NULL) {
-			printf("%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, opts->prefix, node->copyfrom_path+offset);
+			printf("%s: %s%s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, opts->prefix, copyfrom_path);
 		} else {
-			printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, node->copyfrom_path+offset);
+			printf("%s: %s\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_PATH, copyfrom_path);
 		}
 
 		/* Maybe we don't need to dump the contents */
 		if ((node->action == 'A') && (node->kind == svn_node_file)) {
-			unsigned char *prev_md5 = rhash_get(md5_hash, node->copyfrom_path+offset, APR_HASH_KEY_STRING);
+			unsigned char *prev_md5 = rhash_get(md5_hash, copyfrom_path, APR_HASH_KEY_STRING);
 			if (prev_md5 && !memcmp(node->md5sum, prev_md5, APR_MD5_DIGESTSIZE)) {
 				DEBUG_MSG("md5sum matches\n");
 				dump_content = 0;
@@ -670,7 +630,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 				if (prev_md5) {
 					DEBUG_MSG("md5sum doesn't match: (%s != %s)\n", svn_md5_digest_to_cstring(node->md5sum, node->pool), svn_md5_digest_to_cstring(prev_md5, node->pool));
 				} else {
-					DEBUG_MSG("md5sum of %s not available\n", node->copyfrom_path+offset);
+					DEBUG_MSG("md5sum of %s not available\n", copyfrom_path);
 				}
 #endif
 				dump_content = 1;
@@ -1302,6 +1262,63 @@ static svn_error_t *de_abort_edit(void *edit_baton, apr_pool_t *pool)
 /*---------------------------------------------------------------------------*/
 /* Global functions                                                          */
 /*---------------------------------------------------------------------------*/
+
+
+/* Determines the local copyfrom_path (returns NULL if it can't be reached) */
+const char *delta_get_local_copyfrom_path(const char *prefix, const char *path)
+{
+	int preflen = strlen(prefix);
+
+	if (strncmp(prefix, path, preflen)) {
+		return NULL;
+	}
+
+	while (*(path + preflen) == '/') {
+		++preflen;
+	}
+	return (path + preflen);
+}
+
+
+/* Determines the local copyfrom_revision number */
+svn_revnum_t delta_get_local_copyfrom_rev(svn_revnum_t original, dump_options_t *opts, list_t *logs, svn_revnum_t local_revnum)
+{
+	svn_revnum_t rev;
+
+	/* If we sync the revision numbers, the original one is correct */
+	if (opts->flags & DF_KEEP_REVNUMS) {
+		return original;
+	}
+
+	DEBUG_MSG("local_revnum = %ld\n", local_revnum);
+
+	/*
+	 * Loop backwards through the revision list, starting at the previous
+	 * revision ,in order to find the best matching revision for the copy.
+	 * NOTE: This algorithm assumes that list indexes are equal to their
+	 * respective local revision numbers. This is ensured in dump()
+	 */
+	rev = logs->size-1;
+	while (--rev >= 0) {
+		log_revision_t *logrev = ((log_revision_t *)logs->elements) + rev;
+		DEBUG_MSG("node->copyfrom = %ld, logrev->revision = %ld, rev = %ld\n",  original, logrev->revision, rev);
+		if (original == logrev->revision) {
+			/* This is ideal, there's an exact match */
+			DEBUG_MSG("-> equal, using %ld\n", rev);
+			break;
+		} else if (logrev->revision < original)  {
+			/* The revision in question has not been dumped as we've just
+			   missed it. Therefore, simply use this revision (since
+			   node->copyfrom_revision has not been dumped, the node contents
+			   haven't changed between this revision and
+			   node->copyfrom_revision) */
+			DEBUG_MSG("-> smaller , using %ld\n", rev);
+			break;
+		}
+	}
+
+	return rev;
+}
 
 
 /* Sets up a delta editor for dumping a revision */

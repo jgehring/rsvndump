@@ -501,7 +501,12 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 
 		/* Insert revision into path_hash */
-		path_hash_commit(session, (log_revision_t *)logs.elements + list_idx, local_rev);
+		if (!(opts->flags & DF_DRY_RUN)) {
+			if (path_hash_commit(session, (log_revision_t *)logs.elements + list_idx, local_rev)) {
+				ret = 1;
+				break;
+			}
+		}
 
 		if (opts->verbosity == 0 && !(opts->flags & DF_DRY_RUN)) {
 			if (show_local_rev) {

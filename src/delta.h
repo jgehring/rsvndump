@@ -33,6 +33,12 @@
 #include "session.h"
 
 
+/* Determines the local copyfrom_path (returns NULL if it can't be reached) */
+const char *delta_get_local_copyfrom_path(const char *prefix, const char *path);
+
+/* Determines the local copyfrom_revision number */
+svn_revnum_t delta_get_local_copyfrom_rev(svn_revnum_t original, dump_options_t *opts, list_t *logs, svn_revnum_t local_revnum);
+
 /* Sets up a delta editor for dumping a revision */
 extern void delta_setup_editor(session_t *session, dump_options_t *options, list_t *logs, log_revision_t *log_revision, svn_revnum_t local_revnum, svn_delta_editor_t **editor, void **editor_baton, apr_pool_t *pool);
 
