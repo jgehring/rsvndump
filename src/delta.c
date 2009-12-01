@@ -291,13 +291,52 @@ static svn_error_t *delta_load_properties(de_node_baton_t *node)
 }
 
 
+/* Determines the local copyfrom_revision number */
+static svn_revnum_t delta_get_local_copyfrom_rev(svn_revnum_t original, dump_options_t *opts, list_t *logs, svn_revnum_t local_revnum)
+{
+	svn_revnum_t rev;
+
+	/* If we sync the revision numbers, the original one is correct */
+	if (opts->flags & DF_KEEP_REVNUMS) {
+		return original;
+	}
+
+	DEBUG_MSG("local_revnum = %ld\n", local_revnum);
+
+	/*
+	 * Loop backwards through the revision list, starting at the previous
+	 * revision ,in order to find the best matching revision for the copy.
+	 * NOTE: This algorithm assumes that list indexes are equal to their
+	 * respective local revision numbers. This is ensured in dump()
+	 */
+	rev = logs->size-1;
+	while (--rev >= 0) {
+		log_revision_t *logrev = ((log_revision_t *)logs->elements) + rev;
+		DEBUG_MSG("node->copyfrom = %ld, logrev->revision = %ld, rev = %ld\n",  original, logrev->revision, rev);
+		if (original == logrev->revision) {
+			/* This is ideal, there's an exact match */
+			DEBUG_MSG("-> equal, using %ld\n", rev);
+			break;
+		} else if (logrev->revision < original)  {
+			/* The revision in question has not been dumped as we've just
+			   missed it. Therefore, simply use this revision (since
+			   node->copyfrom_revision has not been dumped, the node contents
+			   haven't changed between this revision and
+			   node->copyfrom_revision) */
+			DEBUG_MSG("-> smaller , using %ld\n", rev);
+			break;
+		}
+	}
+
+	return rev;
+}
+
+
 /* Checks if a node can be dumped as a copy */
 static char delta_check_copy(de_node_baton_t *node)
 {
 	session_t *session = node->de_baton->session;
 	dump_options_t *opts = node->de_baton->opts;
-	list_t *logs = node->de_baton->logs;
-	svn_revnum_t local_revnum = node->de_baton->local_revnum;
 
 	/* If the parent could not be copied, this node won't be copied, too */
 	if (node->cp_info == CPI_FAILED) {
@@ -327,40 +366,7 @@ static char delta_check_copy(de_node_baton_t *node)
 	if (((opts->flags & DF_INCREMENTAL) || (opts->start <= node->copyfrom_revision)) && !strncmp(session->prefix, node->copyfrom_path, strlen(session->prefix))) {
 		svn_revnum_t rev;
 
-		/* If we sync the revision numbers, the copy-from revision is correct */
-		if (opts->flags & DF_KEEP_REVNUMS) {
-			node->cp_info = CPI_COPY;
-			node->copyfrom_rev_local = node->copyfrom_revision;
-			return 0;
-		}
-
-		DEBUG_MSG("local_revnum = %ld\n", local_revnum);
-
-		/*
-		 * Loop backwards through the revision list, starting at the previous
-		 * revision ,in order to find the best matching revision for the copy.
-		 * NOTE: This algorithm assumes that list indexes are equal to their
-		 * respective local revision numbers. This is ensured in dump()
-		 */
-		rev = logs->size-1;
-		while (--rev >= 0) {
-			log_revision_t *logrev = ((log_revision_t *)logs->elements) + rev;
-			DEBUG_MSG("node->copyfrom = %ld, logrev->revision = %ld, rev = %ld\n",  node->copyfrom_revision, logrev->revision, rev);
-			if (node->copyfrom_revision == logrev->revision) {
-				/* This is ideal, there's an exact match */
-				DEBUG_MSG("-> equal, using %ld\n", rev);
-				break;
-			} else if (logrev->revision < node->copyfrom_revision)  {
-				/* The revision in question has not been dumped as we've just
-				   missed it. Therefore, simply use this revision (since
-				   node->copyfrom_revision has not been dumped, the node contents
-				   haven't changed between this revision and
-				   node->copyfrom_revision) */
-				DEBUG_MSG("-> smaller , using %ld\n", rev);
-				break;
-			}
-		}
-
+		rev = delta_get_local_copyfrom_rev(node->copyfrom_revision, opts, node->de_baton->logs, node->de_baton->local_revnum);
 		if (rev > 0) {
 			node->copyfrom_rev_local = rev;
 			node->cp_info = CPI_COPY;
@@ -394,6 +400,7 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 {
 	apr_pool_t *check_pool;
 	char *child_relpath;
+	svn_revnum_t revision;
 	int offset = strlen(parent->de_baton->session->prefix);
 
 	/* Easy case first */
@@ -417,13 +424,16 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 		++child_relpath;
 	}
 
+	/* TODO: Check if prefix doesn't match!! */
 	while (*(parent->copyfrom_path+offset) == '/') {
 		++offset;
 	}
 
+	revision = delta_get_local_copyfrom_rev(parent->copyfrom_revision, parent->de_baton->opts, parent->de_baton->logs, parent->de_baton->local_revnum);
+
 	/* Check the old parent relationship */
 	check_pool = svn_pool_create(child->pool);
-	if (path_hash_check_parent(parent->copyfrom_path+offset, child_relpath, parent->copyfrom_revision, check_pool)) {
+	if (path_hash_check_parent(parent->copyfrom_path+offset, child_relpath, revision, check_pool)) {
 		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld OK\n", parent->copyfrom_path, child_relpath, parent->copyfrom_revision);
 		child->cp_info = CPI_COPY;
 	} else {

@@ -363,7 +363,9 @@ char dump(session_t *session, dump_options_t *opts)
 		/* Jump to local revision and fill the path hash for previous revisions */
 		local_rev = 0;
 		while ((local_rev < (long int)logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
-			path_hash_commit((log_revision_t *)logs.elements + local_rev, local_rev);
+			if (path_hash_commit(session, (log_revision_t *)logs.elements + local_rev, local_rev)) {
+				return 1;
+			}
 			++local_rev;
 		}
 
@@ -499,7 +501,7 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 
 		/* Insert revision into path_hash */
-		path_hash_commit((log_revision_t *)logs.elements + list_idx, local_rev);
+		path_hash_commit(session, (log_revision_t *)logs.elements + list_idx, local_rev);
 
 		if (opts->verbosity == 0 && !(opts->flags & DF_DRY_RUN)) {
 			if (show_local_rev) {

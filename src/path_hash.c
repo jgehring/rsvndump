@@ -32,6 +32,8 @@
 #include <stdio.h>
 
 #include <svn_path.h>
+#include <svn_ra.h>
+#include <svn_dirent_uri.h>
 
 #include <apr_hash.h>
 #include <apr_tables.h>
@@ -39,6 +41,7 @@
 #include "main.h"
 
 #include "path_hash.h"
+#include "utils.h"
 
 
 /* Interval for taking snapshots of the full tree */
@@ -125,6 +128,70 @@ static apr_hash_t *path_hash_add(apr_hash_t *tree, const char *path, apr_pool_t 
 	}
 	DEBUG_MSG("/%s", child);
 	return child_tree;
+}
+
+
+/* Fetches a tree from a repository and adds every path to the given hash, recursively */
+static char path_hash_add_tree_rec(session_t *session, apr_hash_t *tree, const char *path, svn_revnum_t revnum, apr_pool_t *pool)
+{
+	svn_error_t *err;
+	apr_hash_t *dirents;
+	apr_hash_index_t *hi;
+	apr_pool_t *subpool = svn_pool_create(pool);
+
+	if ((err = svn_ra_get_dir2(session->ra, &dirents, NULL, NULL, path, revnum, SVN_DIRENT_KIND, pool))) {
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
+		svn_error_clear(err);
+		return 1;
+	}
+
+	/* Iterate over entries and add them to the tree using their full paths */
+	for (hi = apr_hash_first(pool, dirents); hi; hi = apr_hash_next(hi)) {
+		const char *entry;
+		char *subpath;
+		svn_dirent_t *dirent;
+		apr_hash_this(hi, (const void **)(void *)&entry, NULL, (void **)(void *)&dirent);
+
+		subpath = svn_dirent_join(path, entry, subpool);
+
+		if (dirent->kind == svn_node_file) {
+			DEBUG_MSG("path_hash: S++ ");
+			path_hash_add(tree, subpath, pool);
+			DEBUG_MSG("\n");
+		} else if (dirent->kind == svn_node_dir) {
+			path_hash_add_tree_rec(session, tree, subpath, revnum, subpool);
+		}
+	}
+
+	svn_pool_destroy(subpool);
+	return 0;
+}
+
+
+/* Fetches a tree from a repository and adds every path to the given hash */
+static char path_hash_add_tree(session_t *session, apr_hash_t *tree, const char *path, svn_revnum_t revnum, apr_pool_t *pool)
+{
+	svn_error_t *err;
+	svn_dirent_t *dirent;
+
+	/*
+	 * Check the node type first. If it is a file, we can simply add it.
+	 * Otherwise, add the the directory contents recursively.
+	 */
+	if ((err = svn_ra_stat(session->ra, path, revnum, &dirent, pool))) {
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
+		svn_error_clear(err);
+		return 1;
+	}
+
+	if (dirent->kind == svn_node_file) {
+		DEBUG_MSG("path_hash: S++ ");
+		path_hash_add(tree, path, pool);
+		DEBUG_MSG("\n");
+		return 0;
+	}
+
+	return path_hash_add_tree_rec(session, tree, path, revnum, pool);
 }
 
 
@@ -262,7 +329,7 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 
 
 /* Copies a path from a specific revision (recursively) */
-static void path_hash_copy(apr_hash_t *tree, const char *path, const char *from, svn_revnum_t revnum, apr_pool_t *pool)
+static char path_hash_copy(apr_hash_t *tree, const char *path, const char *from, svn_revnum_t revnum, apr_pool_t *pool)
 {
 	apr_hash_t *recon, *subtree, *newtree;
 	apr_pool_t *recon_pool = svn_pool_create(pool);
@@ -271,14 +338,16 @@ static void path_hash_copy(apr_hash_t *tree, const char *path, const char *from,
 	recon = path_hash_reconstruct(revnum, recon_pool);
 	if (recon == NULL) {
 		DEBUG_MSG("path_hash: !!! reconstruction failed for %ld!\n", revnum);
-		return;
+		svn_pool_destroy(recon_pool);
+		return 1;
 	}
 
 	/* Determine location of the path */
 	subtree = path_hash_subtree(recon, from, recon_pool);
 	if (subtree == NULL) {
 		DEBUG_MSG("path_hash: !!! no subtree for %s@%ld\n", from, revnum);
-		return;
+		svn_pool_destroy(recon_pool);
+		return 1;
 	}
 
 	/* Add the complete subtree */
@@ -288,6 +357,7 @@ static void path_hash_copy(apr_hash_t *tree, const char *path, const char *from,
 	path_hash_copy_deep(newtree, subtree, pool);
 
 	svn_pool_destroy(recon_pool);
+	return 0;
 }
 
 
@@ -373,17 +443,38 @@ void path_hash_add_path(const char *path)
 
 
 /* Adds a new revision to the path hash */
-void path_hash_commit(log_revision_t *log, svn_revnum_t revnum)
+char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revnum)
 {
 	apr_hash_index_t *hi;
 	apr_pool_t *pool = svn_pool_create(ph_pool);
 
 	if (ph_revisions->nelts > revnum) {
 		DEBUG_MSG("path_hash: not commiting previous revision %ld\n", revnum);
-		return;
+		return 1;
 	}
 
 	if (log->changed_paths != NULL) {
+#if 0 && defined(DEBUG)
+		DEBUG_MSG("path_hash: changed paths in revision %ld:\n", revnum);
+		for (hi = apr_hash_first(pool, log->changed_paths); hi; hi = apr_hash_next(hi)) {
+			const char *path;
+			svn_log_changed_path_t *info;
+			apr_hash_this(hi, (const void **)(void *)&path, NULL, (void **)(void *)&info);
+
+			DEBUG_MSG("path_hash: %c %s", info->action, path);
+			if (info->copyfrom_path) {
+				int offset = strlen(ph_session_prefix);
+				while (*(info->copyfrom_path+offset) == '/') {
+					++offset;
+				}
+
+				DEBUG_MSG(" (from %s@%d [%s])\n", info->copyfrom_path, info->copyfrom_rev, info->copyfrom_path + offset);
+			} else {
+				DEBUG_MSG("\n");
+			}
+		}
+#endif
+
 		if (ph_head == NULL) {
 			ph_head = apr_palloc(ph_pool, sizeof(tree_delta_t));
 			ph_head->added = apr_hash_make(ph_pool);
@@ -399,13 +490,29 @@ void path_hash_commit(log_revision_t *log, svn_revnum_t revnum)
 
 			if (info->action == 'A') {
 				if (info->copyfrom_path) {
-					int offset = strlen(ph_session_prefix);
-					while (*(info->copyfrom_path+offset) == '/') {
-						++offset;
-					}
+					if (strncmp(info->copyfrom_path, ph_session_prefix, strlen(ph_session_prefix))) {
+						/* The copy source is not inside the session root, so add the tree manually */
+						if (path_hash_add_tree(session, ph_head->added, path, log->revision, pool)) {
+							return 1;
+						}
+					} else {
+						int offset = strlen(ph_session_prefix);
+						while (*(info->copyfrom_path+offset) == '/') {
+							++offset;
+						}
 
-					DEBUG_MSG("path_hash: +++ %s@%d -> %s [prefix = %s]\n", info->copyfrom_path, info->copyfrom_rev, path, ph_session_prefix);
-					path_hash_copy(ph_head->added, path, info->copyfrom_path + offset, info->copyfrom_rev, pool);
+						DEBUG_MSG("path_hash: +++ %s@%d -> %s [prefix = %s]\n", info->copyfrom_path, info->copyfrom_rev, path, ph_session_prefix);
+						if (path_hash_copy(ph_head->added, path, info->copyfrom_path + offset, info->copyfrom_rev, pool)) {
+							/*
+							 * The copy source could not be determined. However, it is
+							 * important to have a consistent history, so add the whole tree
+							 * manually.
+							 */
+							if (path_hash_add_tree(session, ph_head->added, path, log->revision, pool)) {
+								return 1;
+							}
+						}
+					}
 				} else {
 					DEBUG_MSG("path_hash: +++ ");
 					path_hash_add(ph_head->added, path, pool);
@@ -438,6 +545,7 @@ void path_hash_commit(log_revision_t *log, svn_revnum_t revnum)
 
 	DEBUG_MSG("path_hash: commited revision %ld\n", revnum);
 	svn_pool_destroy(pool);
+	return 0;
 }
 
 

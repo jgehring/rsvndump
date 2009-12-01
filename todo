@@ -1,9 +1,6 @@
 == Schedule for 0.5.3 ==
 > Centralize delta_check_copy() (find_matching_rev() or s.th. similar) so
-  that can be used for determining copy sources in path_hash_commit()
-> If not dumping with --incremental, be sure to recursively retrieve a
-  tree if a copy source cannot be reached in path_hash_commit(). We need
-  a valid path_hash history! (see currently failing incremental_sub test)
+  that it can be used for determining copy sources in path_hash_commit()
 > After taking a snapshot in path_hash, write the last invertval (snapshot
   and deltas) to a temporary file in order to reduce memory usage. Thanks
   to the snapshots, only a single file needs to be opened and parsed in order to
