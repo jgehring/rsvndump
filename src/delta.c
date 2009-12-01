@@ -299,8 +299,10 @@ static char delta_check_copy(de_node_baton_t *node)
 
 	/* If the parent could not be copied, this node won't be copied, too */
 	if (node->cp_info == CPI_FAILED) {
-		/* Inform the path_hash */
-		path_hash_add_path(node->path);
+		if (!(opts->flags & DF_DRY_RUN)) {
+			/* Inform the path_hash */
+			path_hash_add_path(node->path);
+		}
 		return 0;
 	}
 
@@ -346,7 +348,7 @@ static char delta_check_copy(de_node_baton_t *node)
 	}
 
 	/* If a copy must be resolved "manually", we need to inform the path_hash */
-	if (node->cp_info == CPI_FAILED) {
+	if (node->cp_info == CPI_FAILED && !(opts->flags & DF_DRY_RUN)) {
 		path_hash_add_path(node->path);
 	}
 
