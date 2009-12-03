@@ -24,8 +24,7 @@
  *      copies and deciding which nodes will actually be copied.
  *
  *      The current implementation stores tree deltas instead of full
- *      layouts for each revision to minimize memory usage. Therefore,
- *
+ *      layouts for each revision to minimize memory usage.
  */
 
 
@@ -47,10 +46,16 @@
 
 
 /* Interval for taking snapshots of the full tree */
-#define SNAPSHOT_DIST 512
+/*#define SNAPSHOT_DIST 256*/
+#define SNAPSHOT_DIST 32
 
 /* Cache size for reconstructed repositories */
 #define CACHE_SIZE 4
+
+/* Codes for reading and writing the path history */
+#define REV_SEPERATOR "==="
+#define REV_ADD "+ "
+#define REV_DELETE "- "
 
 
 /*---------------------------------------------------------------------------*/
@@ -64,6 +69,7 @@ typedef struct {
 	 * For nodes that are being added, a hash tree is used for every
 	 * part of the path. For deletions, there's a simple array of strings.
 	 */
+	apr_pool_t *pool;
 	apr_hash_t *added;
 	apr_array_header_t *deleted;
 } tree_delta_t;
@@ -92,13 +98,19 @@ static apr_array_header_t *ph_revisions = NULL;
 /* Additional session prefix (for copyfrom_path information) */
 static const char *ph_session_prefix = "";
 
+/* Temporary directory */
+static const char *ph_temp_dir = NULL;
+
 /* The current (head) delta */
 static tree_delta_t *ph_head = NULL;
 
 /* Full-tree snapshots */
 static apr_array_header_t *ph_snapshots = NULL;
 
-/* Full-tree Cache */
+/* History files */
+static apr_array_header_t *ph_files = NULL;
+
+/* Full-tree cache */
 static apr_array_header_t *ph_cache = NULL;
 static int ph_cache_pos = 0;
 
@@ -218,7 +230,7 @@ static apr_hash_t *path_hash_subtree(apr_hash_t *tree, const char *path, apr_poo
 
 
 /* Deletes a path (and thus, all its children) from a tree. This doesn't free
- * the memory, though */
+   the memory, though */
 static void path_hash_delete(apr_hash_t *tree, const char *path, apr_pool_t *pool)
 {
 	const char *parent, *child;
@@ -363,6 +375,110 @@ static char path_hash_copy(apr_hash_t *tree, const char *path, const char *from,
 }
 
 
+/* Writes a series of tree deltas to the given file */
+static char path_hash_write(apr_hash_t *tree, apr_file_t *file, apr_pool_t *pool)
+{
+	apr_hash_index_t *hi;
+	apr_array_header_t *recon_stack = apr_array_make(pool, 0, sizeof(apr_hash_t *));
+	apr_array_header_t *recon_path = apr_array_make(pool, 0, sizeof(const char *));
+
+	APR_ARRAY_PUSH(recon_stack, apr_hash_t *) = tree;
+	APR_ARRAY_PUSH(recon_path, const char *) = "/";
+
+	while (recon_stack->nelts > 0) {
+		apr_hash_t *top_hash = *(apr_hash_t **)apr_array_pop(recon_stack);
+		const char *top_path = *(const char **)apr_array_pop(recon_path);
+
+		if (apr_hash_count(top_hash) == 0) {
+			if (strcmp(top_path, "/")) {
+				apr_file_printf(file, "%s%s\n", REV_ADD, top_path);
+			}
+			continue;
+		}
+
+		for (hi = apr_hash_first(pool, top_hash); hi; hi = apr_hash_next(hi)) {
+			const char *key;
+			apr_hash_t *value;
+			apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
+
+			APR_ARRAY_PUSH(recon_stack, apr_hash_t *) = value;
+			APR_ARRAY_PUSH(recon_path, const char *) = svn_path_join(top_path, key, pool);
+		}
+	}
+
+	return 0;
+}
+
+
+/* Writes the first available snapshot an all following deltas to a temporary
+   file and returns the file path. Additionally, the snapshots and the deltas
+   will be freed */
+static char *path_hash_write_deltas(apr_pool_t *pool)
+{
+	char *filename;
+	int index;
+	apr_status_t status;
+	apr_hash_t *tree;
+	apr_file_t *file = NULL;
+	apr_pool_t *delta_pool = svn_pool_create(pool);
+
+	filename = apr_psprintf(pool, "%s/XXXXXX", ph_temp_dir);
+	status = apr_file_mktemp(&file, filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
+	DEBUG_MSG("path_hash: temp_file = %s : %d\n", filename, status);
+	if (status) {
+		fprintf(stderr, _("ERROR: Unable to create temporary file (%d)\n"), status);
+		return NULL;
+	}
+
+	/* Write the snapshot first */
+	index = 0;
+	while ((tree = APR_ARRAY_IDX(ph_snapshots, index, apr_hash_t *)) == NULL) {
+		++index;
+	}
+	if (path_hash_write(tree, file, delta_pool)) {
+		apr_file_close(file);
+		return NULL;
+	}
+
+	svn_pool_destroy(apr_hash_pool_get(tree));
+	APR_ARRAY_IDX(ph_snapshots, index, apr_hash_t *) = NULL;
+
+	/* Write all deltas */
+	index *= SNAPSHOT_DIST;
+	index += 1;
+	while ((index % SNAPSHOT_DIST) != 0) {
+		tree_delta_t *delta = APR_ARRAY_IDX(ph_revisions, index, tree_delta_t *);
+		int j;
+
+		apr_file_printf(file, "%s\n", REV_SEPERATOR);
+
+		/* Skip padding revisions */
+		if (delta == NULL) {
+			continue;
+		}
+
+		/* Deletions */
+		for (j = 0; j < delta->deleted->nelts; j++) {
+			apr_file_printf(file, "%s%s\n", REV_DELETE, APR_ARRAY_IDX(delta->deleted, j, const char *));
+		}
+
+		/* Additions */
+		svn_pool_clear(delta_pool);
+		if (path_hash_write(delta->added, file, delta_pool)) {
+			apr_file_close(file);
+			return NULL;
+		}
+
+		svn_pool_destroy(delta->pool);
+		APR_ARRAY_IDX(ph_revisions, index++, tree_delta_t *) = NULL;
+	}
+
+	apr_file_close(file);
+	svn_pool_destroy(delta_pool);
+	return filename;
+}
+
+
 #ifdef DEBUG
 
 /* Debugging */
@@ -405,7 +521,7 @@ static void path_hash_dump(apr_hash_t *tree, apr_pool_t *pool)
 
 
 /* Initializes the path hash using the given pool */
-void path_hash_initialize(const char *session_prefix, apr_pool_t *parent_pool)
+void path_hash_initialize(const char *session_prefix, const char *temp_dir, apr_pool_t *parent_pool)
 {
 	if (ph_pool == NULL) {
 		int i;
@@ -414,7 +530,9 @@ void path_hash_initialize(const char *session_prefix, apr_pool_t *parent_pool)
 		ph_pool = svn_pool_create(parent_pool);
 		ph_revisions = apr_array_make(ph_pool, 0, sizeof(tree_delta_t *));
 		ph_session_prefix = apr_pstrdup(ph_pool, session_prefix);
+		ph_temp_dir = apr_pstrdup(ph_pool, temp_dir);
 		ph_snapshots = apr_array_make(ph_pool, 0, sizeof(apr_hash_t *));
+		ph_files = apr_array_make(ph_pool, 0, sizeof(const char *));
 		ph_cache = apr_array_make(ph_pool, CACHE_SIZE, sizeof(cached_tree_t));
 
 		/* Initialize cache */
@@ -432,8 +550,9 @@ void path_hash_add_path(const char *path)
 
 	if (ph_head == NULL) {
 		ph_head = apr_palloc(ph_pool, sizeof(tree_delta_t));
-		ph_head->added = apr_hash_make(ph_pool);
-		ph_head->deleted = apr_array_make(ph_pool, 0, sizeof(const char *));
+		ph_head->pool = svn_pool_create(ph_pool);
+		ph_head->added = apr_hash_make(ph_head->pool);
+		ph_head->deleted = apr_array_make(ph_head->pool, 0, sizeof(const char *));
 	}
 
 	DEBUG_MSG("path_hash: M++ ");
@@ -479,8 +598,9 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 
 		if (ph_head == NULL) {
 			ph_head = apr_palloc(ph_pool, sizeof(tree_delta_t));
-			ph_head->added = apr_hash_make(ph_pool);
-			ph_head->deleted = apr_array_make(ph_pool, 0, sizeof(const char *));
+			ph_head->pool = svn_pool_create(ph_pool);
+			ph_head->added = apr_hash_make(ph_head->pool);
+			ph_head->deleted = apr_array_make(ph_head->pool, 0, sizeof(const char *));
 		}
 
 		/* Iterate over the changed paths of this revision and store them
@@ -499,11 +619,6 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 							return 1;
 						}
 					} else {
-						int offset = strlen(ph_session_prefix);
-						while (*(info->copyfrom_path+offset) == '/') {
-							++offset;
-						}
-
 						DEBUG_MSG("path_hash: +++ %s@%d -> %s\n", copyfrom_path, info->copyfrom_rev, path, ph_session_prefix);
 						if (path_hash_copy(ph_head->added, path, copyfrom_path, info->copyfrom_rev, pool)) {
 							/*
@@ -537,8 +652,20 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 
 	/* Add regular snapshots to speed up path reconstructions */ 
 	if ((revnum % SNAPSHOT_DIST) == 0) {
-		apr_hash_t *snapshot = path_hash_reconstruct(revnum, ph_pool);
+		apr_hash_t *snapshot = path_hash_reconstruct(revnum, svn_pool_create(ph_pool));
 		APR_ARRAY_PUSH(ph_snapshots, apr_hash_t *) = snapshot;
+
+		/* Only keep the last two snapshots and the deltas between them
+		   in memory. All other deltas will be saved to files. */
+		if ((revnum / SNAPSHOT_DIST) > 2) {
+			char *filename = path_hash_write_deltas(pool);
+			if (filename != NULL) {
+				APR_ARRAY_PUSH(ph_files, const char *) = apr_pstrdup(ph_pool, filename);
+			} else {
+				/* TODO: Write error message */
+				return 1;
+			}
+		}
 	}
 
 #if 0 && defined(DEBUG)

@@ -32,7 +32,7 @@
 
 
 /* Initializes the path hash using the given pool */
-extern void path_hash_initialize(const char *session_prefix, apr_pool_t *parent_pool);
+extern void path_hash_initialize(const char *session_prefix, const char *temp_dir, apr_pool_t *parent_pool);
 
 /* Manually adds a new path to the head revision (without committing it) */
 extern void path_hash_add_path(const char *path);
