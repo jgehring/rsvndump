@@ -1,10 +1,8 @@
 == Schedule for 0.5.3 ==
 > Centralize delta_check_copy() (find_matching_rev() or s.th. similar) so
   that it can be used for determining copy sources in path_hash_commit()
-> After taking a snapshot in path_hash, write the last invertval (snapshot
-  and deltas) to a temporary file in order to reduce memory usage. Thanks
-  to the snapshots, only a single file needs to be opened and parsed in order to
-  reconstruct a tree.
+> Write a test program for the path_hash that commits a specified number of
+  revisions (from a test repository) and checks every revision afterwards
 > Fix verbose output
 
 

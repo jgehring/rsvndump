@@ -53,7 +53,7 @@
 #define CACHE_SIZE 4
 
 /* Codes for reading and writing the path history */
-#define REV_SEPERATOR "==="
+#define REV_SEPERATOR "=="
 #define REV_ADD "+ "
 #define REV_DELETE "- "
 
@@ -270,22 +270,82 @@ static void path_hash_copy_deep(apr_hash_t *dest, apr_hash_t *source, apr_pool_t
 }
 
 
+/* Reconstructs a revision from a file */
+static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool)
+{
+	apr_hash_t *tree;
+	apr_file_t *file = NULL;
+	apr_status_t status;
+	apr_pool_t *temp_pool;
+	unsigned long i, filename_idx = (rev / SNAPSHOT_DIST);
+
+	if (ph_files->nelts < filename_idx) {
+		DEBUG_MSG("path_hash_reconstruct_file(%ld): file not available (%d < %d)\n", rev, ph_files->nelts, filename_idx);
+		return NULL;
+	}
+
+	/* Try to open the file */
+	temp_pool = svn_pool_create(pool);
+	status = apr_file_open(&file, APR_ARRAY_IDX(ph_files, filename_idx, const char *), APR_READ | APR_BINARY, APR_OS_DEFAULT, temp_pool);
+	if (status) {
+		fprintf(stderr, _("ERROR: Unable to open temporary file %s\n"), APR_ARRAY_IDX(ph_files, filename_idx, const char *));
+		svn_pool_destroy(temp_pool);
+		return NULL;
+	}
+
+	tree = apr_hash_make(pool);
+
+	/* Read revisions */
+	i = filename_idx * SNAPSHOT_DIST;
+	while (i <= rev) { 
+		char *buffer = utils_file_readln(temp_pool, file);
+		if (buffer == NULL) {
+			fprintf(stderr, _("ERROR: Unable to read from temporary file %s\n"), APR_ARRAY_IDX(ph_files, filename_idx, const char *));
+			apr_file_close(file);
+			svn_pool_destroy(temp_pool);
+			return NULL;
+		}
+
+		if (!strncmp(buffer, REV_ADD, sizeof(REV_ADD))) {
+			path_hash_add(tree, buffer + sizeof(REV_ADD), temp_pool);
+		} else if (!strncmp(buffer, REV_DELETE, sizeof(REV_DELETE))) {
+			path_hash_delete(tree, buffer + sizeof(REV_DELETE), temp_pool);
+		} else if (!strncmp(buffer, REV_SEPERATOR, sizeof(REV_SEPERATOR))) {
+			++i;
+		}
+	}
+
+	apr_file_close(file);
+	svn_pool_destroy(temp_pool);
+	return tree;
+}
+
+
 /* Reconstructs the complete tree at the given revision, allocated in pool */
 static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 {
 	apr_hash_t *tree;
 	apr_array_header_t *stack, *path;
 	apr_hash_index_t *hi;
-	apr_pool_t *temp_pool = svn_pool_create(pool);
-	int i, j, snapshot_idx = (rev / SNAPSHOT_DIST);
+	apr_pool_t *temp_pool;
+	unsigned long i, j, snapshot_idx = (rev / SNAPSHOT_DIST);
 
 	if (ph_revisions->nelts < rev) {
 		DEBUG_MSG("path_hash_reconstruct(%ld): revision not available (max = %d)\n", rev, ph_revisions->nelts);
-		svn_pool_destroy(temp_pool);
 		return NULL;
 	}
 
+	/* Maybe we need to read from a file */
+	if (ph_snapshots->nelts > snapshot_idx && APR_ARRAY_IDX(ph_snapshots, snapshot_idx, apr_hash_t *) == NULL) {
+		if (ph_snapshots->nelts > 2) {
+			return path_hash_reconstruct_file(rev, pool);
+		} else {
+			return NULL;
+		}
+	};
+
 	tree = apr_hash_make(pool);
+	temp_pool = svn_pool_create(pool);
 	stack = apr_array_make(temp_pool, 0, sizeof(apr_hash_t *));
 	path = apr_array_make(temp_pool, 0, sizeof(const char *));
 
@@ -293,7 +353,7 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 	i = 0;
 	if (ph_snapshots->nelts > snapshot_idx) {
 		path_hash_copy_deep(tree, APR_ARRAY_IDX(ph_snapshots, snapshot_idx, apr_hash_t *), temp_pool);
-		i = snapshot_idx + 1; 
+		i = (snapshot_idx * SNAPSHOT_DIST) + 1; 
 	}
 
 	while (i <= rev) {
@@ -423,7 +483,7 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 	apr_pool_t *delta_pool = svn_pool_create(pool);
 
 	filename = apr_psprintf(pool, "%s/XXXXXX", ph_temp_dir);
-	status = apr_file_mktemp(&file, filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
+	status = apr_file_mktemp(&file, filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL | APR_BINARY, pool);
 	DEBUG_MSG("path_hash: temp_file = %s : %d\n", filename, status);
 	if (status) {
 		fprintf(stderr, _("ERROR: Unable to create temporary file (%d)\n"), status);
@@ -454,6 +514,7 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 
 		/* Skip padding revisions */
 		if (delta == NULL) {
+			++index;
 			continue;
 		}
 
@@ -657,7 +718,7 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 
 		/* Only keep the last two snapshots and the deltas between them
 		   in memory. All other deltas will be saved to files. */
-		if ((revnum / SNAPSHOT_DIST) > 2) {
+		if (ph_snapshots->nelts > 2) {
 			char *filename = path_hash_write_deltas(pool);
 			if (filename != NULL) {
 				APR_ARRAY_PUSH(ph_files, const char *) = apr_pstrdup(ph_pool, filename);

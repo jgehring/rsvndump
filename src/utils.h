@@ -47,6 +47,9 @@ extern float stopwatch_elapsed(stopwatch_t *watch);
 /* Returns a canonicalized path that has been allocated using strdup() */
 extern char *utils_canonicalize_pstrdup(struct apr_pool_t *pool, char *path);
 
+/* Reads a single line from a file, allocating it in pool */
+extern char *utils_file_readln(struct apr_pool_t *pool, struct apr_file_t *file);
+
 /* Recursively removes the contents of a directory and the directory */
 /* itself it 'rmdir' is non-zero */
 extern void utils_rrmdir(struct apr_pool_t *pool, const char *path, char rmdir);
