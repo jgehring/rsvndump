@@ -46,8 +46,7 @@
 
 
 /* Interval for taking snapshots of the full tree */
-/*#define SNAPSHOT_DIST 256*/
-#define SNAPSHOT_DIST 32
+#define SNAPSHOT_DIST 256
 
 /* Cache size for reconstructed repositories */
 #define CACHE_SIZE 4
@@ -173,6 +172,9 @@ static char path_hash_add_tree_rec(session_t *session, apr_hash_t *tree, const c
 			path_hash_add(tree, subpath, pool);
 			DEBUG_MSG("\n");
 		} else if (dirent->kind == svn_node_dir) {
+			DEBUG_MSG("path_hash: S++ ");
+			path_hash_add(tree, subpath, pool);
+			DEBUG_MSG("\n");
 			path_hash_add_tree_rec(session, tree, subpath, revnum, subpool);
 		}
 	}
@@ -278,6 +280,9 @@ static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool
 	apr_status_t status;
 	apr_pool_t *temp_pool;
 	unsigned long i, filename_idx = (rev / SNAPSHOT_DIST);
+	int rev_add_len, rev_delete_len, rev_sep_len;
+
+	DEBUG_MSG("path_hash_test: reconstruct_file(%ld) started\n", rev);
 
 	if (ph_files->nelts < filename_idx) {
 		DEBUG_MSG("path_hash_reconstruct_file(%ld): file not available (%d < %d)\n", rev, ph_files->nelts, filename_idx);
@@ -293,11 +298,16 @@ static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool
 		return NULL;
 	}
 
+	DEBUG_MSG("path_hash_test: reconstruct_file(%ld) using file %s\n", rev, APR_ARRAY_IDX(ph_files, filename_idx, const char *));
 	tree = apr_hash_make(pool);
+
+	rev_add_len = strlen(REV_ADD);
+	rev_delete_len = strlen(REV_DELETE);
+	rev_sep_len = strlen(REV_SEPERATOR);
 
 	/* Read revisions */
 	i = filename_idx * SNAPSHOT_DIST;
-	while (i <= rev) { 
+	while (i <= rev) {
 		char *buffer = utils_file_readln(temp_pool, file);
 		if (buffer == NULL) {
 			fprintf(stderr, _("ERROR: Unable to read from temporary file %s\n"), APR_ARRAY_IDX(ph_files, filename_idx, const char *));
@@ -306,11 +316,12 @@ static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool
 			return NULL;
 		}
 
-		if (!strncmp(buffer, REV_ADD, sizeof(REV_ADD))) {
-			path_hash_add(tree, buffer + sizeof(REV_ADD), temp_pool);
-		} else if (!strncmp(buffer, REV_DELETE, sizeof(REV_DELETE))) {
-			path_hash_delete(tree, buffer + sizeof(REV_DELETE), temp_pool);
-		} else if (!strncmp(buffer, REV_SEPERATOR, sizeof(REV_SEPERATOR))) {
+		if (!strncmp(buffer, REV_ADD, rev_add_len)) {
+			DEBUG_MSG("path_hash_test: +++ %s\n", buffer + rev_add_len);
+			path_hash_add(tree, buffer + rev_add_len, temp_pool);
+		} else if (!strncmp(buffer, REV_DELETE, rev_delete_len)) {
+			path_hash_delete(tree, buffer + rev_delete_len, temp_pool);
+		} else if (!strncmp(buffer, REV_SEPERATOR, rev_sep_len)) {
 			++i;
 		}
 	}
@@ -338,11 +349,12 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 	/* Maybe we need to read from a file */
 	if (ph_snapshots->nelts > snapshot_idx && APR_ARRAY_IDX(ph_snapshots, snapshot_idx, apr_hash_t *) == NULL) {
 		if (ph_snapshots->nelts > 2) {
+			DEBUG_MSG("path_hash_reconstruct(%ld): using file\n", rev);
 			return path_hash_reconstruct_file(rev, pool);
 		} else {
 			return NULL;
 		}
-	};
+	}
 
 	tree = apr_hash_make(pool);
 	temp_pool = svn_pool_create(pool);
@@ -354,6 +366,13 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 	if (ph_snapshots->nelts > snapshot_idx) {
 		path_hash_copy_deep(tree, APR_ARRAY_IDX(ph_snapshots, snapshot_idx, apr_hash_t *), temp_pool);
 		i = (snapshot_idx * SNAPSHOT_DIST) + 1; 
+	} else if (rev > 0) {
+		/* No snapshot here. Try to load the previous revision */
+		apr_hash_t *previous = path_hash_reconstruct(rev-1, temp_pool);
+		if (previous != NULL) {
+			path_hash_copy_deep(tree, previous, temp_pool);
+			i = rev-1;
+		}
 	}
 
 	while (i <= rev) {
@@ -451,6 +470,7 @@ static char path_hash_write(apr_hash_t *tree, apr_file_t *file, apr_pool_t *pool
 
 		if (apr_hash_count(top_hash) == 0) {
 			if (strcmp(top_path, "/")) {
+				DEBUG_MSG("path_hash_write: +++ %s\n", top_path);
 				apr_file_printf(file, "%s%s\n", REV_ADD, top_path);
 			}
 			continue;
@@ -506,7 +526,7 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 	/* Write all deltas */
 	index *= SNAPSHOT_DIST;
 	index += 1;
-	while ((index % SNAPSHOT_DIST) != 0) {
+	do {
 		tree_delta_t *delta = APR_ARRAY_IDX(ph_revisions, index, tree_delta_t *);
 		int j;
 
@@ -520,6 +540,7 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 
 		/* Deletions */
 		for (j = 0; j < delta->deleted->nelts; j++) {
+			DEBUG_MSG("path_hash_write: --- %s\n", APR_ARRAY_IDX(delta->deleted, j, const char *));
 			apr_file_printf(file, "%s%s\n", REV_DELETE, APR_ARRAY_IDX(delta->deleted, j, const char *));
 		}
 
@@ -530,9 +551,13 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 			return NULL;
 		}
 
+		DEBUG_MSG("path_hash_write: --------------------------------------------------------------\n");
+
 		svn_pool_destroy(delta->pool);
-		APR_ARRAY_IDX(ph_revisions, index++, tree_delta_t *) = NULL;
-	}
+		APR_ARRAY_IDX(ph_revisions, index, tree_delta_t *) = NULL;
+	} while ((index++ % SNAPSHOT_DIST) != 0);
+
+	DEBUG_MSG("path_hash_write: ==============================================================\n");
 
 	apr_file_close(file);
 	svn_pool_destroy(delta_pool);
@@ -543,13 +568,14 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 #ifdef DEBUG
 
 /* Debugging */
-static void path_hash_dump(apr_hash_t *tree, apr_pool_t *pool)
+static void path_hash_dump_prefix(const char *prefix, apr_hash_t *tree, apr_pool_t *pool)
 {
+#ifdef DEBUG_PHASH
 	apr_hash_index_t *hi;
 	apr_array_header_t *recon_stack = apr_array_make(pool, 0, sizeof(apr_hash_t *));
 	apr_array_header_t *recon_path = apr_array_make(pool, 0, sizeof(const char *));
 
-	DEBUG_MSG("path_hash: ----------------------------------------------\n");
+	DEBUG_MSG("%s: ----------------------------------------------\n", prefix);
 	APR_ARRAY_PUSH(recon_stack, apr_hash_t *) = tree;
 	APR_ARRAY_PUSH(recon_path, const char *) = "/";
 	while (recon_stack->nelts > 0) {
@@ -557,7 +583,7 @@ static void path_hash_dump(apr_hash_t *tree, apr_pool_t *pool)
 		const char *top_path = *(const char **)apr_array_pop(recon_path);
 
 		if (apr_hash_count(top_hash) == 0) {
-			DEBUG_MSG("path_hash: %s\n", top_path);
+			DEBUG_MSG("%s: %s\n", prefix, top_path);
 			continue;
 		}
 
@@ -570,7 +596,13 @@ static void path_hash_dump(apr_hash_t *tree, apr_pool_t *pool)
 			APR_ARRAY_PUSH(recon_path, const char *) = svn_path_join(top_path, key, pool);
 		}
 	}
-	DEBUG_MSG("path_hash: ----------------------------------------------\n");
+	DEBUG_MSG("%s: ----------------------------------------------\n", prefix);
+#endif
+}
+
+static void path_hash_dump(apr_hash_t *tree, apr_pool_t *pool)
+{
+	path_hash_dump_prefix("path_hash", tree, pool);
 }
 
 #endif
@@ -636,7 +668,7 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 	}
 
 	if (log->changed_paths != NULL) {
-#if 0 && defined(DEBUG)
+#if defined(DEBUG_PHASH) && defined(DEBUG)
 		DEBUG_MSG("path_hash: changed paths in revision %ld:\n", revnum);
 		for (hi = apr_hash_first(pool, log->changed_paths); hi; hi = apr_hash_next(hi)) {
 			const char *path;
@@ -705,7 +737,7 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 	}
 
 	/* Finally, add the new revision after possible padding */
-	while (ph_revisions->nelts < revnum) {
+	while (ph_revisions->nelts < revnum-1) {
 		APR_ARRAY_PUSH(ph_revisions, tree_delta_t *) = NULL;
 	}
 	APR_ARRAY_PUSH(ph_revisions, tree_delta_t *) = ph_head;
@@ -729,7 +761,7 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 		}
 	}
 
-#if 0 && defined(DEBUG)
+#if defined(DEBUG_PHASH) && defined(DEBUG)
 	DEBUG_MSG("path_hash: for revision %ld:\n", revnum);
 	path_hash_dump(path_hash_reconstruct(revnum, pool), pool);
 #endif
@@ -794,3 +826,113 @@ char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t 
 	/* Find the subtree of the child */
 	return (subtree && path_hash_subtree(subtree, child, pool) != NULL);
 }
+
+#ifdef DEBUG_PHASH
+
+/* Testing: compare two hashes */
+char path_hash_test_compare(apr_hash_t *orig, apr_hash_t *recon, apr_pool_t *pool)
+{
+	apr_hash_index_t *hi;
+	apr_array_header_t *recon_stack = apr_array_make(pool, 0, sizeof(apr_hash_t *));
+	apr_array_header_t *recon_path = apr_array_make(pool, 0, sizeof(const char *));
+	char ret = 0;
+
+	/* First, check if every path in orig is in recon */
+	APR_ARRAY_PUSH(recon_stack, apr_hash_t *) = orig;
+	APR_ARRAY_PUSH(recon_path, const char *) = "/";
+
+	while (recon_stack->nelts > 0) {
+		apr_hash_t *top_hash = *(apr_hash_t **)apr_array_pop(recon_stack);
+		const char *top_path = *(const char **)apr_array_pop(recon_path);
+
+		if (apr_hash_count(top_hash) == 0) {
+			if (strcmp(top_path, "/")) {
+				if (path_hash_subtree(recon, top_path, pool) == NULL) {
+					DEBUG_MSG("path_hash_test: NOT IN RECON: %s\n", top_path);
+					ret = 1;
+				}
+			}
+			continue;
+		}
+
+		for (hi = apr_hash_first(pool, top_hash); hi; hi = apr_hash_next(hi)) {
+			const char *key;
+			apr_hash_t *value;
+			apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
+
+			APR_ARRAY_PUSH(recon_stack, apr_hash_t *) = value;
+			APR_ARRAY_PUSH(recon_path, const char *) = svn_path_join(top_path, key, pool);
+		}
+	}
+
+	/* Finally, the other way round */
+	APR_ARRAY_PUSH(recon_stack, apr_hash_t *) = recon;
+	APR_ARRAY_PUSH(recon_path, const char *) = "/";
+
+	while (recon_stack->nelts > 0) {
+		apr_hash_t *top_hash = *(apr_hash_t **)apr_array_pop(recon_stack);
+		const char *top_path = *(const char **)apr_array_pop(recon_path);
+
+		if (apr_hash_count(top_hash) == 0) {
+			if (strcmp(top_path, "/")) {
+				if (path_hash_subtree(orig, top_path, pool) == NULL) {
+					DEBUG_MSG("path_hash_test: NOT IN ORIG: %s\n", top_path);
+					ret = 1;
+				}
+			}
+			continue;
+		}
+
+		for (hi = apr_hash_first(pool, top_hash); hi; hi = apr_hash_next(hi)) {
+			const char *key;
+			apr_hash_t *value;
+			apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
+
+			APR_ARRAY_PUSH(recon_stack, apr_hash_t *) = value;
+			APR_ARRAY_PUSH(recon_path, const char *) = svn_path_join(top_path, key, pool);
+		}
+	}
+
+	return ret;
+}
+
+/* A short implementation testing function */
+void path_hash_test(session_t *session)
+{
+	svn_revnum_t i = 0;
+	apr_pool_t *pool = svn_pool_create(ph_pool);
+
+	/*
+	 * The idea is pretty simple. All available revisions are first reconstructed
+	 * and then retrieved manually. Afterwards, both hashes will be compared.
+	 */
+	while (i < ph_revisions->nelts) {
+		apr_hash_t *orig;
+		apr_hash_t *recon;
+
+		/* Retrieve actual repository tree */
+		orig = apr_hash_make(pool);
+		path_hash_add_tree(session, orig, ph_session_prefix, i, pool);
+
+		/* Reconstruct the tree using the path_hash */
+		recon = path_hash_reconstruct(i, pool);
+		if (recon == NULL) {
+			DEBUG_MSG("path_hash_test: recon failed!\n");
+			exit(1);
+		}
+//		path_hash_dump(recon, pool);
+
+		DEBUG_MSG("path_hash_test: testing revision %ld\n", i);
+		if (path_hash_test_compare(orig, recon, pool)) {
+			break;
+		}
+
+		svn_pool_clear(pool);
+		++i;
+	}
+
+	svn_pool_destroy(pool);
+	exit(1);
+}
+
+#endif

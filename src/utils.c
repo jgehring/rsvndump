@@ -207,13 +207,16 @@ char *utils_file_readln(struct apr_pool_t *pool, struct apr_file_t *file)
 		char *bptr = buffer;
 		while ((bptr - buffer) < 511 && (bptr == buffer || *(bptr-1) != '\n')) {
 			if (apr_file_getc(bptr++, file)) {
-				*(bptr-1) = '\n';
+				if (bptr == buffer+1) {
+					return NULL;
+				} else {
+					*(bptr-1) = '\n';
+				}
 				break;
 			}
 		}
 		*bptr = '\0';
 
-		DEBUG_MSG("utils_file_readln: %s\n", buffer);
 		if (dest == NULL) {
 			dest = apr_pstrdup(pool, buffer);
 		} else {

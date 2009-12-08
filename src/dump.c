@@ -430,7 +430,6 @@ char dump(session_t *session, dump_options_t *opts)
 			if (log_fetch(session, global_rev, opts->end, &log, revpool)) {
 				ret = 1;
 				break;
-
 			}
 			list_append(&logs, &log);
 			list_idx = logs.size-1;
@@ -531,6 +530,10 @@ char dump(session_t *session, dump_options_t *opts)
 
 		apr_pool_destroy(revpool);
 	} while (global_rev <= opts->end);
+
+#ifdef DEBUG_PHASH
+	path_hash_test(session);
+#endif
 
 	delta_cleanup();
 	list_free(&logs);
