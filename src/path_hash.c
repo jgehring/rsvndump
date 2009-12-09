@@ -388,6 +388,11 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 			path_hash_delete(tree, APR_ARRAY_IDX(delta->deleted, j, const char *), pool);
 		}
 
+		/* Continue if there are no additions */
+		if (delta->added == NULL) {
+			continue;
+		}
+
 		/* Apply delta: additions */
 		APR_ARRAY_PUSH(stack, apr_hash_t *) = delta->added;
 		APR_ARRAY_PUSH(path, const char *) = apr_pstrdup(pool, "/");
