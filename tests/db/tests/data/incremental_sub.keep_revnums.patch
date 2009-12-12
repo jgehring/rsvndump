@@ -1,0 +1,24 @@
+--- rsvndump.dump	2009-12-12 22:02:04.445413083 +0100
++++ rsvndump.dump.fixed	2009-12-12 22:08:14.312207417 +0100
+@@ -10,10 +10,6 @@
+ This is an empty revision for padding.
+ PROPS-END
+ 
+-Node-path: dir2
+-Node-kind: dir
+-Node-action: add
+-
+ Revision-number: 2
+ Prop-content-length: 66
+ Content-length: 66
+@@ -52,6 +48,10 @@
+ 2009-11-30T22:05:03.445940Z
+ PROPS-END
+ 
++Node-path: dir2
++Node-kind: dir
++Node-action: add
++
+ Node-path: dir2/file1
+ Node-kind: file
+ Node-action: add

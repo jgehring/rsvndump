@@ -241,7 +241,7 @@ def dump_reload_rsvndump_sub(id, dumpfile, path, args):
 
 # Compares two subversion repositories using "svnlook"
 def diff_repos(id, repo1, sub1, repo2, sub2):
-	log(id, "\n*** compare_repos ("+str(id)+")\n")
+	log(id, "\n*** compare_repos ("+str(id)+"): "+repo1+"/"+sub1+" and "+repo2+"/"+sub2+"\n")
 
 	# Retrieve log messages
 	log1 = test.mktemp(id)

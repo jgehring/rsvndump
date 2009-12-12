@@ -74,6 +74,11 @@ def run(id, args = []):
 	args.append("--prefix")
 	args.append("dir2/")
 	rdump_path = test_api.dump_rsvndump_incremental_sub(id, "dir2", 1, args)
-	repo2 = test_api.repos_load(id, rdump_path)
-	
+
+	# Because of the prefix, the dump needs to be patched (move prefix construction
+	# to revision 4, so it can be compared with the original one)
+	if "--keep-revnums" in args:
+		test_api.patch(id, rdump_path, test_api.data_dir()+"/"+test_api.name(id)+".keep_revnums.patch")
+
+	repo2 = test_api.repos_load(id, rdump_path)	
 	return test_api.diff_repos(id, repo1, "dir2", repo2, "dir2")
