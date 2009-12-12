@@ -363,7 +363,8 @@ char dump(session_t *session, dump_options_t *opts)
 		/* Jump to local revision and fill the path hash for previous revisions */
 		local_rev = 0;
 		while ((local_rev < (long int)logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
-			if (path_hash_commit(session, (log_revision_t *)logs.elements + local_rev, local_rev)) {
+			svn_revnum_t phrev = ((opts->flags & DF_KEEP_REVNUMS) ? ((log_revision_t *)logs.elements)[local_rev].revision : local_rev);
+			if (path_hash_commit(session, (log_revision_t *)logs.elements + local_rev, phrev)) {
 				return 1;
 			}
 			++local_rev;
@@ -500,7 +501,7 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 
 		/* Insert revision into path_hash */
-		if (!(opts->flags & DF_DRY_RUN)) {
+		if (!(opts->flags & DF_DRY_RUN) || strlen(session->prefix) != 0) {
 			if (path_hash_commit(session, (log_revision_t *)logs.elements + list_idx, local_rev)) {
 				ret = 1;
 				break;

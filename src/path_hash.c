@@ -744,6 +744,7 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 	/* Finally, add the new revision after possible padding */
 	while (ph_revisions->nelts < revnum-1) {
 		APR_ARRAY_PUSH(ph_revisions, tree_delta_t *) = NULL;
+		DEBUG_MSG("path_hash: padded revision %d\n", ph_revisions->nelts);
 	}
 	APR_ARRAY_PUSH(ph_revisions, tree_delta_t *) = ph_head;
 	ph_head = NULL;
