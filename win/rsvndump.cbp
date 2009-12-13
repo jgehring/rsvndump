@@ -95,6 +95,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\src\main.h" />
+		<Unit filename="..\src\path_hash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\src\path_hash.h" />
 		<Unit filename="..\src\property.c">
 			<Option compilerVar="CC" />
 		</Unit>
