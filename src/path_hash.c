@@ -46,7 +46,7 @@
 
 
 /* Interval for taking snapshots of the full tree */
-#define SNAPSHOT_DIST 256
+#define SNAPSHOT_DIST 512
 
 /* Cache size for reconstructed repositories */
 #define CACHE_SIZE 4

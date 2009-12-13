@@ -1,6 +1,4 @@
 == Schedule for 0.5.3 ==
-> Centralize delta_check_copy() (find_matching_rev() or s.th. similar) so
-  that it can be used for determining copy sources in path_hash_commit()
 > Fix verbose output
 
 
@@ -8,6 +6,9 @@
 > Move MD5-sums for files to the versioned path_hash
 > Direct dumping of deltas, thus elmiminating base revision fetching for
   incremental dumps in delta mode
+> Use zlib for reading and writing of path_hash snapshots
+> Centralize delta_check_copy() (find_matching_rev() or s.th. similar) so
+  that it can be used for determining copy sources in path_hash_commit()
 > Check base MD5 in de_apply_textdelta for non-delta dumps
 
 
