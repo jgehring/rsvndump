@@ -15,6 +15,6 @@ Test that should be run priot to a release
     > compare svnadmin dumps of repositories constructed using
       .dumps/{normal,incremental}
     Please not that it's normal that files in the incremental dump
-    may be dumped with their contents even through their full copies.
-    The incremental dump simply don't has informations about checksums
-    of files in previous revisions
+    may be dumped with their contents even if they are full copies.
+    The incremental dump simply doesn't have informations about checksums
+    of files in previous revisions.

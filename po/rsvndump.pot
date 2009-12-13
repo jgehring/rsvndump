@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.5.2\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-09-24 15:51+0200\n"
+"POT-Creation-Date: 2009-12-13 02:46+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,74 +16,74 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/delta.c:179
+#: src/delta.c:203
 #, c-format
 msgid "COPIED ... done.\n"
 msgstr ""
 
-#: src/delta.c:181
+#: src/delta.c:205
 #, c-format
 msgid "done.\n"
 msgstr ""
 
-#: src/delta.c:490 src/delta.c:1001
-#, c-format
-msgid "     * adding path : %s ... "
-msgstr ""
-
-#: src/delta.c:748
-#, c-format
-msgid "     * deleting path : %s ... "
-msgstr ""
-
-#: src/delta.c:1017
+#: src/delta.c:579
 #, c-format
 msgid "     * editing path : %s ... "
 msgstr ""
 
-#: src/dump.c:203
+#: src/delta.c:586
+#, c-format
+msgid "     * adding path : %s ... "
+msgstr ""
+
+#: src/delta.c:593
+#, c-format
+msgid "     * deleting path : %s ... "
+msgstr ""
+
+#: src/dump.c:204
 #, c-format
 msgid "ERROR: URL '%s' not found in HEAD revision\n"
 msgstr ""
 
-#: src/dump.c:320
+#: src/dump.c:321
 #, c-format
 msgid "ERROR: URL '%s' not found in revision %ld\n"
 msgstr ""
 
-#: src/dump.c:440
+#: src/dump.c:446
 #, c-format
 msgid "* Padded revision %ld.\n"
 msgstr ""
 
-#: src/dump.c:442
+#: src/dump.c:448
 #, c-format
 msgid ""
 "------ Padded revision %ld <<<\n"
 "\n"
 msgstr ""
 
-#: src/dump.c:480
+#: src/dump.c:490
 #, c-format
 msgid ">>> Dumping new revision, based on original revision %ld\n"
 msgstr ""
 
-#: src/dump.c:482
+#: src/dump.c:492
 #, c-format
 msgid "Fetching base revision... "
 msgstr ""
 
-#: src/dump.c:495
+#: src/dump.c:513
 #, c-format
 msgid "* Dumped revision %ld (local %ld).\n"
 msgstr ""
 
-#: src/dump.c:497
+#: src/dump.c:515
 #, c-format
 msgid "* Dumped revision %ld.\n"
 msgstr ""
 
-#: src/dump.c:501
+#: src/dump.c:519
 #, c-format
 msgid ""
 "\n"
@@ -91,7 +91,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dump.c:503 src/log.c:179 src/log.c:253
+#: src/dump.c:521 src/log.c:179 src/log.c:253
 #, c-format
 msgid "done\n"
 msgstr ""

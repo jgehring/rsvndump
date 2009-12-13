@@ -110,7 +110,7 @@ typedef struct {
 
 /*
  * If the dump output is not using deltas, we need to keep a local copy of
- * every file in the repository. The delta_hash hash defines a mapping
+ * every file in the repository. The delta_hash hash defines a mapping of
  * repository paths to temporary files for this purpose. The prop_hash
  * defines a mapping from repository files to temporary files filled
  * with file/directory properties. The md5_hash is used to store the md5-sums
@@ -340,7 +340,7 @@ static char delta_check_copy(de_node_baton_t *node)
 		}
 	} else {
 		/* Hm, this is bad. we have to ignore the copy operation and
-		   simulate it by simple dumping it the node as being added.
+		   simulate it by simple dumping the node as being added.
 		   This will work fine for single files, but directories
 		   must be dumped recursively. */
 		node->action = 'A';
@@ -1207,8 +1207,8 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 	}
 
 	/*
-	 * There are probably some delete nodes that haven't been dumped. This
-	 * will happen if nodes whose parent is a copy destination have been
+	 * There are probably some deleted nodes that haven't been dumped yet.
+	 * This will happen if nodes whose parent is a copy destination have been
 	 * deleted.
 	 */
 	for (hi = apr_hash_first(pool, de_baton->log_revision->changed_paths); hi; hi = apr_hash_next(hi)) {

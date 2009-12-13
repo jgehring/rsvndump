@@ -23,8 +23,20 @@
  *      previous revisions. This is useful when handling directory
  *      copies and deciding which nodes will actually be copied.
  *
+ *      Each tree is a hash of hashes, and each entry represents
+ *      a directory entry. The hash makes no difference between files
+ *      and directories. After all, this isn't needed to check
+ *      the parent-relation of a file and a directory.
+ *
  *      The current implementation stores tree deltas instead of full
  *      layouts for each revision to minimize memory usage.
+ *      Snapshots are take at regular intervals to speed up reconstruction.
+ *      Only the two latest snapshots (and the revisions between them) are
+ *      actually kept in memory. Previous records are stored in
+ *      files containing the snapshot itself and the following deltas.
+ *
+ *      Furthermore, there's a small full-tree cache to speed up
+ *      repeated queries (quite common whenever a directory is copied).
  */
 
 
@@ -164,7 +176,7 @@ static char path_hash_add_tree_rec(session_t *session, apr_hash_t *tree, const c
 		svn_dirent_t *dirent;
 		apr_hash_this(hi, (const void **)(void *)&entry, NULL, (void **)(void *)&dirent);
 
-		subpath = apr_psprintf(subpool, "%s/$s", path, entry);
+		subpath = apr_psprintf(subpool, "%s/%s", path, entry);
 
 		if (dirent->kind == svn_node_file) {
 			DEBUG_MSG("path_hash: S++ ");
