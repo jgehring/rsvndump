@@ -1,7 +1,3 @@
-== Schedule for 0.5.3 ==
-> Fix verbose output
-
-
 == Schedule for 0.5.4 ==
 > Move MD5-sums for files to the versioned path_hash
 > Direct dumping of deltas, thus elmiminating base revision fetching for

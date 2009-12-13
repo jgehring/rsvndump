@@ -197,6 +197,7 @@ static void delta_mark_node(de_node_baton_t *node)
 		DEBUG_MSG("md5_hash += %s : %s\n", node->path, svn_md5_digest_to_cstring(node->md5sum, node->pool));
 	}
 	node->dump_needed = 0;
+
 	if ((de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
 		if (node->cp_info == CPI_COPY) {
 			fprintf(stderr, _("COPIED ... done.\n"));
@@ -549,10 +550,6 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 
 	DEBUG_MSG("delta_dump_node(%s): started\n", node->path);
 
-	if ((node->kind == svn_node_dir) && (de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
-		fprintf(stderr, _("     * adding path : %s ... "), node->path);
-	}
-
 	/* Check for potential copy. This is neede here because it might change the action. */
 	delta_check_copy(node);
 	if (node->action == 'R') {
@@ -578,24 +575,33 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	switch (node->action) {
 		case 'M':
 			printf("change\n");
+			if ((de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
+				fprintf(stderr, _("     * editing path : %s ... "), path);
+			}
 			break;
+
 		case 'A':
 			printf("add\n");
+			if ((de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
+				fprintf(stderr, _("     * adding path : %s ... "), path);
+			}
 			break;
+
 		case 'D':
 			printf("delete\n");
-			break;
+			if ((de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
+				fprintf(stderr, _("     * deleting path : %s ... "), path);
+			}
+
+			/* We can finish early here */
+			printf("\n\n");
+			delta_mark_node(node);
+			DEBUG_MSG("delta_dump_node(%s): deleted -> finished\n", node->path);
+			return SVN_NO_ERROR;
+
 		case 'R':
 			printf("replace\n");
 			break;
-	}
-
-	/* If the node has been deleted, we can finish now */
-	if (node->action == 'D') {
-		printf("\n\n");
-		delta_mark_node(node);
-		DEBUG_MSG("delta_dump_node(%s): deleted -> finished\n", node->path);
-		return SVN_NO_ERROR;
 	}
 
 	/* Check if the node content needs to be dumped */
@@ -851,9 +857,6 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 	int pathlen;
 
 	DEBUG_MSG("de_delete_entry(%s@%ld)\n", path, revision);
-	if ((parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
-		fprintf(stderr, _("     * deleting path : %s ... "), path);
-	}
 
 	/* We can dump this entry directly */
 	node = delta_create_node(path, parent);
@@ -1073,10 +1076,6 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		node->action = 'A';
 	}
 
-	if (!(node->cp_info == CPI_COPY) && (parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
-		fprintf(stderr, _("     * adding path : %s ... "), path);
-	}
-
 	*file_baton = node;
 	return SVN_NO_ERROR;
 }
@@ -1089,9 +1088,6 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 	de_node_baton_t *node;
 
 	DEBUG_MSG("de_open_file(%s)\n", path);
-	if ((parent->de_baton->opts->verbosity > 0) && !(parent->de_baton->opts->flags & DF_DRY_RUN)) {
-		fprintf(stderr, _("     * editing path : %s ... "), path);
-	}
 
 	node = delta_create_node(path, parent);
 	node->kind = svn_node_file;
