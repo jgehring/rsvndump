@@ -32,7 +32,6 @@
 
 #include <svn_path.h>
 #include <svn_ra.h>
-#include <svn_dirent_uri.h>
 
 #include <apr_hash.h>
 #include <apr_tables.h>
@@ -165,7 +164,7 @@ static char path_hash_add_tree_rec(session_t *session, apr_hash_t *tree, const c
 		svn_dirent_t *dirent;
 		apr_hash_this(hi, (const void **)(void *)&entry, NULL, (void **)(void *)&dirent);
 
-		subpath = svn_dirent_join(path, entry, subpool);
+		subpath = apr_psprintf(subpool, "%s/$s", path, entry);
 
 		if (dirent->kind == svn_node_file) {
 			DEBUG_MSG("path_hash: S++ ");
@@ -365,7 +364,7 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 	i = 0;
 	if (ph_snapshots->nelts > snapshot_idx) {
 		path_hash_copy_deep(tree, APR_ARRAY_IDX(ph_snapshots, snapshot_idx, apr_hash_t *), temp_pool);
-		i = (snapshot_idx * SNAPSHOT_DIST) + 1; 
+		i = (snapshot_idx * SNAPSHOT_DIST) + 1;
 	} else if (rev > 0) {
 		/* No snapshot here. Try to load the previous revision */
 		apr_hash_t *previous = path_hash_reconstruct(rev-1, temp_pool);
@@ -749,7 +748,7 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 	APR_ARRAY_PUSH(ph_revisions, tree_delta_t *) = ph_head;
 	ph_head = NULL;
 
-	/* Add regular snapshots to speed up path reconstructions */ 
+	/* Add regular snapshots to speed up path reconstructions */
 	if ((revnum % SNAPSHOT_DIST) == 0) {
 		apr_hash_t *snapshot = path_hash_reconstruct(revnum, svn_pool_create(ph_pool));
 		APR_ARRAY_PUSH(ph_snapshots, apr_hash_t *) = snapshot;
