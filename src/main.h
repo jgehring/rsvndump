@@ -28,7 +28,7 @@
 /* Application-specific constants */
 #ifndef HAVE_CONFIG_H
 	#define PACKAGE "rsvndump"
-	#define PACKAGE_VERSION "0.5.2"
+	#define PACKAGE_VERSION "0.5.3"
 	#define PACKAGE_BUGREPORT "jonas.gehring@boolsoft.org"
 
 	/* Internationalization */

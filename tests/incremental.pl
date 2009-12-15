@@ -53,12 +53,16 @@ print("done\n");
 print(">> Preforming incremental dump... ");
 open(in, "< .dumps/revisions") || die $!;
 my $last = 0;
-my $n = 0;
+my $n = -1;
 while (<in>) {
 	my $rev;
 	if (m/\"([0-9]*)\"/) {
 		$rev = $1;
+		if (not defined($last)) {
+			$last = $rev;
+		}
 	}
+	$n += 1;
 
 	# Stick to given step width
 	if (($n % $steps) != 0) {
@@ -66,7 +70,7 @@ while (<in>) {
 	}
 
 	system("../src/rsvndump --incremental --no-incremental-header -r $last:$rev $args $url >> .dumps/incremental 2>> .dumps/incremental.log") == 0 || die $!;
-	$last = $rev;
+	$last = undef;
 }
 close(in);
 print("done\n");

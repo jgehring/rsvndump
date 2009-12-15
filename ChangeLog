@@ -1,3 +1,15 @@
+2009-12-15  --  version 0.5.3
+
+	* Added detection for paths affected by a copy operation, which
+	  fixes possibly invalid dumpfiles (#22898487)
+	* Moved data output to the end of the delta editor run. This fixes
+	  a bug that could prevent properties from being dumped (#2898815)
+	* Fixed dumping of root node modifications
+	* Fixed missing construction of user prefix when dumping a subdirectory
+	  with --keep-revnums
+	* Fixed --disable-man and --disable-tests arguments for configure
+	  (#2831432)
+
 2009-07-17  --  version 0.5.2
 
 	* Fixed Node-copyfrom-rev revision number calculation when dumping

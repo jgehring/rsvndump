@@ -51,6 +51,28 @@
         <hr />
         <a name="news"><h3>News</h3></a>
         <ul>
+          <li><h4>December 15th, 2009</h4>
+          <p>rsvndump 0.5.3 is now <a href="#content">available</a>. This
+          release fixes a couple of serious bugs reported via the
+          <a href="http://sourceforge.net/tracker/?atid=1143180&group_id=268687">bug tracker</a>
+          at SourceForge, including a bug that could prevent directory
+          properties from being dumped
+          (<a href="http://sourceforge.net/tracker/?func=detail&aid=2898815&group_id=268687&atid=1143180">#2898815</a>).
+          Additionally, detection for paths affected by directory copy
+          operations has been added. This fixes the generation of unloadable 
+          dumps observed in specific cases (as reported in
+          <a href="http://sourceforge.net/tracker/?func=detail&aid=2898487&group_id=268687&atid=1143180">#2898487</a>
+          by lordnightwalker). Dumping root node modifications has been fixed,
+          too.
+          The full list of the changes can be found in the
+          <a href="ChangeLog">ChangeLog</a>. The source package is
+          is available as a tarball compressed using either gzip or bzip2 as
+          well as in zip format.<br />
+          Please note that the Debian packages haven't been updated (and are
+          unlikely to be updated again). Please refer to the
+          source tarball instead.
+          </p></li>
+
           <li><h4>July 17th, 2009</h4>
           <p>rsvndump 0.5.2 is now <a href="#content">available</a>,
           fixing wrong Node-copyfrom-rev revision numbers when dumping subdirectories,
@@ -112,18 +134,6 @@
           As usual, the source package is available as a tarball compressed
           using either gzip or bzip2. The Debian packages have been updated,
           too.</p></li>
-
-          <li><h4>March 30th, 2009</h4>
-          <p>rsvndump 0.4.4 is now <a href="#content">available</a>. This
-          release adds a command line option to disable the need for manually
-          accepting a SSL certificate (<i>--no-check-certificate</i>), which
-          is useful when calling rsvndump from within a script. Additionally,
-          the program has been made translatable using
-          <a href="http://www.gnu.org/software/gettext/">GNU gettext</a>.
-          A German translation of all output strings is already included.<br />
-          As usual, the source package is available as a tarball compressed
-          using either gzip or bzip2. The Debian packages have been updated,
-          too.</p></li>
         </ul>
         <p>Older news items can be found in the <a href="news-archive.html">news archive</a>.</p>
 
@@ -132,11 +142,9 @@
         <ul>
           <li><h4>Downloads:</h4>
             <ul>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.2.tar.gz">rsvndump-0.5.2.tar.gz</a></b> - Source code distribution</li>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.2.tar.bz2">rsvndump-0.5.2.tar.bz2</a></b> - Source code distribution</li>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.2.zip">rsvndump-0.5.2.zip</a></b> - Source code distribution</li>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump_0.5.2_i386.deb">rsvndump_0.5.2_i386.deb</a></b> - Debian binary package (x86)</li>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump_0.5.2_arm.deb">rsvndump_0.5.2_arm.deb</a></b> - Debian binary package (ARM)</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.3.tar.gz">rsvndump-0.5.3.tar.gz</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.3.tar.bz2">rsvndump-0.5.3.tar.bz2</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.3.zip">rsvndump-0.5.3.zip</a></b> - Source code distribution</li>
               </ul>
             <p>Previous releases can be found on rsvndump's <a href="http://sourceforge.net/projects/rsvndump/files/">file list at SourceForge</a>.</p>
           </li>
@@ -144,8 +152,11 @@
           <li><h4>Packages for other distributions:</h4>
             <p><b>NOTE</b>: These are not maintained by myself</p>
             <ul>
+              <li><b><a href="http://aur.archlinux.org/packages.php?ID=30032">ArchLinux (AUR)</a></b></li>
               <li><b><a href="http://www.freshports.org/devel/rsvndump/">FreeBSD port</a></b></li>
-              <li><b><a href="http://download.opensuse.org/repositories/Subversion/">openSUSE packages</a></b></li>
+              <li><b><a href="http://maintainers.mandriva.com/viewpkg.php?pkg=15278">Mandriva</a></b></li>
+              <li><b><a href="http://openports.se/devel/rsvndump">OpenBSD port</a></b></li>
+              <li><b><a href="http://download.opensuse.org/repositories/devel:/tools:/scm:/svn/">openSUSE packages</a></b></li>
             </ul>
           </li>
 
