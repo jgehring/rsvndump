@@ -6,6 +6,7 @@
 > Centralize delta_check_copy() (find_matching_rev() or s.th. similar) so
   that it can be used for determining copy sources in path_hash_commit()
 > Check base MD5 in de_apply_textdelta for non-delta dumps
+> Fix compilation without NLS (if gettext is not present)
 
 
 == Schedule for 0.5.x ==
