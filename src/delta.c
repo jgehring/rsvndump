@@ -399,10 +399,10 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 	/* Check the old parent relationship */
 	check_pool = svn_pool_create(child->pool);
 	if (path_hash_check_parent(path, child_relpath, revision, check_pool)) {
-		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld OK\n", path, child_relpath, parent->copyfrom_revision);
+		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld OK\n", path, child_relpath, revision);
 		child->cp_info = CPI_COPY;
 	} else {
-		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld FAIL\n", path, child_relpath, parent->copyfrom_revision);
+		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld FAIL\n", path, child_relpath, revision);
 		child->cp_info = CPI_NONE;
 	}
 	svn_pool_destroy(check_pool);

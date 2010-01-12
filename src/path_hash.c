@@ -747,7 +747,7 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 				}
 			} else if (info->action == 'D') {
 				DEBUG_MSG("path_hash: --- %s\n", path);
-				APR_ARRAY_PUSH(ph_head->deleted, const char *) = apr_pstrdup(ph_pool, path);
+				APR_ARRAY_PUSH(ph_head->deleted, const char *) = apr_pstrdup(ph_head->pool, path);
 			}
 		}
 	}
@@ -794,6 +794,8 @@ char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t 
 {
 	int i;
 	apr_hash_t *recon = NULL, *subtree;
+
+	DEBUG_MSG("path_hash: check_parent(%s, %s, %ld): %ld revisions\n", parent, child, revnum, ph_revisions->nelts);
 
 	/* Check the cache first */
 	for (i = 0; i < CACHE_SIZE; i++) {
