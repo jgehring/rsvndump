@@ -189,7 +189,7 @@ char log_get_range(session_t *session, svn_revnum_t *start, svn_revnum_t *end, i
 
 
 /* Fetches a single revision log */
-char log_fetch(session_t *session, svn_revnum_t rev, svn_revnum_t end, log_revision_t *log, apr_pool_t *pool)
+char log_fetch_single(session_t *session, svn_revnum_t rev, svn_revnum_t end, log_revision_t *log, apr_pool_t *pool)
 {
 	svn_error_t *err;
 	apr_array_header_t *paths;

@@ -48,7 +48,7 @@ typedef struct {
 extern char log_get_range(session_t *session, svn_revnum_t *start, svn_revnum_t *end, int verbosity);
 
 /* Fetches a single revision log */
-extern char log_fetch(session_t *session, svn_revnum_t rev, svn_revnum_t end, log_revision_t *log, apr_pool_t *pool);
+extern char log_fetch_single(session_t *session, svn_revnum_t rev, svn_revnum_t end, log_revision_t *log, apr_pool_t *pool);
 
 /* Fetches all revision logs for a given revision range */
 extern char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, list_t *list, int verbosity);

@@ -428,7 +428,7 @@ char dump(session_t *session, dump_options_t *opts)
 
 		if (logs_fetched == 0) {
 			log_revision_t log;
-			if (log_fetch(session, global_rev, opts->end, &log, revpool)) {
+			if (log_fetch_single(session, global_rev, opts->end, &log, revpool)) {
 				ret = 1;
 				break;
 			}
