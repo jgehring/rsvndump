@@ -634,7 +634,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 				DEBUG_MSG("md5sum matches\n");
 				dump_content = 0;
 			} else {
-#if DEBUG
+#ifdef DEBUG
 				if (prev_md5) {
 					DEBUG_MSG("md5sum doesn't match: (%s != %s)\n", svn_md5_digest_to_cstring(node->md5sum, node->pool), svn_md5_digest_to_cstring(prev_md5, node->pool));
 				} else {
