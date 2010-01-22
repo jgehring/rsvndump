@@ -716,7 +716,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		char *fpath = (opts->flags & DF_USE_DELTAS) ? node->delta_filename : node->filename;
 		apr_finfo_t *info = apr_pcalloc(node->pool, sizeof(apr_finfo_t));
 		if (apr_stat(info, fpath, APR_FINFO_SIZE, node->pool) != APR_SUCCESS) {
-			DEBUG_MSG("dump_delta_node: FATAL: cannot stat %s\n", node->filename);
+			DEBUG_MSG("delta_dump_node: FATAL: cannot stat %s\n", node->filename);
 			return svn_error_create(1, NULL, apr_psprintf(session->pool, "Cannot stat %s", node->filename));
 		}
 		content_len = (unsigned long)info->size;
