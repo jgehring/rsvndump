@@ -220,7 +220,7 @@ char *utils_file_readln(struct apr_pool_t *pool, struct apr_file_t *file)
 		if (dest == NULL) {
 			dest = apr_pstrdup(pool, buffer);
 		} else {
-			dest = apr_pstrcat(pool, dest, buffer);
+			dest = apr_pstrcat(pool, dest, buffer, NULL);
 		}
 
 		if (*(bptr-1) == '\n') {
