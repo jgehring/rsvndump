@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <apr_file_info.h>
+#include <apr_portable.h>
 #include <apr_strings.h>
 
 #include <svn_error.h>
@@ -33,19 +34,23 @@
 #include <svn_pools.h>
 #include <svn_utf.h>
 
+#ifdef WIN32
+	#include <io.h>
+#endif
+
 #include "utils.h"
 
 #ifdef USE_TIMING
 
- #ifdef TIME_WITH_SYS_TIME
-  #include <sys/time.h>
- #endif
- #include <time.h>
- #ifdef WIN32
-  #include <windows.h>
- #else
-  #include <sys/time.h>
- #endif
+#ifdef TIME_WITH_SYS_TIME
+	#include <sys/time.h>
+#endif
+#include <time.h>
+#ifdef WIN32
+	#include <windows.h>
+#else
+	#include <sys/time.h>
+#endif
 
 
 /*---------------------------------------------------------------------------*/
@@ -168,6 +173,21 @@ void utils_handle_error(svn_error_t *error, FILE *stream, svn_boolean_t fatal, c
 		svn_error_clear(error);
 		exit(EXIT_FAILURE);
 	}
+}
+
+
+/* Returns the file descriptor of an APR file */
+int utils_apr_file_fd(struct apr_file_t *file)
+{
+	apr_os_file_t fd;
+	apr_os_file_get(&fd, file);
+
+#ifndef WIN32
+	return (int)fd;
+#else
+	/* TODO: This is not tested! */
+	return _open_osfhandle(fd, _O_RDWR);
+#endif
 }
 
 

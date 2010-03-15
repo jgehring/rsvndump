@@ -18,7 +18,6 @@
   if this can be fixed
 > Direct dumping of deltas, thus elmiminating base revision fetching for
   incremental dumps in delta mode
-> Use zlib for reading and writing of path_hash snapshots
 > Move MD5-sums for files to the versioned path_hash
 > Centralize delta_check_copy() (find_matching_rev() or s.th. similar) so
   that it can be used for determining copy sources in path_hash_commit()

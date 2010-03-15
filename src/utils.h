@@ -50,6 +50,10 @@ extern float stopwatch_elapsed(stopwatch_t *watch);
 /* Returns a canonicalized path that has been allocated using strdup() */
 extern char *utils_canonicalize_pstrdup(struct apr_pool_t *pool, char *path);
 
+
+/* Returns the file descriptor of an APR file */
+extern int utils_apr_file_fd(struct apr_file_t *file);
+
 /* Recursively removes the contents of a directory and the directory */
 /* itself it 'rmdir' is non-zero */
 extern void utils_rrmdir(struct apr_pool_t *pool, const char *path, char rmdir);

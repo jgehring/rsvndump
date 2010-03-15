@@ -52,6 +52,10 @@
 
 #include "main.h"
 
+#ifdef HAVE_LIBZ
+	#include <zlib.h>
+#endif
+
 #include "delta.h"
 #include "logger.h"
 #include "utils.h"
@@ -421,7 +425,11 @@ static void path_hash_copy_deep(apr_hash_t *dest, apr_hash_t *source, apr_pool_t
 static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool)
 {
 	apr_hash_t *tree;
+#ifdef HAVE_LIBZ
+	gzFile file;
+#else
 	FILE *file;
+#endif
 	char buffer[4096];
 	apr_pool_t *temp_pool;
 	unsigned long i, filename_idx = (rev / SNAPSHOT_DIST);
@@ -433,9 +441,13 @@ static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool
 		return NULL;
 	}
 
-	/* Try to open the file */
 	temp_pool = svn_pool_create(pool);
+	/* Try to open the file */
+#ifdef HAVE_LIBZ
+	file = gzopen(APR_ARRAY_IDX(ph_files, filename_idx, const char *), "rb");
+#else
 	file = fopen(APR_ARRAY_IDX(ph_files, filename_idx, const char *), "rb");
+#endif
 	if (file == NULL) {
 		fprintf(stderr, _("ERROR: Unable to open temporary file %s\n"), APR_ARRAY_IDX(ph_files, filename_idx, const char *));
 		svn_pool_destroy(temp_pool);
@@ -449,9 +461,14 @@ static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool
 	i = filename_idx * SNAPSHOT_DIST;
 	while (i <= rev) {
 		size_t len;
+#ifdef HAVE_LIBZ
+		if (gzgets(file, buffer, sizeof(buffer)-1) == NULL) {
+			gzclose(file);
+#else
 		if (fgets(buffer, sizeof(buffer)-1, file) == NULL) {
-			fprintf(stderr, _("ERROR: Unable to read from temporary file %s\n"), APR_ARRAY_IDX(ph_files, filename_idx, const char *));
 			fclose(file);
+#endif
+			fprintf(stderr, _("ERROR: Unable to read from temporary file %s\n"), APR_ARRAY_IDX(ph_files, filename_idx, const char *));
 			svn_pool_destroy(temp_pool);
 			return NULL;
 		}
@@ -471,7 +488,11 @@ static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool
 		}
 	}
 
+#ifdef HAVE_LIBZ
+	gzclose(file);
+#else
 	fclose(file);
+#endif
 	svn_pool_destroy(temp_pool);
 	return tree;
 }
@@ -611,7 +632,11 @@ static char path_hash_copy(apr_hash_t *tree, const char *path, const char *from,
 
 
 /* Writes a series of tree deltas to the given file */
+#ifdef HAVE_LIBZ
+static char path_hash_write(apr_hash_t *tree, gzFile file, apr_pool_t *pool)
+#else
 static char path_hash_write(apr_hash_t *tree, apr_file_t *file, apr_pool_t *pool)
+#endif
 {
 	apr_hash_index_t *hi;
 	apr_array_header_t *recon_stack = apr_array_make(pool, 0, sizeof(apr_hash_t *));
@@ -627,7 +652,11 @@ static char path_hash_write(apr_hash_t *tree, apr_file_t *file, apr_pool_t *pool
 		if (apr_hash_count(top_hash) == 0) {
 			if (strcmp(top_path, "/")) {
 				DEBUG_MSG("path_hash_write: +++ %s\n", top_path);
+#ifdef HAVE_LIBZ
+				gzprintf(file, "%s%s\n", REV_ADD, top_path);
+#else
 				apr_file_printf(file, "%s%s\n", REV_ADD, top_path);
+#endif
 			}
 			continue;
 		}
@@ -655,16 +684,26 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 	int index, end;
 	apr_status_t status;
 	apr_hash_t *tree;
-	apr_file_t *file = NULL;
+	apr_file_t *aprfile = NULL;
+#ifdef HAVE_LIBZ
+	gzFile file;
+#else
+	apr_file_t *file;
+#endif
 	apr_pool_t *delta_pool = svn_pool_create(pool);
 
 	filename = apr_psprintf(pool, "%s/XXXXXX", ph_temp_dir);
-	status = apr_file_mktemp(&file, filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL | APR_BINARY, pool);
+	status = apr_file_mktemp(&aprfile, filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL | APR_BINARY, pool);
 	DEBUG_MSG("path_hash: temp_file = %s : %d\n", filename, status);
 	if (status) {
 		fprintf(stderr, _("ERROR: Unable to create temporary file (%d)\n"), status);
 		return NULL;
 	}
+#ifdef HAVE_LIBZ
+	file = gzdopen(utils_apr_file_fd(aprfile), "wb");
+#else
+	file = aprfile;
+#endif
 
 	/* Write the snapshot first */
 	index = 0;
@@ -673,7 +712,11 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 	}
 	DEBUG_MSG("path_hash_write: snapshot at index %d -> revision %d\n", index, index * SNAPSHOT_DIST);
 	if (path_hash_write(tree, file, delta_pool)) {
+#ifdef HAVE_LIBZ
+		gzclose(file);
+#else
 		apr_file_close(file);
+#endif
 		return NULL;
 	}
 
@@ -689,7 +732,11 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 		int j;
 
 		DEBUG_MSG("path_hash_write: %s %d\n", REV_SEPARATOR, index);
-		apr_file_printf(file, "%s %d\n", REV_SEPARATOR, index);
+#ifdef HAVE_LIBZ
+		gzprintf(file, "%s %d\n", REV_SEPARATOR, index);
+#else
+		apr_file_printf(file, "%s $d\n", REV_SEPARATOR, index);
+#endif
 
 		/* Skip padding revisions */
 		if (delta == NULL) {
@@ -700,14 +747,22 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 		/* Additions */
 		svn_pool_clear(delta_pool);
 		if (path_hash_write(delta->added, file, delta_pool)) {
+#ifdef HAVE_LIBZ
+			gzclose(file);
+#else
 			apr_file_close(file);
+#endif
 			return NULL;
 		}
 
 		/* Deletions */
 		for (j = 0; j < delta->deleted->nelts; j++) {
 			DEBUG_MSG("path_hash_write: --- %s\n", APR_ARRAY_IDX(delta->deleted, j, const char *));
+#ifdef HAVE_LIBZ
+			gzprintf(file, "%s%s\n", REV_DELETE, APR_ARRAY_IDX(delta->deleted, j, const char *));
+#else
 			apr_file_printf(file, "%s%s\n", REV_DELETE, APR_ARRAY_IDX(delta->deleted, j, const char *));
+#endif
 		}
 
 		DEBUG_MSG("path_hash_write: --------------------------------------------------------------\n");
@@ -717,10 +772,18 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 		++index;
 	}
 
+#ifdef HAVE_LIBZ
+	gzprintf(file, "%s\n", REV_SEPARATOR);
+#else
 	apr_file_printf(file, "%s\n", REV_SEPARATOR);
+#endif
 	DEBUG_MSG("path_hash_write: ==============================================================\n");
 
+#ifdef HAVE_LIBZ
+	gzclose(file);
+#else
 	apr_file_close(file);
+#endif
 	svn_pool_destroy(delta_pool);
 	return filename;
 }
