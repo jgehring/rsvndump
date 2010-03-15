@@ -184,5 +184,5 @@ SEE ALSO
 
 COPYING
 -------
-Copyright (C) 2008-2009 Jonas Gehring <\jonas.gehring@boolsoft.org>.
+Copyright (C) 2008-2010 Jonas Gehring <\jonas.gehring@boolsoft.org>.
 Released under the GNU General Public License.
