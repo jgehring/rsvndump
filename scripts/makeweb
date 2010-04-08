@@ -28,7 +28,7 @@ ROOT="$1"
 mkdir web
 cat "${ROOT}/web/index.html"| sed "s/\$DATE/`date +"%B %d, %Y"`/" > web/index.html
 cat "${ROOT}/web/news-archive.html"| sed "s/\$DATE/`date +"%B %d, %Y"`/" > web/news-archive.html
-cat "${ROOT}/web/downloads-archive.html"| sed "s/\$DATE/`date +"%B %d, %Y"`/" > web/downloads-archive.html
+#cat "${ROOT}/web/downloads-archive.html"| sed "s/\$DATE/`date +"%B %d, %Y"`/" > web/downloads-archive.html
 cat "${ROOT}/web/stylesheet.css" | sed "s/\$DATE/`date +"%B %d, %Y"`/" > web/stylesheet.css
 cp "${ROOT}/README" web/README
 cp "${ROOT}/ChangeLog" web/ChangeLog
