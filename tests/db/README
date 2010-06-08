@@ -1,4 +1,4 @@
-The 'incremental' test will most likely not succeeed, because the incremental
+The 'incremental' test will most likely not succeed, because the incremental
 dump is unable to determine file modifications. Thus, the file dir1/file2
 will be dumped with all its content, just to be sure there's no modification
 missing. 

@@ -1,5 +1,5 @@
-Test that should be run priot to a release
-==========================================
+Tests that should be run prior to a release
+===========================================
 
 > Test database:
   - ./tdb.py all
@@ -16,5 +16,5 @@ Test that should be run priot to a release
       .dumps/{normal,incremental}
     Please not that it's normal that files in the incremental dump
     may be dumped with their contents even if they are full copies.
-    The incremental dump simply doesn't have informations about checksums
+    The incremental dump simply doesn't have information about checksums
     of files in previous revisions.
