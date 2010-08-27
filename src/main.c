@@ -80,9 +80,9 @@ static void print_usage()
 	printf(_("    --keep-revnums            keep the dumped revision numbers in sync with\n" \
 	         "                              the repository by using empty revisions for\n" \
 	         "                              padding\n"));
-	printf(_("    --no-incremental-header   don't print the dumpfile header when dumping\n"));
-	printf(_("                              with --incremental and not starting at\n"));
-	printf(_("                              revision 0\n"));
+	printf(_("    --no-incremental-header   don't print the dumpfile header when dumping\n" \
+	         "                              with --incremental and not starting at\n" \
+	         "                              revision 0\n"));
 	printf(_("    --log-window-size         when retrieving the log for a large number of\n" \
 	         "                              revisions, retrieve the specified number at a\n" \
 	         "                              time to avoid timeouts\n"));
