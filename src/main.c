@@ -86,6 +86,8 @@ static void print_usage()
 	printf(_("    --log-window-size         when retrieving the log for a large number of\n" \
 	         "                              revisions, retrieve the specified number at a\n" \
 	         "                              time to avoid timeouts\n"));
+	printf(_("    --first-rev               start repository at the given revision instead\n" \
+	         "                              of 0.\n"));
 	printf("\n");
 	printf(_("Report bugs to <%s>\n"), PACKAGE_BUGREPORT);
 }
@@ -219,6 +221,13 @@ int main(int argc, char **argv)
 			opts.flags |= DF_INCREMENTAL;
 		} else if (i+1 < argc && (!strcmp(argv[i], "--log-window-size"))) {
 			if (parse_num(argv[++i], &opts.log_window_size)) {
+				fprintf(stderr, _("ERROR: invalid revision number '%s'.\n"), argv[i]);
+				session_free(&session);
+				dump_options_free(&opts);
+				return EXIT_FAILURE;
+			}
+		} else if (i+1 < argc && (!strcmp(argv[i], "--first"))) {
+			if (parse_num(argv[++i], &opts.first)) {
 				fprintf(stderr, _("ERROR: invalid revision number '%s'.\n"), argv[i]);
 				session_free(&session);
 				dump_options_free(&opts);

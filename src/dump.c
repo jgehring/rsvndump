@@ -355,7 +355,7 @@ char dump(session_t *session, dump_options_t *opts)
 	 * prior to dumping.
 	 */
 	if (start_mid) {
-		if (log_fetch_all(session, 0, opts->end, &logs, opts->verbosity, opts->log_window_size)) {
+		if (log_fetch_all(session, opts->first, opts->end, &logs, opts->verbosity, opts->log_window_size)) {
 			return 1;
 		}
 		logs_fetched = 1;

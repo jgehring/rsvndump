@@ -46,6 +46,7 @@ enum dump_flags {
 typedef struct {
 	char          *temp_dir;
 	char          *prefix;
+	svn_revnum_t  first;
 	svn_revnum_t  start;
 	svn_revnum_t  end;
 	int           verbosity;
