@@ -38,3 +38,4 @@ tests/db/dumps
 tests/db/cache
 tests/db/wcs
 tests/auto/work
+src/rsvndump
