@@ -80,6 +80,8 @@ static void print_usage()
 	printf(_("    --keep-revnums            keep the dumped revision numbers in sync with\n" \
 	         "                              the repository by using empty revisions for\n" \
 	         "                              padding\n"));
+	printf(_("    --adjust-missing-revnums  if copying from a missing revision, search\n" \
+	         "                              backwards for the previous revision and use it"));
 	printf(_("    --no-incremental-header   don't print the dumpfile header when dumping\n" \
 	         "                              with --incremental and not starting at\n" \
 	         "                              revision 0\n"));
@@ -211,6 +213,10 @@ int main(int argc, char **argv)
 			session.flags |= SF_NO_AUTH_CACHE;
 		} else if (!strcmp(argv[i], "--non-interactive")) {
 			session.flags |= SF_NON_INTERACTIVE;
+		} else if (!strcmp(argv[i], "--adjust-missing-revnums")) {
+			opts.flags |= DF_ADJUST_MISSING_REVNUMS;
+			/* implies the following */
+			opts.flags |= DF_KEEP_REVNUMS;
 		} else if (!strcmp(argv[i], "--keep-revnums")) {
 			opts.flags |= DF_KEEP_REVNUMS;
 		} else if (!strcmp(argv[i], "--no-incremental-header")) {

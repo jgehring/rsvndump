@@ -673,10 +673,11 @@ void path_hash_add_path(const char *path)
 
 
 /* Adds a new revision to the path hash */
-char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revnum)
+char path_hash_commit(session_t *session, log_revision_t *log_full, int log_start, svn_revnum_t revnum, char adjust_missing_revnums)
 {
 	apr_hash_index_t *hi;
 	apr_pool_t *pool = svn_pool_create(ph_pool);
+	log_revision_t *log = log_full + log_start;
 
 	if (ph_revisions->nelts > revnum) {
 		DEBUG_MSG("path_hash: not commiting previous revision %ld\n", revnum);
@@ -728,8 +729,29 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 							return 1;
 						}
 					} else {
-						DEBUG_MSG("path_hash: +++ %s@%d -> %s\n", copyfrom_path, info->copyfrom_rev, path, ph_session_prefix);
-						if (path_hash_copy(ph_head->added, path, copyfrom_path, info->copyfrom_rev, pool)) {
+						svn_revnum_t copyfrom_rev = info->copyfrom_rev;
+
+						if (adjust_missing_revnums) {
+							int backtrack = 0;
+							svn_revnum_t last_rev = 0;
+
+							/* Iterate through all the revs and find the one that corresponds to the copied one.
+							 * We also adjust to the "last good" one if we hit a missing revision.
+							 * This is to workaround a quirk in Codeplex's SVNBridge. */
+							while (backtrack <= log_start && last_rev < copyfrom_rev) {
+								svn_revnum_t rev = ((log_revision_t *)log_full)[backtrack++].revision;
+
+								if (rev > copyfrom_rev) {
+									DEBUG_MSG("Adjusted copy revision from %ld to %ld\n", copyfrom_rev, last_rev);
+									copyfrom_rev = last_rev;
+									break;
+								}
+								last_rev = rev;
+							}
+						}
+
+						DEBUG_MSG("path_hash: +++ %s@%d -> %s\n", copyfrom_path, copyfrom_rev, path, ph_session_prefix);
+						if (path_hash_copy(ph_head->added, path, copyfrom_path, copyfrom_rev, pool)) {
 							/*
 							 * The copy source could not be determined. However, it is
 							 * important to have a consistent history, so add the whole tree
