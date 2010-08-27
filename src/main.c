@@ -80,6 +80,9 @@ static void print_usage()
 	printf(_("    --keep-revnums            keep the dumped revision numbers in sync with\n" \
 	         "                              the repository by using empty revisions for\n" \
 	         "                              padding\n"));
+	printf(_("    --omit-padding-revs       with --keep-revnums, don't add padding revisions\n" \
+	         "                              but still skip revision numbers (leaving them out\n" \
+	         "                              of sync)\n"));
 	printf(_("    --adjust-missing-revnums  if copying from a missing revision, search\n" \
 	         "                              backwards for the previous revision and use it"));
 	printf(_("    --no-incremental-header   don't print the dumpfile header when dumping\n" \
@@ -215,10 +218,13 @@ int main(int argc, char **argv)
 			session.flags |= SF_NON_INTERACTIVE;
 		} else if (!strcmp(argv[i], "--adjust-missing-revnums")) {
 			opts.flags |= DF_ADJUST_MISSING_REVNUMS;
-			/* implies the following option, because the dump doesn't work if there are missing revs */
+			/* TODO: implies the following option, because the dump doesn't work if there are missing revs */
 			opts.flags |= DF_KEEP_REVNUMS;
 		} else if (!strcmp(argv[i], "--keep-revnums")) {
 			opts.flags |= DF_KEEP_REVNUMS;
+		} else if (!strcmp(argv[i], "--omit-padding-revs")) {
+			/* TODO: this is primarily to workaround the bug in --adjust-missing-revnums above */
+			opts.flags |= DF_OMIT_PADDING_REVISIONS;
 		} else if (!strcmp(argv[i], "--no-incremental-header")) {
 			opts.flags |= DF_NO_INCREMENTAL_HEADER;
 		} else if (!strcmp(argv[i], "--deltas")) {

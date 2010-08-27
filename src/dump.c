@@ -442,7 +442,9 @@ char dump(session_t *session, dump_options_t *opts)
 		if ((opts->flags & DF_KEEP_REVNUMS) && !(opts->flags & DF_DRY_RUN)) {
 			/* Padd with empty revisions if neccessary */
 			while (local_rev < ((log_revision_t *)logs.elements)[list_idx].revision) {
-				dump_padding_revision(revpool, local_rev);
+				if (!(opts->flags & DF_OMIT_PADDING_REVISIONS)) {
+					dump_padding_revision(revpool, local_rev);
+				}
 				if (opts->verbosity == 0) {
 					fprintf(stderr, _("* Padded revision %ld.\n"), local_rev);
 				} else if (opts->verbosity > 0) {
