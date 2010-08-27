@@ -239,11 +239,16 @@ char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, lis
 		window_size = end - start + 1;
 	}
 	for (i = start; i <= end; i += window_size) {
-		if (verbosity > 0) {
-			fprintf(stderr, _("Fetching logs %ld to %ld of %ld... "), i, i + window_size - 1, end);
+		svn_revnum_t last = i + window_size - 1;
+		if (last > end) {
+			last = end;
 		}
 
-		if ((err = svn_ra_get_log(session->ra, paths, i, i + window_size - 1, 0, TRUE, FALSE, log_receiver_list, &baton, pool))) {
+		if (verbosity > 0) {
+			fprintf(stderr, _("Fetching logs %ld to %ld of %ld... "), i, last, end);
+		}
+
+		if ((err = svn_ra_get_log(session->ra, paths, i, last, 0, TRUE, FALSE, log_receiver_list, &baton, pool))) {
 			if (verbosity > 0) {
 				fprintf(stderr, "\n");
 			}
