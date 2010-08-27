@@ -215,7 +215,7 @@ int main(int argc, char **argv)
 			session.flags |= SF_NON_INTERACTIVE;
 		} else if (!strcmp(argv[i], "--adjust-missing-revnums")) {
 			opts.flags |= DF_ADJUST_MISSING_REVNUMS;
-			/* implies the following */
+			/* implies the following option, because the dump doesn't work if there are missing revs */
 			opts.flags |= DF_KEEP_REVNUMS;
 		} else if (!strcmp(argv[i], "--keep-revnums")) {
 			opts.flags |= DF_KEEP_REVNUMS;
