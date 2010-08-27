@@ -84,7 +84,7 @@ static void print_usage()
 	         "                              but still skip revision numbers (leaving them out\n" \
 	         "                              of sync)\n"));
 	printf(_("    --adjust-missing-revnums  if copying from a missing revision, search\n" \
-	         "                              backwards for the previous revision and use it"));
+	         "                              backwards for the previous revision and use it\n"));
 	printf(_("    --no-incremental-header   don't print the dumpfile header when dumping\n" \
 	         "                              with --incremental and not starting at\n" \
 	         "                              revision 0\n"));
