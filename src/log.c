@@ -218,12 +218,13 @@ char log_fetch_single(session_t *session, svn_revnum_t rev, svn_revnum_t end, lo
 
 
 /* Fetches all revision logs for a given revision range */
-char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, list_t *list, int verbosity)
+char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, list_t *list, int verbosity, int window_size)
 {
 	svn_error_t *err;
 	apr_array_header_t *paths;
 	apr_pool_t *pool;
 	log_receiver_list_baton_t baton;
+        svn_revnum_t i;
 
 	/* We just need the root */
 	pool = svn_pool_create(session->pool);
@@ -234,25 +235,29 @@ char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, lis
 	baton.session = session;
 	baton.pool = session->pool;
 
-	if (verbosity > 0) {
-		fprintf(stderr, _("Fetching logs... "));
+	if (window_size <= 0) {
+		window_size = end - start + 1;
 	}
-
-	if ((err = svn_ra_get_log(session->ra, paths, start, end, 0, TRUE, FALSE, log_receiver_list, &baton, pool))) {
+	for (i = start; i <= end; i += window_size) {
 		if (verbosity > 0) {
-			fprintf(stderr, "\n");
+			fprintf(stderr, _("Fetching logs %ld to %ld of %ld... "), i, i + window_size - 1, end);
 		}
-		utils_handle_error(err, stderr, FALSE, "ERROR: ");
-		list_free(list);
-		svn_error_clear(err);
-		svn_pool_destroy(pool);
-		return 1;
-	}
 
-	if (verbosity > 0) {
-		fprintf(stderr, _("done\n"));
-	}
+		if ((err = svn_ra_get_log(session->ra, paths, i, i + window_size - 1, 0, TRUE, FALSE, log_receiver_list, &baton, pool))) {
+			if (verbosity > 0) {
+				fprintf(stderr, "\n");
+			}
+			utils_handle_error(err, stderr, FALSE, "ERROR: ");
+			list_free(list);
+			svn_error_clear(err);
+			svn_pool_destroy(pool);
+			return 1;
+		}
 
+		if (verbosity > 0) {
+			fprintf(stderr, _("done\n"));
+		}
+	}
 	svn_pool_destroy(pool);
 	return 0;
 }

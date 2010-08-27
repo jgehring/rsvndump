@@ -83,6 +83,9 @@ static void print_usage()
 	printf(_("    --no-incremental-header   don't print the dumpfile header when dumping\n"));
 	printf(_("                              with --incremental and not starting at\n"));
 	printf(_("                              revision 0\n"));
+	printf(_("    --log-window-size         when retrieving the log for a large number of\n" \
+	         "                              revisions, retrieve the specified number at a\n" \
+	         "                              time to avoid timeouts\n"));
 	printf("\n");
 	printf(_("Report bugs to <%s>\n"), PACKAGE_BUGREPORT);
 }
@@ -128,6 +131,18 @@ static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 	if (sscanf(str, "%4s%c", tmp1, &eos) == 1 && !strcmp(tmp1, head)) {
 		*start = -1;
 		*end = -1;
+		return 0;
+	}
+	return 1;
+}
+
+static char parse_num(char *str, int *num)
+{
+	char eos;
+	if (sscanf(str, "%ld%c", num, &eos) == 1) {
+		if (*num < 0) {
+			return 1;
+		}
 		return 0;
 	}
 	return 1;
@@ -202,6 +217,13 @@ int main(int argc, char **argv)
 			opts.flags |= DF_USE_DELTAS;
 		} else if (!strcmp(argv[i], "--incremental")) {
 			opts.flags |= DF_INCREMENTAL;
+		} else if (i+1 < argc && (!strcmp(argv[i], "--log-window-size"))) {
+			if (parse_num(argv[++i], &opts.log_window_size)) {
+				fprintf(stderr, _("ERROR: invalid revision number '%s'.\n"), argv[i]);
+				session_free(&session);
+				dump_options_free(&opts);
+				return EXIT_FAILURE;
+			}
 		} else if (i+1 < argc && (!strcmp(argv[i], "-r") || !strcmp(argv[i], "--revision"))) {
 			if (parse_revnum(argv[++i], &opts.start, &opts.end)) {
 				fprintf(stderr, _("ERROR: invalid revision range '%s'.\n"), argv[i]);

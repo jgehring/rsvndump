@@ -51,6 +51,7 @@ typedef struct {
 	int           verbosity;
 	int           flags;
 	int           dump_format;
+	int           log_window_size;
 } dump_options_t;
 
 
