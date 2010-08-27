@@ -138,7 +138,7 @@ static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 	return 1;
 }
 
-static char parse_num(char *str, int *num)
+static char parse_num(char *str, svn_revnum_t *num)
 {
 	char eos;
 	if (sscanf(str, "%ld%c", num, &eos) == 1) {
