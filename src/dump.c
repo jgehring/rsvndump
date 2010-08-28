@@ -363,7 +363,9 @@ char dump(session_t *session, dump_options_t *opts)
 		/* Jump to local revision and fill the path hash for previous revisions */
 		local_rev = 0;
 		while ((local_rev < (long int)logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
-			DEBUG_MSG("Filling path hash for rev %ld (%ld) of %ld\n", local_rev, ((log_revision_t *)logs.elements)[local_rev].revision, (long int)logs.size);
+			if (opts->verbosity > 0) {
+				fprintf(stderr, _("Filling path hash for rev %ld (%ld) of %ld\n"), local_rev, ((log_revision_t *)logs.elements)[local_rev].revision, (long int)logs.size);
+			}
 			svn_revnum_t phrev = ((opts->flags & DF_KEEP_REVNUMS) ? ((log_revision_t *)logs.elements)[local_rev].revision : local_rev);
 			if (path_hash_commit(session, (log_revision_t *)logs.elements, local_rev, phrev, (opts->flags & DF_ADJUST_MISSING_REVNUMS))) {
 				return 1;
@@ -429,6 +431,9 @@ char dump(session_t *session, dump_options_t *opts)
 
 		if (logs_fetched == 0) {
 			log_revision_t log;
+			if (opts->verbosity > 0) {
+				fprintf(stderr, _("Fetching log for revision %ld of %ld...\n"), global_rev, opts->end);
+			}
 			if (log_fetch_single(session, global_rev, opts->end, &log, revpool)) {
 				ret = 1;
 				break;
@@ -498,6 +503,9 @@ char dump(session_t *session, dump_options_t *opts)
 
 		/* Setup the delta editor and run a diff */
 		delta_setup_editor(session, opts, &logs, (log_revision_t *)logs.elements + list_idx, local_rev, &editor, &editor_baton, revpool);
+		if (opts->verbosity > 0 && !(opts->flags & DF_DRY_RUN)) {
+			fprintf(stderr, _("Retrieving diff for revision %ld...\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
+		}
 		if (dump_do_diff(session, diff_rev, ((log_revision_t *)logs.elements)[list_idx].revision, (global_rev == opts->start), editor, editor_baton, revpool)) {
 			ret = 1;
 			break;
@@ -505,6 +513,9 @@ char dump(session_t *session, dump_options_t *opts)
 
 		/* Insert revision into path_hash */
 		if (!(opts->flags & DF_DRY_RUN) || strlen(session->prefix) != 0) {
+			if (opts->verbosity > 0) {
+				fprintf(stderr, _("Storing path hash for local revision %ld...\n"), local_rev);
+			}
 			if (path_hash_commit(session, (log_revision_t *)logs.elements, list_idx, local_rev, (opts->flags & DF_ADJUST_MISSING_REVNUMS))) {
 				ret = 1;
 				break;
