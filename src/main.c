@@ -238,7 +238,7 @@ int main(int argc, char **argv)
 				dump_options_free(&opts);
 				return EXIT_FAILURE;
 			}
-		} else if (i+1 < argc && (!strcmp(argv[i], "--first"))) {
+		} else if (i+1 < argc && (!strcmp(argv[i], "--first-rev"))) {
 			if (parse_num(argv[++i], &opts.first)) {
 				fprintf(stderr, _("ERROR: invalid revision number '%s'.\n"), argv[i]);
 				session_free(&session);
