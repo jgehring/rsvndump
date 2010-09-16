@@ -716,7 +716,7 @@ void path_hash_add_path(const char *path)
 
 
 /* Adds a new revision to the path hash */
-char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revnum)
+char path_hash_commit(session_t *session, dump_options_t *opts, log_revision_t *log, svn_revnum_t revnum, list_t *logs)
 {
 	apr_hash_index_t *hi;
 	apr_pool_t *pool = svn_pool_create(ph_pool);
@@ -771,8 +771,10 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 							return 1;
 						}
 					} else {
-						DEBUG_MSG("path_hash: +++ %s@%d -> %s\n", copyfrom_path, info->copyfrom_rev, path, ph_session_prefix);
-						if (path_hash_copy(ph_head->added, path, copyfrom_path, info->copyfrom_rev, pool)) {
+						/* Use local copyfrom revision, just like in delta.c */
+						svn_revnum_t copyfrom_rev = delta_get_local_copyfrom_rev(info->copyfrom_rev, opts, logs, revnum);
+						DEBUG_MSG("path_hash: +++ %s@%d -> %s@%d -> %s\n", info->copyfrom_path, info->copyfrom_rev, copyfrom_path, copyfrom_rev, path, ph_session_prefix);
+						if (path_hash_copy(ph_head->added, path, copyfrom_path, copyfrom_rev, pool)) {
 							/*
 							 * The copy source could not be determined. However, it is
 							 * important to have a consistent history, so add the whole tree
