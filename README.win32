@@ -4,9 +4,6 @@ These are special build instructions for Windows operating systems
 
 
 Known issues:
-	- If an error from Subversion leads to program termination, the program
-	  will crash (Windows 7 Beta) or enter an infinite loop (Windows XP)
-
 	- No internationalization
 
 

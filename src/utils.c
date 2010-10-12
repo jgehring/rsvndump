@@ -131,14 +131,10 @@ char *utils_canonicalize_pstrdup(struct apr_pool_t *pool, char *path)
 /* Error handling proxy function */
 void utils_handle_error(svn_error_t *error, FILE *stream, svn_boolean_t fatal, const char *prefix)
 {
-#ifndef WIN32
-	svn_handle_error2(error, stream, fatal, prefix);
-#else /* !WIN32 */
 	/*
-	 * When running under Windows, a custom error handler (very similar to the one
-	 * from Subversion) is used, because passing stderr to Subversion functions
-	 * is a little problematic. Note that it is possible, but it's too much hassle
-	 * for now.
+	 * On Windows, passing stderr to Subversion functions (e.g., svn_handle_error2())
+	 * is not that easy. Note that it is possible, but it's too much hassle for now.
+	 * Therefore, a custom error handler is used. The implementation is close to svn_handle_error2().
 	 */
 	apr_pool_t *subpool;
 	svn_error_t *tmp_err;
@@ -167,8 +163,7 @@ void utils_handle_error(svn_error_t *error, FILE *stream, svn_boolean_t fatal, c
 			svn_error_t *tmp_err2 = NULL;
 
 			if (tmp_err->message) {
-				fprintf(stderr,"%s%s\n", prefix, tmp_err->message);
-				svn_error_clear(tmp_err);
+				fprintf(stderr, "%s%s\n", prefix, tmp_err->message);
 			} else {
 				if ((tmp_err->apr_err > APR_OS_START_USEERR) && (tmp_err->apr_err <= APR_OS_START_CANONERR)) {
 					err_string = svn_strerror(tmp_err->apr_err, errbuf, sizeof(errbuf));
@@ -176,8 +171,7 @@ void utils_handle_error(svn_error_t *error, FILE *stream, svn_boolean_t fatal, c
 					svn_error_clear(tmp_err2);
 					err_string = "Can't recode error string from APR";
 				}
-				fprintf(stderr,"%s%s\n", prefix, tmp_err->message);
-				svn_error_clear(tmp_err);
+				fprintf(stderr, "%s%s\n", prefix, err_string);
 
 				APR_ARRAY_PUSH(empties, apr_status_t) = tmp_err->apr_err;
 			}
@@ -193,7 +187,6 @@ void utils_handle_error(svn_error_t *error, FILE *stream, svn_boolean_t fatal, c
 		svn_error_clear(error);
 		exit(EXIT_FAILURE);
 	}
-#endif /* !WIN32 */
 }
 
 
