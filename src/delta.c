@@ -237,14 +237,16 @@ static svn_error_t *delta_write_properties(de_node_baton_t *node)
 	filename = apr_psprintf(node->pool, "%s/XXXXXX", opts->temp_dir);
 	status = apr_file_mktemp(&file, filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
 	if (status) {
-		apr_pool_t *epool = svn_pool_create(NULL);
-		char *errbuf = apr_palloc(epool, ERRBUFFER_SIZE);
-		svn_pool_destroy(pool);
-		return svn_error_create(status, NULL, apr_strerror(status, errbuf, ERRBUFFER_SIZE));
+		DEBUG_MSG("delta_write_properties(%s): Error creating temporary file in %s\n", node->path, opts->temp_dir);
+		return svn_error_wrap_apr(status, "Unable to create temporary file in %s", opts->temp_dir);
 	}
 
 	property_hash_write(node->properties, file, pool);
-	apr_file_close(file);
+	status = apr_file_close(file);
+	if (status) {
+		DEBUG_MSG("delta_write_properties(%s): Error closing file %s\n", node->path, filename);
+		return svn_error_wrap_apr(status, "Unable to finish writing to %s", filename);
+	}
 
 	rhash_set(prop_hash, node->path, APR_HASH_KEY_STRING, filename, RHASH_VAL_STRING);
 
@@ -270,21 +272,27 @@ static svn_error_t *delta_load_properties(de_node_baton_t *node)
 
 	status = apr_file_open(&file, filename, APR_READ, 0600, pool);
 	if (status) {
-		apr_pool_t *epool = svn_pool_create(NULL);
-		char *errbuf = apr_palloc(epool, ERRBUFFER_SIZE);
-		svn_pool_destroy(pool);
-		return svn_error_create(status, NULL, apr_strerror(status, errbuf, ERRBUFFER_SIZE));
+		DEBUG_MSG("delta_load_properties(%s): Error opening file %s\n", node->path, filename);
+		return svn_error_wrap_apr(status, "Unable to read from %s", filename);
 	}
 
 	if (property_hash_load(node->properties, file, node->pool)) {
-		apr_file_close(file);
-		DEBUG_MSG("ERROR reading from %s\n", filename);
-		return svn_error_create(1, NULL, "Error reading properties file");
+		DEBUG_MSG("delta_load_properties(%s): Error reading from %s\n", node->path, filename);
+		if (apr_file_close(file) != APR_SUCCESS) {
+			DEBUG_MSG("delta_load_properties(%s): AND error closing this file\n", node->path);
+		}
+		return svn_error_createf(1, NULL, "Error reading from %s", filename);
 	}
-	apr_file_close(file);
+	status = apr_file_close(file);
+	if (status) {
+		DEBUG_MSG("delta_load_properties(%s): Error closing file %s\n", node->path, filename);
+		return svn_error_wrap_apr(status, "Unable to finish reading from %s", filename);
+	}
 
 	/* Delete the old file if it exists */
-	apr_file_remove(filename, pool);
+	if (apr_file_remove(filename, pool) != APR_SUCCESS) {
+		DEBUG_MSG("delta_load_properties(%s): Cannot remove file %s\n", node->path, filename);
+	}
 	rhash_set(prop_hash, node->path, APR_HASH_KEY_STRING, NULL, 0);
 
 	svn_pool_destroy(pool);
@@ -417,6 +425,7 @@ static svn_error_t *delta_deltify_node(de_node_baton_t *node)
 	void *handler_baton;
 	svn_stream_t *source, *target, *dest;
 	apr_file_t *source_file = NULL, *target_file = NULL, *dest_file = NULL;
+	apr_status_t status;
 	dump_options_t *opts = node->de_baton->opts;
 	apr_pool_t *pool = svn_pool_create(node->pool);
 	svn_error_t *err;
@@ -424,10 +433,18 @@ static svn_error_t *delta_deltify_node(de_node_baton_t *node)
 	DEBUG_MSG("delta_deltify_node(%s): %s -> %s\n", node->path, node->old_filename, node->filename);
 
 	/* Open source and target */
-	apr_file_open(&target_file, node->filename, APR_READ, 0600, pool);
+	status = apr_file_open(&target_file, node->filename, APR_READ, 0600, pool);
+	if (status) {
+		DEBUG_MSG("delta_deltify_node(%s): Error opening %s\n", node->path, node->filename);
+		return svn_error_wrap_apr(status, "Unable to open %s", node->filename);
+	}
 	target = svn_stream_from_aprfile2(target_file, FALSE, pool);
 	if (node->old_filename) {
-		apr_file_open(&source_file, node->old_filename, APR_READ, 0600, pool);
+		status = apr_file_open(&source_file, node->old_filename, APR_READ, 0600, pool);
+		if (status) {
+			DEBUG_MSG("delta_deltify_node(%s): Error opening %s\n", node->path, node->old_filename);
+			return svn_error_wrap_apr(status, "Unable to open %s", node->old_filename);
+		}
 		source = svn_stream_from_aprfile2(source_file, FALSE, pool);
 	} else {
 		source = svn_stream_empty(pool);
@@ -435,7 +452,11 @@ static svn_error_t *delta_deltify_node(de_node_baton_t *node)
 
 	/* Open temporary output file */
 	node->delta_filename = apr_psprintf(node->pool, "%s/XXXXXX", opts->temp_dir);
-	apr_file_mktemp(&dest_file, node->delta_filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
+	status = apr_file_mktemp(&dest_file, node->delta_filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
+	if (status) {
+		DEBUG_MSG("delta_deltify_node(%s): Error creating temporary file in %s\n", node->path, opts->temp_dir);
+		return svn_error_wrap_apr(status, "Unable to create temporary file in %s", opts->temp_dir);
+	}
 	dest = svn_stream_from_aprfile2(dest_file, FALSE, pool);
 
 	DEBUG_MSG("delta_deltify_node(%s): writing to %s\n", node->path, node->delta_filename);
@@ -445,8 +466,12 @@ static svn_error_t *delta_deltify_node(de_node_baton_t *node)
 	svn_txdelta_to_svndiff2(&handler, &handler_baton, dest, 0, pool);
 
 	err = svn_txdelta_send_txstream(stream, handler, handler_baton, pool);
+	if (err) {
+		DEBUG_MSG("delta_delify_node(%s): Error creating svndiff\n", node->path);
+		return err;
+	}
 	svn_pool_destroy(pool);
-	return err;
+	return SVN_NO_ERROR;
 }
 
 
@@ -771,7 +796,9 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		svn_pool_destroy(pool);
 #ifndef DUMP_DEBUG
 		if (opts->flags & DF_USE_DELTAS) {
-			apr_file_remove(node->delta_filename, node->pool);
+			if (apr_file_remove(node->delta_filename, node->pool) != APR_SUCCESS) {
+				DEBUG_MSG("delta_dump_node(%s): Cannot remove file %s\n", node->path, node->delta_filename);
+			}
 		}
 #endif
 	}
@@ -878,7 +905,9 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 		/* TODO: This is a small hack to make sure the node is a directory */
 		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
 #ifndef DUMP_DEBUG
-			apr_file_remove(filename, node->pool);
+			if (apr_file_remove(filename, node->pool) != APR_SUCCESS) {
+				DEBUG_MSG("de_delete_entry(%s): Cannot remove file %s\n", node->path, filename);
+			}
 #endif
 			DEBUG_MSG("deleting %s from delta_hash\n", npath);
 			rhash_set(delta_hash, npath, APR_HASH_KEY_STRING, NULL, 0);
@@ -891,7 +920,9 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 		/* TODO: This is a small hack to make sure the node is a directory */
 		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
 #ifndef DUMP_DEBUG
-			apr_file_remove(filename, node->pool);
+			if (apr_file_remove(filename, node->pool) != APR_SUCCESS) {
+				DEBUG_MSG("de_delete_entry(%s): Cannot remove file %s\n", node->path, filename);
+			}
 #endif
 			DEBUG_MSG("deleting %s from prop_hash\n", npath);
 			rhash_set(prop_hash, npath, APR_HASH_KEY_STRING, NULL, 0);
@@ -1104,6 +1135,7 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checksum, apr_pool_t *pool, svn_txdelta_window_handler_t *handler, void **handler_baton)
 {
 	apr_file_t *src_file = NULL, *dest_file = NULL;
+	apr_status_t status;
 	svn_stream_t *src_stream, *dest_stream;
 	de_node_baton_t *node = (de_node_baton_t *)file_baton;
 	dump_options_t *opts = node->de_baton->opts;
@@ -1116,7 +1148,11 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 
 	/* Create a new temporary file to write to */
 	node->filename = apr_psprintf(node->pool, "%s/XXXXXX", opts->temp_dir);
-	apr_file_mktemp(&dest_file, node->filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
+	status = apr_file_mktemp(&dest_file, node->filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
+	if (status) {
+		DEBUG_MSG("de_apply_textdelta(%s): Error creating temporary file in %s\n", node->path, opts->temp_dir);
+		return svn_error_wrap_apr(status, "Unable to create temporary file in %s", opts->temp_dir);
+	}
 	dest_stream = svn_stream_from_aprfile2(dest_file, FALSE, pool);
 
 	/* Update the local copy */
@@ -1124,7 +1160,11 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 	if (filename == NULL) {
 		src_stream = svn_stream_empty(pool);
 	} else {
-		apr_file_open(&src_file, filename, APR_READ, 0600, pool);
+		status = apr_file_open(&src_file, filename, APR_READ, 0600, pool);
+		if (status) {
+			DEBUG_MSG("de_apply_textdelta(%s): Error opening %s\n", node->path, filename);
+			return svn_error_wrap_apr(status, "Unable to open %s", filename);
+		}
 		src_stream = svn_stream_from_aprfile2(src_file, FALSE, pool);
 	}
 
@@ -1177,7 +1217,9 @@ static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, a
 	/* Remove the old file if neccessary */
 #ifndef DUMP_DEBUG
 	if (node->old_filename) {
-		apr_file_remove(node->old_filename, pool);
+		if (apr_file_remove(node->old_filename, pool) != APR_SUCCESS) {
+			DEBUG_MSG("de_close_file(%s): Cannot remove old file %s\n", node->path, node->old_filename);
+		}
 	}
 #endif
 
@@ -1221,7 +1263,9 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 			char *filename = rhash_get(delta_hash, path, APR_HASH_KEY_STRING);
 			if (filename) {
 #ifndef DUMP_DEBUG
-				apr_file_remove(filename, pool);
+				if (apr_file_remove(filename, pool) != APR_SUCCESS) {
+					DEBUG_MSG("de_close_edit(): Cannot remove file %s\n", filename);
+				}
 #endif
 				rhash_set(delta_hash, path, APR_HASH_KEY_STRING, NULL, 0);
 			}
