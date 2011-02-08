@@ -619,10 +619,8 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 			}
 
 			/* We can finish early here */
-			printf("\n\n");
-			delta_mark_node(node);
 			DEBUG_MSG("delta_dump_node(%s): deleted -> finished\n", node->path);
-			return SVN_NO_ERROR;
+			goto finish;
 
 		case 'R':
 			printf("replace\n");
@@ -671,9 +669,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		}
 
 		if (!dump_content && !node->props_changed) {
-			printf("\n\n");
-			delta_mark_node(node);
-			return 0;
+			goto finish;
 		} else if (node->kind == svn_node_dir) {
 			dump_content = 0;
 		}
@@ -796,6 +792,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 		svn_pool_destroy(pool);
 #ifndef DUMP_DEBUG
 		if (opts->flags & DF_USE_DELTAS) {
+			DEBUG_MSG("delta_dump_node(%s): Removing delta file %s\n", node->path, node->delta_filename);
 			if (apr_file_remove(node->delta_filename, node->pool) != APR_SUCCESS) {
 				DEBUG_MSG("delta_dump_node(%s): Cannot remove file %s\n", node->path, node->delta_filename);
 			}
@@ -803,8 +800,20 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 #endif
 	}
 
+finish:
 	printf("\n\n");
 	delta_mark_node(node);
+
+	/* Remove the old file if any - it's not needed any more */
+#ifndef DUMP_DEBUG
+	if (node->old_filename) {
+		DEBUG_MSG("de_close_file(%s): Removing old file %s\n", node->path, node->old_filename);
+		if (apr_file_remove(node->old_filename, node->pool) != APR_SUCCESS) {
+			DEBUG_MSG("de_close_file(%s): Cannot remove old file %s\n", node->path, node->old_filename);
+		}
+	}
+#endif
+
 	return SVN_NO_ERROR;
 }
 
@@ -905,6 +914,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 		/* TODO: This is a small hack to make sure the node is a directory */
 		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
 #ifndef DUMP_DEBUG
+			DEBUG_MSG("de_delete_entry(%s): Removing file %s\n", node->path, filename);
 			if (apr_file_remove(filename, node->pool) != APR_SUCCESS) {
 				DEBUG_MSG("de_delete_entry(%s): Cannot remove file %s\n", node->path, filename);
 			}
@@ -920,6 +930,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 		/* TODO: This is a small hack to make sure the node is a directory */
 		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
 #ifndef DUMP_DEBUG
+			DEBUG_MSG("de_delete_entry(%s): Removing file %s\n", node->path, filename);
 			if (apr_file_remove(filename, node->pool) != APR_SUCCESS) {
 				DEBUG_MSG("de_delete_entry(%s): Cannot remove file %s\n", node->path, filename);
 			}
@@ -1173,7 +1184,7 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 	node->old_filename = apr_pstrdup(node->pool, filename);
 	rhash_set(delta_hash, node->path, APR_HASH_KEY_STRING, node->filename, RHASH_VAL_STRING);
 
-	DEBUG_MSG("applied delta: %s -> %s\n", node->old_filename, node->filename);
+	DEBUG_MSG("applying delta: %s -> %s\n", node->old_filename, node->filename);
 
 	node->applied_delta = 1;
 	node->dump_needed = 1;
@@ -1213,15 +1224,6 @@ static svn_error_t *de_change_file_prop(void *file_baton, const char *name, cons
 static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, apr_pool_t *pool)
 {
 	de_node_baton_t *node = (de_node_baton_t *)file_baton;
-
-	/* Remove the old file if neccessary */
-#ifndef DUMP_DEBUG
-	if (node->old_filename) {
-		if (apr_file_remove(node->old_filename, pool) != APR_SUCCESS) {
-			DEBUG_MSG("de_close_file(%s): Cannot remove old file %s\n", node->path, node->old_filename);
-		}
-	}
-#endif
 
 	/* Save the property hash */
 	return delta_write_properties(node);
@@ -1263,6 +1265,7 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 			char *filename = rhash_get(delta_hash, path, APR_HASH_KEY_STRING);
 			if (filename) {
 #ifndef DUMP_DEBUG
+				DEBUG_MSG("de_close_edit(): Removing %s\n", filename);
 				if (apr_file_remove(filename, pool) != APR_SUCCESS) {
 					DEBUG_MSG("de_close_edit(): Cannot remove file %s\n", filename);
 				}
