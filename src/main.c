@@ -324,16 +324,18 @@ int main(int argc, char **argv)
 	if (session_open(&session) == 0) {
 		ret = dump(&session, &opts);
 		session_close(&session);
-	}
 
-	/* Clean up temporary directory on success */
+		/* Clean up temporary directory on success */
 #ifndef DUMP_DEBUG
-	if (ret == 0) {
-		utils_rrmdir(session.pool, opts.temp_dir, 1);
-	} else {
-		fprintf(stderr, _("NOTE: Please remove the temporary directory %s manually\n"), opts.temp_dir);
-	}
+		if (ret == 0) {
+			utils_rrmdir(session.pool, opts.temp_dir, 1);
+		} else {
+			fprintf(stderr, _("NOTE: Please remove the temporary directory %s manually\n"), opts.temp_dir);
+		}
 #endif
+	} else {
+		utils_rrmdir(session.pool, opts.temp_dir, 1);
+	}
 
 	session_free(&session);
 	dump_options_free(&opts);
