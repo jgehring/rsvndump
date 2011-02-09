@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 #	Test database for rsvndump
 #	written by Jonas Gehring
