@@ -36,8 +36,6 @@
 #include <svn_pools.h>
 #include <svn_opt.h>
 
-#include <apr_file_io.h>
-
 #include "main.h"
 #include "dump.h"
 #include "utils.h"

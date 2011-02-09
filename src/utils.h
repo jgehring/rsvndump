@@ -27,6 +27,9 @@
 
 #include "main.h"
 
+#include <apr_file_io.h>
+#include <apr_pools.h>
+
 
 #ifdef USE_TIMING
 

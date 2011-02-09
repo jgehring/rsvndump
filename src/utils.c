@@ -27,7 +27,6 @@
 #include <string.h>
 
 #include <apr_file_info.h>
-#include <apr_file_io.h>
 #include <apr_strings.h>
 
 #include <svn_error.h>
