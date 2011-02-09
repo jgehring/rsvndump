@@ -62,25 +62,30 @@ static void print_usage()
 	printf(_("USAGE:"));
 	printf(" "PACKAGE" ");
 	printf(_("[options] <url>\n\n"));
-	printf(_("Valid options:\n"));
+	printf(_("Common options:\n"));
 	printf(_("    -h [--help]               print a nice help screen\n"));
 	printf(_("    --version                 print the program name and version\n"));
 	printf(_("    -q [--quiet]              be quiet\n"));
 	printf(_("    -v [--verbose]            print extra progress\n"));
-	printf(_("    -u [--username] arg       username\n"));
-	printf(_("    -p [--password] arg       password\n"));
-	printf(_("    -r [--revision] arg       specify revision number (or X:Y range)\n"));
+	printf("\n");
+	printf(_("Dump options:\n"));
+	printf(_("    -r [--revision] ARG       specify revision number (or X:Y range)\n"));
 	printf(_("    --deltas                  use deltas in dump output\n"));
 	printf(_("    --incremental             dump incrementally\n"));
-	printf(_("    --no-auth-cache           do not cache authentication tokens\n"));
-	printf(_("    --non-interactive         do no interactive prompting\n"));
-	printf(_("    --prefix arg              prepend arg to the path that is being dumped\n"));
+	printf(_("    --prefix ARG              prepend ARG to the path that is being dumped\n"));
 	printf(_("    --keep-revnums            keep the dumped revision numbers in sync with\n" \
 	         "                              the repository by using empty revisions for\n" \
 	         "                              padding\n"));
 	printf(_("    --no-incremental-header   don't print the dumpfile header when dumping\n"));
 	printf(_("                              with --incremental and not starting at\n"));
 	printf(_("                              revision 0\n"));
+	printf("\n");
+	printf(_("Subversion compability options:\n"));
+	printf(_("    -u [--username] ARG       specify a username ARG\n"));
+	printf(_("    -p [--password] ARG       specify a password ARG\n"));
+	printf(_("    --no-auth-cache           do not cache authentication tokens\n"));
+	printf(_("    --non-interactive         do no interactive prompting\n"));
+	printf(_("    --config-dir ARG          read user configuration files from directory ARG\n"));
 	printf("\n");
 	printf(_("Report bugs to <%s>\n"), PACKAGE_BUGREPORT);
 }
