@@ -318,9 +318,13 @@ int main(int argc, char **argv)
 		session_close(&session);
 	}
 
-	/* Clean up temporary directory */
+	/* Clean up temporary directory on success */
 #ifndef DUMP_DEBUG
-	utils_rrmdir(session.pool, opts.temp_dir, 1);
+	if (ret == 0) {
+		utils_rrmdir(session.pool, opts.temp_dir, 1);
+	} else {
+		fprintf(stderr, _("NOTE: Please remove the temporary directory %s manually\n"), opts.temp_dir);
+	}
 #endif
 
 	session_free(&session);
