@@ -29,6 +29,7 @@
 #include <svn_path.h>
 #include <svn_pools.h>
 #include <svn_ra.h>
+#include <svn_utf.h>
 
 #include <apr_lib.h>
 
@@ -57,6 +58,7 @@ session_t session_create()
 #endif
 	session.username = NULL;
 	session.password = NULL;
+	session.config_dir = NULL;
 	session.flags = 0x00;
 
 	session.pool = svn_pool_create(NULL);
@@ -82,6 +84,7 @@ char session_open(session_t *session)
 	svn_config_t *config;
 	svn_auth_baton_t *auth_baton;
 	const char *root;
+	const char *config_dir = NULL;
 
 	/* Make sure the URL is properly encoded */
 	session->encoded_url = svn_path_uri_encode(svn_path_canonicalize(session->url, session->pool), session->pool);
@@ -117,9 +120,19 @@ char session_open(session_t *session)
 		return 1;
 	}
 
+	if (session->config_dir != NULL) {
+		const char *path;
+		if ((err = svn_utf_cstring_to_utf8(&path, session->config_dir, session->pool))) {
+			utils_handle_error(err, stderr, FALSE, "ERROR: ");
+			svn_error_clear(err);
+			return 1;
+		}
+		config_dir = svn_path_canonicalize(path, session->pool);
+	}
+
 	/* Setup auth baton */
 	config = apr_hash_get(ctx->config, SVN_CONFIG_CATEGORY_CONFIG, APR_HASH_KEY_STRING);
-	if ((err = svn_cmdline_setup_auth_baton(&auth_baton, (session->flags & SF_NON_INTERACTIVE), session->username, session->password, NULL, (session->flags & SF_NO_AUTH_CACHE), config, NULL, NULL, session->pool))) {
+	if ((err = svn_cmdline_setup_auth_baton(&auth_baton, (session->flags & SF_NON_INTERACTIVE), session->username, session->password, config_dir, (session->flags & SF_NO_AUTH_CACHE), config, NULL, NULL, session->pool))) {
 		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		return 1;

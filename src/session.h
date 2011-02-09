@@ -39,18 +39,19 @@ enum session_flags {
 
 /* Session data */
 typedef struct {
-	struct svn_ra_session_t	*ra;
-	struct apr_pool_t	*pool;
-	char			*url;
-	const char		*encoded_url;
-	const char		*root;
-	char			*prefix;
+	struct svn_ra_session_t *ra;
+	struct apr_pool_t *pool;
+	char *url;
+	const char *encoded_url;
+	const char *root;
+	char*prefix;
 #ifdef USE_SINGLEFILE_DUMP
-	const char		*file; /* Only set if the target is a file */
+	const char *file; /* Only set if the target is a file */
 #endif
-	char			*username;
-	char			*password;
-	int			flags;
+	char *username;
+	char *password;
+	char *config_dir;
+	int flags;
 } session_t;
 
 
