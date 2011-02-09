@@ -213,28 +213,16 @@ int main(int argc, char **argv)
 				return EXIT_FAILURE;
 			}
 		} else if (i+1 < argc && (!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username"))) {
-			if (session.username != NULL) {
-				free(session.username);
-			}
 			session.username = apr_pstrdup(session.pool, argv[++i]);
 			/* No one needs to know the username */
 			memset(argv[i], ' ', strlen(argv[i]));
 		} else if (i+1 < argc && (!strcmp(argv[i], "-p") || !strcmp(argv[i], "--password"))) {
-			if (session.password != NULL) {
-				free(session.password);
-			}
 			session.password = apr_pstrdup(session.pool, argv[++i]);
 			/* No one needs to know the password */
 			memset(argv[i], ' ', strlen(argv[i]));
 		} else if (i+1 < argc && !strcmp(argv[i], "--config-dir")) {
-			if (session.config_dir != NULL) {
-				free(session.config_dir);
-			}
 			session.config_dir = apr_pstrdup(session.pool, argv[++i]);
 		} else if (i+1 < argc && !strcmp(argv[i], "--prefix")) {
-			if (opts.prefix != NULL) {
-				free(opts.prefix);
-			}
 			opts.prefix = apr_pstrdup(session.pool, argv[++i]);
 
 		/* Deprecated options */
