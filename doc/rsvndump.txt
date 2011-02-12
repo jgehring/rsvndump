@@ -80,11 +80,17 @@ in a dump that does not contain a dumpfile header and no full base
 revision if the revision range does not start at 0.
 
 *--no-auth-cache*::
-Don't cache the authentication tokens provided by the user, e.g. user name and
-password, or manual SSL certificate validation.
+Don't cache the authentication tokens provided by the user, e.g. user
+name and password, or manual SSL certificate validation. This is equal
+to the corresponding option int *svn*(1).
 
 *--non-interactive*::
-Instead of prompting, the program will exit with an error.
+Instead of prompting, the program will exit with an error. This is equal
+to the corresponding option int *svn*(1).
+
+*--config-dir* 'dir'::
+Use the given Subversion configuration directory when opening a session
+to the repository. This is equal to the corresponding option int *svn*(1).
 
 *--prefix* 'prefix'::
 Prepend a given prefix to every node which is dumped. The first
@@ -190,5 +196,5 @@ Written by Jonas Gehring, <\jonas.gehring@boolsoft.org>
 
 COPYRIGHT
 ---------
-Copyright (C) 2008-2010 Jonas Gehring <\jonas.gehring@boolsoft.org>.
+Copyright (C) 2008-2011 Jonas Gehring <\jonas.gehring@boolsoft.org>.
 Released under the GNU General Public License.
