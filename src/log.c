@@ -163,7 +163,7 @@ char log_get_range(session_t *session, svn_revnum_t *start, svn_revnum_t *end, i
 	baton.pool = subpool;
 
 	if (verbosity > 0) {
-		fprintf(stderr, _("Determining start end end revision... "));
+		fprintf(stderr, _("Determining start and end revision... "));
 	}
 	if ((err = svn_ra_get_log(session->ra, paths, *start, *end, 0, FALSE, TRUE, log_receiver_list, &baton, subpool))) {
 		if (verbosity > 0) {

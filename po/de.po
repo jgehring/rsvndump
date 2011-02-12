@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.4.4\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2011-02-10 00:02+0100\n"
+"POT-Creation-Date: 2011-02-13 00:07+0100\n"
 "PO-Revision-Date: 2009-02-22 03:00+0100\n"
 "Last-Translator:  <jonas.gehring@boolsoft.org>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -105,7 +105,7 @@ msgstr "fertig\n"
 
 #: src/log.c:166
 #, c-format
-msgid "Determining start end end revision... "
+msgid "Determining start and end revision... "
 msgstr "Bestimme Anfangs- und Endrevision... "
 
 #: src/log.c:238
