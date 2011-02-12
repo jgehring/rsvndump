@@ -7,10 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.4.4\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-12-13 02:46+0100\n"
+"POT-Creation-Date: 2011-02-10 00:02+0100\n"
 "PO-Revision-Date: 2009-02-22 03:00+0100\n"
 "Last-Translator:  <jonas.gehring@boolsoft.org>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -27,17 +28,17 @@ msgstr "KOPIERT ... erledigt.\n"
 msgid "done.\n"
 msgstr "erledigt.\n"
 
-#: src/delta.c:579
+#: src/delta.c:604
 #, c-format
 msgid "     * editing path : %s ... "
 msgstr "     * Bearbeite Pfad: %s ... "
 
-#: src/delta.c:586
+#: src/delta.c:611
 #, c-format
 msgid "     * adding path : %s ... "
 msgstr "     * Füge Pfad hinzu: %s ... "
 
-#: src/delta.c:593
+#: src/delta.c:618
 #, c-format
 msgid "     * deleting path : %s ... "
 msgstr "     * Lösche Pfad: %s ... "
@@ -112,17 +113,17 @@ msgstr "Bestimme Anfangs- und Endrevision... "
 msgid "Fetching logs... "
 msgstr "Frage Logs ab... "
 
-#: src/main.c:55
+#: src/main.c:53
 #, c-format
 msgid "Released under the GNU General Public License.\n"
 msgstr "Veröffentlicht unter der GNU General Public License.\n"
 
-#: src/main.c:64
+#: src/main.c:62
 #, c-format
 msgid "USAGE:"
 msgstr "AUFRUF:"
 
-#: src/main.c:66
+#: src/main.c:64
 #, c-format
 msgid ""
 "[options] <url>\n"
@@ -131,75 +132,59 @@ msgstr ""
 "[Optionen] <Url>\n"
 "\n"
 
-#: src/main.c:67
+#: src/main.c:65
 #, c-format
-msgid "Valid options:\n"
-msgstr "Optionen:\n"
+msgid "Common options:\n"
+msgstr "Allgemeine Optionen:\n"
 
-#: src/main.c:68
+#: src/main.c:66
 #, c-format
 msgid "    -h [--help]               print a nice help screen\n"
 msgstr "    -h [--help]               Diese Hilfe anzeigen\n"
 
-#: src/main.c:69
+#: src/main.c:67
 #, c-format
 msgid "    --version                 print the program name and version\n"
 msgstr ""
 "    --version                 Name und Version des Programms ausgeben\n"
 
-#: src/main.c:70
+#: src/main.c:68
 #, c-format
 msgid "    -q [--quiet]              be quiet\n"
 msgstr "    -q [--quiet]              nur Fehler ausgeben\n"
 
-#: src/main.c:71
+#: src/main.c:69
 #, c-format
 msgid "    -v [--verbose]            print extra progress\n"
 msgstr "    -v [--verbose]            zusätzliche Informationen ausgeben\n"
 
+#: src/main.c:71
+#, c-format
+msgid "Dump options:\n"
+msgstr "Dump-Optionen:\n"
+
 #: src/main.c:72
 #, c-format
-msgid "    -u [--username] arg       username\n"
-msgstr "    -u [--username] arg       Benutzername\n"
+msgid "    -r [--revision] ARG       specify revision number (or X:Y range)\n"
+msgstr "    -r [--revision] PAR       Revisionsnummer (oder X:Y Bereich)\n"
 
 #: src/main.c:73
-#, c-format
-msgid "    -p [--password] arg       password\n"
-msgstr "    -p [--password] arg       Passwort\n"
-
-#: src/main.c:74
-#, c-format
-msgid "    -r [--revision] arg       specify revision number (or X:Y range)\n"
-msgstr "    -r [--revision] arg       Revisionsnummer (oder X:Y Bereich)\n"
-
-#: src/main.c:75
 #, c-format
 msgid "    --deltas                  use deltas in dump output\n"
 msgstr "    --deltas                  deltas im dump verwenden\n"
 
-#: src/main.c:76
+#: src/main.c:74
 #, c-format
 msgid "    --incremental             dump incrementally\n"
 msgstr "    --incremental             einen inkrementellen dump erstellen\n"
 
-#: src/main.c:77
-#, c-format
-msgid "    --no-auth-cache           do not cache authentication tokens\n"
-msgstr ""
-"    --no-auth-cache           Anmeldeinformationen nicht zwischenspeichern\n"
-
-#: src/main.c:78
-#, c-format
-msgid "    --non-interactive         do no interactive prompting\n"
-msgstr "    --non-interactive         keine interaktiven Rückfragen ausgeben\n"
-
-#: src/main.c:79
+#: src/main.c:75
 #, c-format
 msgid ""
-"    --prefix arg              prepend arg to the path that is being dumped\n"
-msgstr "    --prefix arg              zuzsätzlicher Präfix für Pfade\n"
+"    --prefix ARG              prepend ARG to the path that is being dumped\n"
+msgstr "    --prefix PAR              zuzsätzlicher Präfix für Pfade\n"
 
-#: src/main.c:80
+#: src/main.c:76
 #, c-format
 msgid ""
 "    --keep-revnums            keep the dumped revision numbers in sync with\n"
@@ -209,7 +194,7 @@ msgstr ""
 "    --keep-revnums            Revisions-Nummern beibehalten, indem falls\n"
 "                              nötig leere Revisionen eingefügt werden\n"
 
-#: src/main.c:83
+#: src/main.c:79
 #, c-format
 msgid ""
 "    --no-incremental-header   don't print the dumpfile header when dumping\n"
@@ -217,28 +202,64 @@ msgstr ""
 "    --no-incremental-header   Keinen Dateiheader ausgeben, falls --"
 "incremental\n"
 
-#: src/main.c:84
+#: src/main.c:80
 #, c-format
 msgid "                              with --incremental and not starting at\n"
 msgstr ""
 "                              aktiv ist und nicht bei Revision 0 gestartet\n"
 
-#: src/main.c:85
+#: src/main.c:81
 #, c-format
 msgid "                              revision 0\n"
 msgstr "                              wurde\n"
 
+#: src/main.c:83
+#, c-format
+msgid "Subversion compability options:\n"
+msgstr "Kompabilitäts-Optionen zu Subversion:\n"
+
+#: src/main.c:84
+#, c-format
+msgid "    -u [--username] ARG       specify a username ARG\n"
+msgstr "    -u [--username] PAR       Benutzername PAR angeben\n"
+
+#: src/main.c:85
+#, c-format
+msgid "    -p [--password] ARG       specify a password ARG\n"
+msgstr "    -p [--password] PAR       Passwort PAR angeben\n"
+
+#: src/main.c:86
+#, c-format
+msgid "    --no-auth-cache           do not cache authentication tokens\n"
+msgstr ""
+"    --no-auth-cache           Anmeldeinformationen nicht zwischenspeichern\n"
+
 #: src/main.c:87
+#, c-format
+msgid "    --non-interactive         do no interactive prompting\n"
+msgstr "    --non-interactive         keine interaktiven Rückfragen ausgeben\n"
+
+#: src/main.c:88
+#, c-format
+msgid ""
+"    --config-dir ARG          read user configuration files from directory "
+"ARG\n"
+msgstr ""
+"    --config-dir PAR          Benutzerkonfigurationsdateien aus dem "
+"Verzeichnis\n"
+"                              PAR lesen\n"
+
+#: src/main.c:90
 #, c-format
 msgid "Report bugs to <%s>\n"
 msgstr "Fehlerberichte an <%s>\n"
 
-#: src/main.c:207
+#: src/main.c:210
 #, c-format
 msgid "ERROR: invalid revision range '%s'.\n"
 msgstr "FEHLER: Ungültiger Revisions-Bereich '%s'.\n"
 
-#: src/main.c:234
+#: src/main.c:230
 #, c-format
 msgid ""
 "WARNING: the '--stop' option is deprated. Please use '--revision'.\n"
@@ -246,52 +267,57 @@ msgid ""
 "         previous versions of the program if you are dumping a "
 "subdirectory.\n"
 msgstr ""
-"ACHTUNG: Die Option '--stop' ist veraltet. Bitte benutzen sie '--revision'.\n"
+"ACHTUNG: Die Option '--stop' ist veraltet. Bitte benutzen Sie '--revision'.\n"
 "         Der erzeugte dump wird von einem mit einer älteren Version\n"
-"         erzeugten ABWEICHEN, wenn sie ein Untervezeichnis dumpen.\n"
+"         erzeugten ABWEICHEN, wenn Sie ein Untervezeichnis dumpen.\n"
 
-#: src/main.c:239
+#: src/main.c:235
 #, c-format
 msgid "ERROR: invalid revision number '%s'.\n"
 msgstr "FEHLER: Ungültige Revisions-Nummer '%s'.\n"
 
-#: src/main.c:245 src/main.c:247
+#: src/main.c:241 src/main.c:243
 #, c-format
 msgid "WARNING: the '%s' option is deprecated.\n"
 msgstr "ACHTUNG: Die Option '%s' ist veraltet.\n"
 
-#: src/main.c:250 src/main.c:252
+#: src/main.c:246 src/main.c:248
 #, c-format
 msgid "WARNING: the '%s' option is deprecated and will be IGNORED!.\n"
 msgstr "ACHTUNG: Die Option '%s'ist veraltet und wird IGNORIERT!.\n"
 
-#: src/main.c:258
+#: src/main.c:254
 #, c-format
 msgid "ERROR: multiple URLs detected.\n"
 msgstr "FEHLER: Meherere URLs entdeckt.\n"
 
-#: src/main.c:265
+#: src/main.c:261
 #, c-format
 msgid "ERROR: Unkown argument or malformed url '%s'.\n"
 msgstr "FEHLER: Ungültiges Argument oder ungültige URL '%s'.\n"
 
-#: src/main.c:266
+#: src/main.c:262
 #, c-format
 msgid "Type %s --help for usage information.\n"
-msgstr "Rufen sie %s --help auf, um Informationen zur Benutzung zu erhalten.\n"
+msgstr "Rufen Sie %s --help auf, um Informationen zur Benutzung zu erhalten.\n"
 
-#: src/main.c:292 src/main.c:308
+#: src/main.c:288 src/main.c:304
 #, c-format
 msgid "ERROR: Unable to create temporary directory.\n"
 msgstr "FEHLER: Erstellen eines temporären Verzeichnisses nicht möglich.\n"
 
-#: src/main.c:300
+#: src/main.c:296
 #, c-format
 msgid "ERROR: Unable to find a suitable temporary directory.\n"
 msgstr ""
 "FEHLER: Es konnte kein passendes temporäres Verzeichnis gefunden werden.\n"
 
-#: src/session.c:192
+#: src/main.c:321
+#, c-format
+msgid "NOTE: Please remove the temporary directory %s manually\n"
+msgstr "HINWEIS: Bitte entfernen Sie das temporäre Verzeichnis %s manuell.\n"
+
+#: src/session.c:205
 #, c-format
 msgid "ERROR: '%s' refers to a file.\n"
 msgstr "FEHLER: '%s' ist eine Datei.\n"

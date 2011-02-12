@@ -6,12 +6,13 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: rsvndump 0.5.2\n"
+"Project-Id-Version: rsvndump 0.5.4\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2009-12-13 02:46+0100\n"
+"POT-Creation-Date: 2011-02-10 00:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -26,17 +27,17 @@ msgstr ""
 msgid "done.\n"
 msgstr ""
 
-#: src/delta.c:579
+#: src/delta.c:604
 #, c-format
 msgid "     * editing path : %s ... "
 msgstr ""
 
-#: src/delta.c:586
+#: src/delta.c:611
 #, c-format
 msgid "     * adding path : %s ... "
 msgstr ""
 
-#: src/delta.c:593
+#: src/delta.c:618
 #, c-format
 msgid "     * deleting path : %s ... "
 msgstr ""
@@ -106,90 +107,75 @@ msgstr ""
 msgid "Fetching logs... "
 msgstr ""
 
-#: src/main.c:55
+#: src/main.c:53
 #, c-format
 msgid "Released under the GNU General Public License.\n"
 msgstr ""
 
-#: src/main.c:64
+#: src/main.c:62
 #, c-format
 msgid "USAGE:"
 msgstr ""
 
-#: src/main.c:66
+#: src/main.c:64
 #, c-format
 msgid ""
 "[options] <url>\n"
 "\n"
 msgstr ""
 
-#: src/main.c:67
+#: src/main.c:65
 #, c-format
-msgid "Valid options:\n"
+msgid "Common options:\n"
 msgstr ""
 
-#: src/main.c:68
+#: src/main.c:66
 #, c-format
 msgid "    -h [--help]               print a nice help screen\n"
 msgstr ""
 
-#: src/main.c:69
+#: src/main.c:67
 #, c-format
 msgid "    --version                 print the program name and version\n"
 msgstr ""
 
-#: src/main.c:70
+#: src/main.c:68
 #, c-format
 msgid "    -q [--quiet]              be quiet\n"
 msgstr ""
 
-#: src/main.c:71
+#: src/main.c:69
 #, c-format
 msgid "    -v [--verbose]            print extra progress\n"
 msgstr ""
 
+#: src/main.c:71
+#, c-format
+msgid "Dump options:\n"
+msgstr ""
+
 #: src/main.c:72
 #, c-format
-msgid "    -u [--username] arg       username\n"
+msgid "    -r [--revision] ARG       specify revision number (or X:Y range)\n"
 msgstr ""
 
 #: src/main.c:73
 #, c-format
-msgid "    -p [--password] arg       password\n"
+msgid "    --deltas                  use deltas in dump output\n"
 msgstr ""
 
 #: src/main.c:74
 #, c-format
-msgid "    -r [--revision] arg       specify revision number (or X:Y range)\n"
+msgid "    --incremental             dump incrementally\n"
 msgstr ""
 
 #: src/main.c:75
 #, c-format
-msgid "    --deltas                  use deltas in dump output\n"
+msgid ""
+"    --prefix ARG              prepend ARG to the path that is being dumped\n"
 msgstr ""
 
 #: src/main.c:76
-#, c-format
-msgid "    --incremental             dump incrementally\n"
-msgstr ""
-
-#: src/main.c:77
-#, c-format
-msgid "    --no-auth-cache           do not cache authentication tokens\n"
-msgstr ""
-
-#: src/main.c:78
-#, c-format
-msgid "    --non-interactive         do no interactive prompting\n"
-msgstr ""
-
-#: src/main.c:79
-#, c-format
-msgid ""
-"    --prefix arg              prepend arg to the path that is being dumped\n"
-msgstr ""
-
-#: src/main.c:80
 #, c-format
 msgid ""
 "    --keep-revnums            keep the dumped revision numbers in sync with\n"
@@ -197,33 +183,65 @@ msgid ""
 "                              padding\n"
 msgstr ""
 
-#: src/main.c:83
+#: src/main.c:79
 #, c-format
 msgid ""
 "    --no-incremental-header   don't print the dumpfile header when dumping\n"
 msgstr ""
 
-#: src/main.c:84
+#: src/main.c:80
 #, c-format
 msgid "                              with --incremental and not starting at\n"
 msgstr ""
 
-#: src/main.c:85
+#: src/main.c:81
 #, c-format
 msgid "                              revision 0\n"
 msgstr ""
 
+#: src/main.c:83
+#, c-format
+msgid "Subversion compability options:\n"
+msgstr ""
+
+#: src/main.c:84
+#, c-format
+msgid "    -u [--username] ARG       specify a username ARG\n"
+msgstr ""
+
+#: src/main.c:85
+#, c-format
+msgid "    -p [--password] ARG       specify a password ARG\n"
+msgstr ""
+
+#: src/main.c:86
+#, c-format
+msgid "    --no-auth-cache           do not cache authentication tokens\n"
+msgstr ""
+
 #: src/main.c:87
+#, c-format
+msgid "    --non-interactive         do no interactive prompting\n"
+msgstr ""
+
+#: src/main.c:88
+#, c-format
+msgid ""
+"    --config-dir ARG          read user configuration files from directory "
+"ARG\n"
+msgstr ""
+
+#: src/main.c:90
 #, c-format
 msgid "Report bugs to <%s>\n"
 msgstr ""
 
-#: src/main.c:207
+#: src/main.c:210
 #, c-format
 msgid "ERROR: invalid revision range '%s'.\n"
 msgstr ""
 
-#: src/main.c:234
+#: src/main.c:230
 #, c-format
 msgid ""
 "WARNING: the '--stop' option is deprated. Please use '--revision'.\n"
@@ -232,47 +250,52 @@ msgid ""
 "subdirectory.\n"
 msgstr ""
 
-#: src/main.c:239
+#: src/main.c:235
 #, c-format
 msgid "ERROR: invalid revision number '%s'.\n"
 msgstr ""
 
-#: src/main.c:245 src/main.c:247
+#: src/main.c:241 src/main.c:243
 #, c-format
 msgid "WARNING: the '%s' option is deprecated.\n"
 msgstr ""
 
-#: src/main.c:250 src/main.c:252
+#: src/main.c:246 src/main.c:248
 #, c-format
 msgid "WARNING: the '%s' option is deprecated and will be IGNORED!.\n"
 msgstr ""
 
-#: src/main.c:258
+#: src/main.c:254
 #, c-format
 msgid "ERROR: multiple URLs detected.\n"
 msgstr ""
 
-#: src/main.c:265
+#: src/main.c:261
 #, c-format
 msgid "ERROR: Unkown argument or malformed url '%s'.\n"
 msgstr ""
 
-#: src/main.c:266
+#: src/main.c:262
 #, c-format
 msgid "Type %s --help for usage information.\n"
 msgstr ""
 
-#: src/main.c:292 src/main.c:308
+#: src/main.c:288 src/main.c:304
 #, c-format
 msgid "ERROR: Unable to create temporary directory.\n"
 msgstr ""
 
-#: src/main.c:300
+#: src/main.c:296
 #, c-format
 msgid "ERROR: Unable to find a suitable temporary directory.\n"
 msgstr ""
 
-#: src/session.c:192
+#: src/main.c:321
+#, c-format
+msgid "NOTE: Please remove the temporary directory %s manually\n"
+msgstr ""
+
+#: src/session.c:205
 #, c-format
 msgid "ERROR: '%s' refers to a file.\n"
 msgstr ""
