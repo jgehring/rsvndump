@@ -31,6 +31,7 @@ cat "${ROOT}/web/news-archive.html"| sed "s/\$DATE/`date +"%B %d, %Y"`/" > web/n
 #cat "${ROOT}/web/downloads-archive.html"| sed "s/\$DATE/`date +"%B %d, %Y"`/" > web/downloads-archive.html
 cat "${ROOT}/web/stylesheet.css" | sed "s/\$DATE/`date +"%B %d, %Y"`/" > web/stylesheet.css
 cp "${ROOT}/README" web/README
+cp "${ROOT}/README.win32" web/README-win32.txt
 cp "${ROOT}/ChangeLog" web/ChangeLog
 
 # Create dynamic content

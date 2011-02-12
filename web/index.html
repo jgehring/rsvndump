@@ -51,6 +51,21 @@
         <hr />
         <a name="news"><h3>News</h3></a>
         <ul>
+          <li><h4>February 13th, 2011</h4>
+          <p>rsvndump 0.5.4 is now <a href="#content">available</a>. This
+          release mainly fixes dumping with text deltas. In previous versions,
+          the delta didn't work and the full file content would be dumped in
+          svndiff format. Please note that these dumps could be imported just
+          fine and resulted in correct repositories.
+          Additionally, support for the <tt>--config-dir</tt> option of the
+          normal <i>svn</i> command-line client has been added, and a couple
+          of minor issues have been fixed. The build instructions for Windows
+          have been updated, too.
+          The full list of changes can be found in the
+          <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
+          is available as a tarball compressed using either gzip or bzip2 as
+          well as in zip format.<br />
+
           <li><h4>December 15th, 2009</h4>
           <p>rsvndump 0.5.3 is now <a href="#content">available</a>. This
           release fixes a couple of serious bugs reported via the
@@ -125,15 +140,6 @@
           I have also uploaded my local repository to
           <a href="http://github.com/jgehring/rsvndump">github.org</a>,
           so please feel free to clone it.</p></li>
-
-          <li><h4>April 15th, 2009</h4>
-          <p>rsvndump 0.4.4-1 is now <a href="#content">available</a>,
-          fixing build issues with Subversion 1.6.1. Please note that you
-          will see warnings about deprecated functions when compiling
-          the package, but it should build without errors.<br />
-          As usual, the source package is available as a tarball compressed
-          using either gzip or bzip2. The Debian packages have been updated,
-          too.</p></li>
         </ul>
         <p>Older news items can be found in the <a href="news-archive.html">news archive</a>.</p>
 
@@ -142,9 +148,9 @@
         <ul>
           <li><h4>Downloads:</h4>
             <ul>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.3.tar.gz">rsvndump-0.5.3.tar.gz</a></b> - Source code distribution</li>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.3.tar.bz2">rsvndump-0.5.3.tar.bz2</a></b> - Source code distribution</li>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.3.zip">rsvndump-0.5.3.zip</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.4.tar.gz">rsvndump-0.5.4.tar.gz</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.4.tar.bz2">rsvndump-0.5.4.tar.bz2</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.4.zip">rsvndump-0.5.4.zip</a></b> - Source code distribution</li>
               </ul>
             <p>Previous releases can be found on rsvndump's <a href="http://sourceforge.net/projects/rsvndump/files/">file list at SourceForge</a>.</p>
           </li>
@@ -165,6 +171,7 @@
           <li><h4>Documentation:</h4>
             <ul>
               <li><a href="README">README</a> - Requirements and general information</li>
+              <li><a href="README-win32.txt">README.win32</a> - Build instructions for Windows</li>
               <li><a href="manpage.html">man page</a> - Online version of the man page</li>
               <li><a href="ChangeLog">ChangeLog</a> - The rsvndump change log</li>
               <li><a href="http://www.gnu.org/licenses/gpl-3.0.txt">COPYING</a> - The GPL v3, under which rsvndump is released</li>

@@ -1,4 +1,4 @@
-== Schedule for 0.5.4 ==
+== Schedule for 0.5.5 ==
 > Move MD5-sums for files to the versioned path_hash
 > Direct dumping of deltas, thus elmiminating base revision fetching for
   incremental dumps in delta mode

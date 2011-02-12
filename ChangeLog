@@ -1,3 +1,11 @@
+2011-02-13  --  version 0.5.4
+
+	* Add support for svn's --config-dir option
+	* Fixed missing deltification when running with --deltas
+	* Fixed crash when passing certain command line options multiple times
+	* Fixed crash on Windows on Subversion errors
+	* Fixed wrong libintl linker option (patch by François Revol, #3031819)
+
 2009-12-15  --  version 0.5.3
 
 	* Added detection for paths affected by a copy operation, which
