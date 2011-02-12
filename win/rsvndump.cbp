@@ -43,18 +43,17 @@
 		<Compiler>
 			<Add option="/W3" />
 			<Add option="/DWIN32" />
-			<Add directory="C:\Programme\Microsoft SDKs\Windows\v6.1\Include" />
+			<Add directory="C:\Program Files\Microsoft SDKs\Windows\v6.0A\Include" />
 			<Add directory="..\svn-win32\include" />
 			<Add directory="..\svn-win32\include\apr" />
 			<Add directory="..\svn-win32\include\apr-iconv" />
 			<Add directory="..\svn-win32\include\apr-util" />
 		</Compiler>
 		<Linker>
-			<Add library="..\svn-win32\lib\apr\libapr.lib" />
-			<Add library="..\svn-win32\lib\apr-iconv\libapriconv.lib" />
-			<Add library="..\svn-win32\lib\apr-util\libaprutil.lib" />
+			<Add library="..\svn-win32\lib\apr\libapr-1.lib" />
+			<Add library="..\svn-win32\lib\apr-iconv\libapriconv-1.lib" />
+			<Add library="..\svn-win32\lib\apr-util\libaprutil-1.lib" />
 			<Add library="..\svn-win32\lib\apr-util\xml.lib" />
-			<Add library="..\svn-win32\lib\intl3_svn.lib" />
 			<Add library="..\svn-win32\lib\neon\libneon.lib" />
 			<Add library="..\svn-win32\lib\neon\zlibstat.lib" />
 			<Add library="..\svn-win32\lib\serf\serf.lib" />
