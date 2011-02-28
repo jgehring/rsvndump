@@ -30,10 +30,11 @@
  *
  *      The current implementation stores tree deltas instead of full
  *      layouts for each revision to minimize memory usage.
- *      Snapshots are take at regular intervals to speed up reconstruction.
- *      Only the two latest snapshots (and the revisions between them) are
- *      actually kept in memory. Previous records are stored in
- *      files containing the snapshot itself and the following deltas.
+ *      Snapshots are taken at regular intervals to speed up
+ *      reconstruction. Only the two latest snapshots (and the
+ *      revisions between them) are actually kept in memory.
+ *      Previous records are stored in files containing the snapshot
+ *      itself and the following deltas.
  *
  *      Furthermore, there's a small full-tree cache to speed up
  *      repeated queries (quite common whenever a directory is copied).
@@ -961,7 +962,7 @@ void path_hash_test(session_t *session)
 
 		/* Retrieve actual repository tree */
 		orig = apr_hash_make(pool);
-		path_hash_add_tree(session, orig, ph_session_prefix, i, pool);
+		path_hash_add_tree(session, orig, "", i, pool);
 
 		/* Reconstruct the tree using the path_hash */
 		recon = path_hash_reconstruct(i, pool);
@@ -969,9 +970,10 @@ void path_hash_test(session_t *session)
 			DEBUG_MSG("path_hash_test: recon failed!\n");
 			exit(1);
 		}
-//		path_hash_dump(recon, pool);
+/*		path_hash_dump(recon, pool); */
 
-		DEBUG_MSG("path_hash_test: testing revision %ld\n", i);
+		DEBUG_MSG("\npath_hash_test: testing revision %ld\n", i);
+		fflush(stderr);
 		if (path_hash_test_compare(orig, recon, pool)) {
 			break;
 		}
@@ -981,7 +983,7 @@ void path_hash_test(session_t *session)
 	}
 
 	svn_pool_destroy(pool);
-	exit(1);
+	exit(0);
 }
 
 #endif
