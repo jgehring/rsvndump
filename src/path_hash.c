@@ -63,7 +63,7 @@
 #define CACHE_SIZE 4
 
 /* Codes for reading and writing the path history */
-#define REV_SEPERATOR "=="
+#define REV_SEPARATOR "=="
 #define REV_ADD "+ "
 #define REV_DELETE "- "
 
@@ -102,7 +102,7 @@ typedef struct {
 /* Global pool */
 static apr_pool_t *ph_pool = NULL;
 
-/* Array storing all deltas */
+/* Array storing all deltas, indexed by revision */
 static apr_array_header_t *ph_revisions = NULL;
 
 /* Additional session prefix (for copyfrom_path information) */
@@ -299,9 +299,8 @@ static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool
 	apr_status_t status;
 	apr_pool_t *temp_pool;
 	unsigned long i, filename_idx = (rev / SNAPSHOT_DIST);
-	int rev_add_len, rev_delete_len, rev_sep_len;
 
-	DEBUG_MSG("path_hash_test: reconstruct_file(%ld) started\n", rev);
+	DEBUG_MSG("path_hash_reconstruct_file(%ld) started\n", rev);
 
 	if (ph_files->nelts < filename_idx) {
 		DEBUG_MSG("path_hash_reconstruct_file(%ld): file not available (%d < %d)\n", rev, ph_files->nelts, filename_idx);
@@ -317,12 +316,8 @@ static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool
 		return NULL;
 	}
 
-	DEBUG_MSG("path_hash_test: reconstruct_file(%ld) using file %s\n", rev, APR_ARRAY_IDX(ph_files, filename_idx, const char *));
+	DEBUG_MSG("path_hash_reconstruct_file(%ld) using file %s\n", rev, APR_ARRAY_IDX(ph_files, filename_idx, const char *));
 	tree = apr_hash_make(pool);
-
-	rev_add_len = strlen(REV_ADD);
-	rev_delete_len = strlen(REV_DELETE);
-	rev_sep_len = strlen(REV_SEPERATOR);
 
 	/* Read revisions */
 	i = filename_idx * SNAPSHOT_DIST;
@@ -335,12 +330,12 @@ static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool
 			return NULL;
 		}
 
-		if (!strncmp(buffer, REV_ADD, rev_add_len)) {
-			DEBUG_MSG("path_hash_test: +++ %s\n", buffer + rev_add_len);
-			path_hash_add(tree, buffer + rev_add_len, temp_pool);
-		} else if (!strncmp(buffer, REV_DELETE, rev_delete_len)) {
-			path_hash_delete(tree, buffer + rev_delete_len, temp_pool);
-		} else if (!strncmp(buffer, REV_SEPERATOR, rev_sep_len)) {
+		if (!strncmp(buffer, REV_ADD, sizeof(REV_ADD)-1)) {
+			DEBUG_MSG("path_hash_reconstruct_file: +++ %s\n", buffer + sizeof(REV_ADD)-1);
+			path_hash_add(tree, buffer + sizeof(REV_ADD)-1, temp_pool);
+		} else if (!strncmp(buffer, REV_DELETE, sizeof(REV_DELETE)-1)) {
+			path_hash_delete(tree, buffer + sizeof(REV_DELETE)-1, temp_pool);
+		} else if (!strncmp(buffer, REV_SEPARATOR, sizeof(REV_SEPARATOR)-1)) {
 			++i;
 		}
 	}
@@ -359,6 +354,8 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 	apr_hash_index_t *hi;
 	apr_pool_t *temp_pool;
 	unsigned long i, j, snapshot_idx = (rev / SNAPSHOT_DIST);
+
+	DEBUG_MSG("path_hash_reconstruct(%ld): started\n", rev);
 
 	if (ph_revisions->nelts < rev) {
 		DEBUG_MSG("path_hash_reconstruct(%ld): revision not available (max = %d)\n", rev, ph_revisions->nelts);
@@ -390,7 +387,7 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 		apr_hash_t *previous = path_hash_reconstruct(rev-1, temp_pool);
 		if (previous != NULL) {
 			path_hash_copy_deep(tree, previous, temp_pool);
-			i = rev-1;
+			i = rev;
 		}
 	}
 
@@ -399,8 +396,10 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 
 		/* Skip padding revisions */
 		if (delta == NULL) {
+			DEBUG_MSG("path_hash_reconstruct(%ld): skipping delta for revision %ld\n", rev, i-1);
 			continue;
 		}
+		DEBUG_MSG("path_hash_reconstruct(%ld): applying delta for revision %ld\n", rev, i-1);
 
 		/* Apply delta: deletions */
 		for (j = 0; j < delta->deleted->nelts; j++) {
@@ -440,6 +439,7 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 		}
 	}
 
+	DEBUG_MSG("path_hash_reconstruct(%ld): done\n", rev);
 	svn_pool_destroy(temp_pool);
 	return tree;
 }
@@ -514,13 +514,13 @@ static char path_hash_write(apr_hash_t *tree, apr_file_t *file, apr_pool_t *pool
 }
 
 
-/* Writes the first available snapshot an all following deltas to a temporary
+/* Writes the first available snapshot and all following deltas to a temporary
    file and returns the file path. Additionally, the snapshots and the deltas
    will be freed */
 static char *path_hash_write_deltas(apr_pool_t *pool)
 {
 	char *filename;
-	int index;
+	int index, end;
 	apr_status_t status;
 	apr_hash_t *tree;
 	apr_file_t *file = NULL;
@@ -539,6 +539,7 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 	while ((tree = APR_ARRAY_IDX(ph_snapshots, index, apr_hash_t *)) == NULL) {
 		++index;
 	}
+	DEBUG_MSG("path_hash_write: snapshot at index %d -> revision %d\n", index, index * SNAPSHOT_DIST);
 	if (path_hash_write(tree, file, delta_pool)) {
 		apr_file_close(file);
 		return NULL;
@@ -549,12 +550,14 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 
 	/* Write all deltas */
 	index *= SNAPSHOT_DIST;
-	index += 1;
-	do {
+	end = index + SNAPSHOT_DIST;
+	++index;
+	while (index < end) {
 		tree_delta_t *delta = APR_ARRAY_IDX(ph_revisions, index, tree_delta_t *);
 		int j;
 
-		apr_file_printf(file, "%s\n", REV_SEPERATOR);
+		DEBUG_MSG("path_hash_write: %s %d\n", REV_SEPARATOR, index);
+		apr_file_printf(file, "%s %d\n", REV_SEPARATOR, index);
 
 		/* Skip padding revisions */
 		if (delta == NULL) {
@@ -579,13 +582,44 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 
 		svn_pool_destroy(delta->pool);
 		APR_ARRAY_IDX(ph_revisions, index, tree_delta_t *) = NULL;
-	} while ((index++ % SNAPSHOT_DIST) != 0);
+		++index;
+	}
 
+	apr_file_printf(file, "%s\n", REV_SEPARATOR);
 	DEBUG_MSG("path_hash_write: ==============================================================\n");
 
 	apr_file_close(file);
 	svn_pool_destroy(delta_pool);
 	return filename;
+}
+
+
+/* Adds a tree delta (which can be NULL) to the ph_revisions array
+ * and writes a snapshot if necessary.
+ */
+static int path_hash_add_delta(tree_delta_t *delta, apr_pool_t *pool)
+{
+	APR_ARRAY_PUSH(ph_revisions, tree_delta_t *) = delta;
+
+	/* Add regular snapshots to speed up path reconstructions */
+	if (((ph_revisions->nelts-1) % SNAPSHOT_DIST) == 0) {
+		apr_hash_t *snapshot = path_hash_reconstruct(ph_revisions->nelts-1, svn_pool_create(ph_pool));
+		APR_ARRAY_PUSH(ph_snapshots, apr_hash_t *) = snapshot;
+
+		/* Only keep the last two snapshots and the deltas between them
+		   in memory. All other deltas will be saved to files. */
+		if (ph_snapshots->nelts > 2) {
+			char *filename = path_hash_write_deltas(pool);
+			if (filename != NULL) {
+				APR_ARRAY_PUSH(ph_files, const char *) = apr_pstrdup(ph_pool, filename);
+			} else {
+				/* TODO: Write error message */
+				return 1;
+			}
+		}
+	}
+
+	return 0;
 }
 
 
@@ -761,30 +795,18 @@ char path_hash_commit(session_t *session, log_revision_t *log, svn_revnum_t revn
 	}
 
 	/* Finally, add the new revision after possible padding */
-	while (ph_revisions->nelts < revnum-1) {
-		APR_ARRAY_PUSH(ph_revisions, tree_delta_t *) = NULL;
-		DEBUG_MSG("path_hash: padded revision %d\n", ph_revisions->nelts);
-	}
-	APR_ARRAY_PUSH(ph_revisions, tree_delta_t *) = ph_head;
-	ph_head = NULL;
-
-	/* Add regular snapshots to speed up path reconstructions */
-	if ((revnum % SNAPSHOT_DIST) == 0) {
-		apr_hash_t *snapshot = path_hash_reconstruct(revnum, svn_pool_create(ph_pool));
-		APR_ARRAY_PUSH(ph_snapshots, apr_hash_t *) = snapshot;
-
-		/* Only keep the last two snapshots and the deltas between them
-		   in memory. All other deltas will be saved to files. */
-		if (ph_snapshots->nelts > 2) {
-			char *filename = path_hash_write_deltas(pool);
-			if (filename != NULL) {
-				APR_ARRAY_PUSH(ph_files, const char *) = apr_pstrdup(ph_pool, filename);
-			} else {
-				/* TODO: Write error message */
-				return 1;
-			}
+	while (ph_revisions->nelts < revnum) {
+		if (path_hash_add_delta(NULL, pool) != 0) {
+			return 1;
 		}
+
+		DEBUG_MSG("path_hash: padded revision %d\n", ph_revisions->nelts-1);
 	}
+
+	if (path_hash_add_delta(ph_head, pool) != 0) {
+		return 1;
+	}
+	ph_head = NULL;
 
 #if defined(DEBUG_PHASH) && defined(DEBUG)
 	DEBUG_MSG("path_hash: for revision %ld:\n", revnum);
