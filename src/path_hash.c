@@ -176,7 +176,11 @@ static char path_hash_add_tree_rec(session_t *session, apr_hash_t *tree, const c
 		svn_dirent_t *dirent;
 		apr_hash_this(hi, (const void **)(void *)&entry, NULL, (void **)(void *)&dirent);
 
-		subpath = apr_psprintf(subpool, "%s/%s", path, entry);
+		if (strlen(path) > 0) {
+			subpath = apr_psprintf(subpool, "%s/%s", path, entry);
+		} else {
+			subpath = apr_pstrdup(subpool, entry);
+		}
 
 		if (dirent->kind == svn_node_file) {
 			DEBUG_MSG("path_hash: S++ ");
@@ -211,6 +215,10 @@ static char path_hash_add_tree(session_t *session, apr_hash_t *tree, const char 
 		return 1;
 	}
 
+	if (dirent == NULL) {
+		DEBUG_MSG("path_hash_add_tree: Non-existent: %s@%ld\n", path, revnum);
+		return 0;
+	}
 	if (dirent->kind == svn_node_file) {
 		DEBUG_MSG("path_hash: S++ ");
 		path_hash_add(tree, path, pool);
