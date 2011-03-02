@@ -51,6 +51,18 @@
         <hr />
         <a name="news"><h3>News</h3></a>
         <ul>
+          <li><h4>March 3rd, 2011</h4>
+          <p>rsvndump 0.5.5 is now <a href="#content">available</a>. This
+          release fixes a bug introduced in 0.5.3 
+          (<a href="http://sourceforge.net/tracker/?func=detail&aid=2997558&group_id=268687&atid=1143180">#2997558</a>)
+          which could led to crashes when dumping a
+          subdirectory. Additionally, performance issues caused by
+          unnecessary stats for copied revisions have been fixed. The
+          full list of changes can be found in the
+          <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
+          is available as a tarball compressed using either gzip or bzip2 as
+          well as in zip format.<br />
+
           <li><h4>February 13th, 2011</h4>
           <p>rsvndump 0.5.4 is now <a href="#content">available</a>. This
           release mainly fixes dumping with text deltas. In previous versions,
@@ -118,28 +130,6 @@
           updated and are now hosted on <a href="http://sourceforge.net">SourceForge.net</a>.
           All previous releases of rsvndump are now available at the
           <a href="http://sourceforge.net/projects/rsvndump/files/">downloads archive</a>.</p></li>
-
-          <li><h4>June 1st, 2009</h4>
-          <p>rsvndump 0.5 is now <a href="#content">available</a>.
-          This is again a complete rewrite of the program and introduces
-          new features as well as bugfixes. The most important features
-          are the ability to perform incremental dumps and the support
-          for dumping text deltas instead of the usual fulltext. The
-          authentication system has been been improved, too. The bugfixes
-          include a fix for missing file contents if a file has been copied
-          and changed in the same revision file, which could occur under
-          certain circumstances.<br />
-          Some of the command line switches of the 0.4-series have become
-          obsolete now. You will get a warning message if you use them,
-          so you should probably do a manual run if you invoke rsvndump
-          via a different program, e.g. as a cronjob.<br />
-          A more detailed description of the changes can be found in the
-          <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
-          is available as a tarball compressed using either gzip or bzip2.
-          The Debian packages have been updated, too.<br />
-          I have also uploaded my local repository to
-          <a href="http://github.com/jgehring/rsvndump">github.org</a>,
-          so please feel free to clone it.</p></li>
         </ul>
         <p>Older news items can be found in the <a href="news-archive.html">news archive</a>.</p>
 
@@ -148,9 +138,9 @@
         <ul>
           <li><h4>Downloads:</h4>
             <ul>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.4.tar.gz">rsvndump-0.5.4.tar.gz</a></b> - Source code distribution</li>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.4.tar.bz2">rsvndump-0.5.4.tar.bz2</a></b> - Source code distribution</li>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.4.zip">rsvndump-0.5.4.zip</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.5.tar.gz">rsvndump-0.5.5.tar.gz</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.5.tar.bz2">rsvndump-0.5.5.tar.bz2</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.5.zip">rsvndump-0.5.5.zip</a></b> - Source code distribution</li>
               </ul>
             <p>Previous releases can be found on rsvndump's <a href="http://sourceforge.net/projects/rsvndump/files/">file list at SourceForge</a>.</p>
           </li>

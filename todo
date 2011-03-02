@@ -1,16 +1,17 @@
-== Schedule for 0.5.5 ==
-> Move MD5-sums for files to the versioned path_hash
+== Schedule for 0.5.6 ==
+> Use zlib for reading and writing of path_hash snapshots
 > Direct dumping of deltas, thus elmiminating base revision fetching for
   incremental dumps in delta mode
-> Use zlib for reading and writing of path_hash snapshots
+> Get rid of list_t and use the APR array struct
+
+== Schedule for 0.5.7 ==
+> Move MD5-sums for files to the versioned path_hash
 > Centralize delta_check_copy() (find_matching_rev() or s.th. similar) so
   that it can be used for determining copy sources in path_hash_commit()
 > Check base MD5 in de_apply_textdelta for non-delta dumps
 > Fix compilation without NLS (if gettext is not present)
 
-
 == Schedule for 0.5.x ==
-> Get rid of list_t and use the APR array struct
 > Add --no-stop-on-copy option
 > Don't dump properties on copy operations if they didn't change
 > Check if revision range determnination can be done faster
@@ -23,7 +24,6 @@
   with replace-actions, but needs further evaluation
 > The svn:merginfo property will sometimes be dumped too early (-1). Not sure
   if this can be fixed
-
 
 == Someday ==
 > Dump user prefix in first revision, even with --keep-revnums

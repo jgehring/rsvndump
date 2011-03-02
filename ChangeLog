@@ -1,3 +1,9 @@
+2011-03-03  --  version 0.5.5
+
+	* Fixed possible crash when dumping a subdirectory (#2997558)
+	* Fixed performance issues when dumping a subdirectory due to
+	  unnecessary stats for copied revisions.
+
 2011-02-13  --  version 0.5.4
 
 	* Add support for svn's --config-dir option

@@ -15,6 +15,28 @@
        For recent news and content, please see the <a href="index.html">main page</a>.</i></p>
       <hr />
       <ul>
+        <li><h4>June 1st, 2009</h4>
+        <p>rsvndump 0.5 is now <a href="#content">available</a>.
+        This is again a complete rewrite of the program and introduces
+        new features as well as bugfixes. The most important features
+        are the ability to perform incremental dumps and the support
+        for dumping text deltas instead of the usual fulltext. The
+        authentication system has been been improved, too. The bugfixes
+        include a fix for missing file contents if a file has been copied
+        and changed in the same revision file, which could occur under
+        certain circumstances.<br />
+        Some of the command line switches of the 0.4-series have become
+        obsolete now. You will get a warning message if you use them,
+        so you should probably do a manual run if you invoke rsvndump
+        via a different program, e.g. as a cronjob.<br />
+        A more detailed description of the changes can be found in the
+        <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
+        is available as a tarball compressed using either gzip or bzip2.
+        The Debian packages have been updated, too.<br />
+        I have also uploaded my local repository to
+        <a href="http://github.com/jgehring/rsvndump">github.org</a>,
+        so please feel free to clone it.</p></li>
+
         <li><h4>April 15th, 2009</h4>
         <p>rsvndump 0.4.4-1 is now <a href="#content">available</a>,
         fixing build issues with Subversion 1.6.1. Please note that you
