@@ -361,6 +361,9 @@ char dump(session_t *session, dump_options_t *opts)
 		logs_fetched = 1;
 
 		/* Jump to local revision and fill the path hash for previous revisions */
+		if (opts->verbosity > 1) {
+			fprintf(stderr, _("Preparing path hash... "));
+		}
 		local_rev = 0;
 		while ((local_rev < (long int)logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
 			svn_revnum_t phrev = ((opts->flags & DF_KEEP_REVNUMS) ? ((log_revision_t *)logs.elements)[local_rev].revision : local_rev);
@@ -368,6 +371,9 @@ char dump(session_t *session, dump_options_t *opts)
 				return 1;
 			}
 			++local_rev;
+		}
+		if (opts->verbosity > 1) {
+			fprintf(stderr, _("done\n"));
 		}
 
 		/* The first revision is a dry run.
@@ -428,12 +434,21 @@ char dump(session_t *session, dump_options_t *opts)
 
 		if (logs_fetched == 0) {
 			log_revision_t log;
+			if (opts->verbosity > 1) {
+				fprintf(stderr, _("Fetching log for original revision %ld... "), global_rev);
+			}
 			if (log_fetch_single(session, global_rev, opts->end, &log, revpool)) {
 				ret = 1;
+				if (opts->verbosity > 1) {
+					fprintf(stderr, _("failed\n"));
+				}
 				break;
 			}
 			list_append(&logs, &log);
 			list_idx = logs.size-1;
+			if (opts->verbosity > 1) {
+				fprintf(stderr, _("done\n"));
+			}
 		} else {
 			++list_idx;
 		}
