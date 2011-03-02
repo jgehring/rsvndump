@@ -29,6 +29,7 @@
 
 #include "main.h"
 #include "list.h"
+#include "logger.h"
 #include "session.h"
 
 #include "log.h"
@@ -144,7 +145,7 @@ static svn_error_t *log_receiver_list(void *baton, apr_hash_t *changed_paths, sv
 
 
 /* Determines the first and last revision of the session root */
-char log_get_range(session_t *session, svn_revnum_t *start, svn_revnum_t *end, int verbosity)
+char log_get_range(session_t *session, svn_revnum_t *start, svn_revnum_t *end)
 {
 	svn_error_t *err;
 	apr_array_header_t *paths;
@@ -162,22 +163,16 @@ char log_get_range(session_t *session, svn_revnum_t *start, svn_revnum_t *end, i
 	baton.session = session;
 	baton.pool = subpool;
 
-	if (verbosity > 0) {
-		fprintf(stderr, _("Determining start and end revision... "));
-	}
+	L1(_("Determining start and end revision... "));
 	if ((err = svn_ra_get_log(session->ra, paths, *start, *end, 0, FALSE, TRUE, log_receiver_list, &baton, subpool))) {
-		if (verbosity > 0) {
-			fprintf(stderr, "\n");
-		}
+		L1(_("failed\n"));
 		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		list_free(&list);
 		svn_pool_destroy(subpool);
 		return 1;
 	}
-	if (verbosity > 0) {
-		fprintf(stderr, _("done\n"));
-	}
+	L1(_("done\n"));
 
 	*start = ((log_revision_t *)list.elements)[0].revision;
 	*end = ((log_revision_t *)list.elements)[list.size-1].revision;
@@ -218,7 +213,7 @@ char log_fetch_single(session_t *session, svn_revnum_t rev, svn_revnum_t end, lo
 
 
 /* Fetches all revision logs for a given revision range */
-char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, list_t *list, int verbosity)
+char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, list_t *list)
 {
 	svn_error_t *err;
 	apr_array_header_t *paths;
@@ -234,24 +229,16 @@ char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, lis
 	baton.session = session;
 	baton.pool = session->pool;
 
-	if (verbosity > 0) {
-		fprintf(stderr, _("Fetching logs... "));
-	}
-
+	L1(_("Fetching logs... "));
 	if ((err = svn_ra_get_log(session->ra, paths, start, end, 0, TRUE, FALSE, log_receiver_list, &baton, pool))) {
-		if (verbosity > 0) {
-			fprintf(stderr, "\n");
-		}
+		L1(_("failed\n"));
 		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		list_free(list);
 		svn_error_clear(err);
 		svn_pool_destroy(pool);
 		return 1;
 	}
-
-	if (verbosity > 0) {
-		fprintf(stderr, _("done\n"));
-	}
+	L1(_("done\n"));
 
 	svn_pool_destroy(pool);
 	return 0;

@@ -35,6 +35,7 @@
 #include "delta.h"
 #include "list.h"
 #include "log.h"
+#include "logger.h"
 #include "path_hash.h"
 #include "property.h"
 #include "utils.h"
@@ -265,7 +266,6 @@ dump_options_t dump_options_create()
 
 	opts.temp_dir = NULL;
 	opts.prefix = NULL;
-	opts.verbosity = 0;
 	opts.flags = 0x00;
 	opts.dump_format = 2;
 
@@ -312,7 +312,7 @@ char dump(session_t *session, dump_options_t *opts)
 		return 1;
 	}
 	if ((opts->start == 0) && (strlen(session->prefix) > 0)) {
-		if (log_get_range(session, &opts->start, &opts->end, opts->verbosity)) {
+		if (log_get_range(session, &opts->start, &opts->end)) {
 			return 1;
 		}
 	} else {
@@ -355,15 +355,13 @@ char dump(session_t *session, dump_options_t *opts)
 	 * prior to dumping.
 	 */
 	if (start_mid) {
-		if (log_fetch_all(session, 0, opts->end, &logs, opts->verbosity)) {
+		if (log_fetch_all(session, 0, opts->end, &logs)) {
 			return 1;
 		}
 		logs_fetched = 1;
 
 		/* Jump to local revision and fill the path hash for previous revisions */
-		if (opts->verbosity > 1) {
-			fprintf(stderr, _("Preparing path hash... "));
-		}
+		L2(_("Preparing path hash... "));
 		local_rev = 0;
 		while ((local_rev < (long int)logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
 			svn_revnum_t phrev = ((opts->flags & DF_KEEP_REVNUMS) ? ((log_revision_t *)logs.elements)[local_rev].revision : local_rev);
@@ -372,9 +370,7 @@ char dump(session_t *session, dump_options_t *opts)
 			}
 			++local_rev;
 		}
-		if (opts->verbosity > 1) {
-			fprintf(stderr, _("done\n"));
-		}
+		L2(_("done\n"));
 
 		/* The first revision is a dry run.
 		   This is because we need to get the data of the previous
@@ -434,21 +430,15 @@ char dump(session_t *session, dump_options_t *opts)
 
 		if (logs_fetched == 0) {
 			log_revision_t log;
-			if (opts->verbosity > 1) {
-				fprintf(stderr, _("Fetching log for original revision %ld... "), global_rev);
-			}
+			L2(_("Fetching log for original revision %ld... "), global_rev);
 			if (log_fetch_single(session, global_rev, opts->end, &log, revpool)) {
 				ret = 1;
-				if (opts->verbosity > 1) {
-					fprintf(stderr, _("failed\n"));
-				}
+				L2(_("failed\n"));
 				break;
 			}
 			list_append(&logs, &log);
 			list_idx = logs.size-1;
-			if (opts->verbosity > 1) {
-				fprintf(stderr, _("done\n"));
-			}
+			L2(_("done\n"));
 		} else {
 			++list_idx;
 		}
@@ -457,10 +447,10 @@ char dump(session_t *session, dump_options_t *opts)
 			/* Padd with empty revisions if neccessary */
 			while (local_rev < ((log_revision_t *)logs.elements)[list_idx].revision) {
 				dump_padding_revision(revpool, local_rev);
-				if (opts->verbosity == 0) {
-					fprintf(stderr, _("* Padded revision %ld.\n"), local_rev);
-				} else if (opts->verbosity > 0) {
-					fprintf(stderr, _("------ Padded revision %ld <<<\n\n"), local_rev);
+				if (loglevel == 0) {
+					L0(_("* Padded revision %ld.\n"), local_rev);
+				} else if (loglevel > 0) {
+					L1(_("------ Padded revision %ld <<<\n\n"), local_rev);
 				}
 				/* The first revision sets up the user prefix */
 				if (local_rev == 1) {
@@ -500,12 +490,10 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 		DEBUG_MSG("global = %ld, diff = %ld, start = %ld\n", global_rev, diff_rev, opts->start);
 
-		if (opts->verbosity > 0) {
-			if (!(opts->flags & DF_DRY_RUN)) {
-				fprintf(stderr, _(">>> Dumping new revision, based on original revision %ld\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
-			} else {
-				fprintf(stderr, _("Fetching base revision... "));
-			}
+		if (!(opts->flags & DF_DRY_RUN)) {
+			L1(_(">>> Dumping new revision, based on original revision %ld\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
+		} else {
+			L1(_("Fetching base revision... "));
 		}
 
 		/* Setup the delta editor and run a diff */
@@ -523,17 +511,17 @@ char dump(session_t *session, dump_options_t *opts)
 			}
 		}
 
-		if (opts->verbosity == 0 && !(opts->flags & DF_DRY_RUN)) {
+		if (loglevel == 0 && !(opts->flags & DF_DRY_RUN)) {
 			if (show_local_rev) {
-				fprintf(stderr, _("* Dumped revision %ld (local %ld).\n"), ((log_revision_t *)logs.elements)[list_idx].revision, local_rev);
+				L0(_("* Dumped revision %ld (local %ld).\n"), ((log_revision_t *)logs.elements)[list_idx].revision, local_rev);
 			} else {
-				fprintf(stderr, _("* Dumped revision %ld.\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
+				L0(_("* Dumped revision %ld.\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
 			}
-		} else if (opts->verbosity > 0) {
+		} else if (loglevel > 0) {
 			if (!(opts->flags & DF_DRY_RUN)) {
-				fprintf(stderr, _("\n------ Dumped revision %ld <<<\n\n"), local_rev);
+				L1(_("\n------ Dumped revision %ld <<<\n\n"), local_rev);
 			} else {
-				fprintf(stderr, _("done\n"));
+				L1(_("done\n"));
 			}
 		}
 

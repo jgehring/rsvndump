@@ -48,7 +48,6 @@ typedef struct {
 	char          *prefix;
 	svn_revnum_t  start;
 	svn_revnum_t  end;
-	int           verbosity;
 	int           flags;
 	int           dump_format;
 } dump_options_t;

@@ -38,6 +38,7 @@
 
 #include "main.h"
 #include "dump.h"
+#include "logger.h"
 #include "utils.h"
 
 
@@ -188,12 +189,12 @@ int main(int argc, char **argv)
 			print_version();
 			goto finish;
 		} else if (!strcmp(argv[i], "-q") || !strcmp(argv[i], "--quiet")) {
-			opts.verbosity = -1;
+			loglevel = -1;
 		} else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")) {
-			if (opts.verbosity < 0) {
-				opts.verbosity = 0;
+			if (loglevel < 0) {
+				loglevel = 0;
 			}
-			opts.verbosity++;
+			loglevel++;
 		} else if (!strcmp(argv[i], "--no-auth-cache")) {
 			session.flags |= SF_NO_AUTH_CACHE;
 		} else if (!strcmp(argv[i], "--non-interactive")) {

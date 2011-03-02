@@ -99,23 +99,6 @@ float stopwatch_elapsed(stopwatch_t *watch)
 
 #endif /* USE_TIMING */
 
-/* Calls vfprintf on stderr using the given arguments */
-int utils_debug(const char *format, ...)
-{
-#ifndef DEBUG
-	(void)format;
-	return 0;
-#else
-	int res;
-	va_list argptr;
-	va_start(argptr, format);
-	res = vfprintf(stderr, format, argptr);
-	va_end(argptr);
-	return res;
-#endif
-}
-
-
 /* Returns a canonicalized path that has been allocated in the given pool */
 char *utils_canonicalize_pstrdup(struct apr_pool_t *pool, char *path)
 {

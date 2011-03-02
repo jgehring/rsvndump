@@ -38,6 +38,7 @@
 #include <apr_strings.h>
 
 #include "main.h"
+#include "logger.h"
 #include "rhash.h"
 
 

@@ -36,6 +36,7 @@
 #include "dump.h"
 #include "list.h"
 #include "log.h"
+#include "logger.h"
 #include "path_hash.h"
 #include "property.h"
 #include "rhash.h"
@@ -198,11 +199,11 @@ static void delta_mark_node(de_node_baton_t *node)
 	}
 	node->dump_needed = 0;
 
-	if ((de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
+	if (!(de_baton->opts->flags & DF_DRY_RUN)) {
 		if (node->cp_info == CPI_COPY) {
-			fprintf(stderr, _("COPIED ... done.\n"));
+			L1(_("COPIED ... done.\n"));
 		} else {
-			fprintf(stderr, _("done.\n"));
+			L1(_("done.\n"));
 		}
 	}
 }
@@ -600,22 +601,22 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	switch (node->action) {
 		case 'M':
 			printf("change\n");
-			if ((de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
-				fprintf(stderr, _("     * editing path : %s ... "), path);
+			if (!(de_baton->opts->flags & DF_DRY_RUN)) {
+				L1(_("     * editing path : %s ... "), path);
 			}
 			break;
 
 		case 'A':
 			printf("add\n");
-			if ((de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
-				fprintf(stderr, _("     * adding path : %s ... "), path);
+			if (!(de_baton->opts->flags & DF_DRY_RUN)) {
+				L1(_("     * adding path : %s ... "), path);
 			}
 			break;
 
 		case 'D':
 			printf("delete\n");
-			if ((de_baton->opts->verbosity > 0) && !(de_baton->opts->flags & DF_DRY_RUN)) {
-				fprintf(stderr, _("     * deleting path : %s ... "), path);
+			if (!(de_baton->opts->flags & DF_DRY_RUN)) {
+				L1(_("     * deleting path : %s ... "), path);
 			}
 
 			/* We can finish early here */

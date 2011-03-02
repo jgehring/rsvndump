@@ -52,6 +52,7 @@
 #include "main.h"
 
 #include "delta.h"
+#include "logger.h"
 #include "utils.h"
 
 #include "path_hash.h"
