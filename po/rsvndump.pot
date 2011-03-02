@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: rsvndump 0.5.4\n"
+"Project-Id-Version: rsvndump 0.5.5\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2011-02-13 00:07+0100\n"
+"POT-Creation-Date: 2011-03-03 00:00+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,32 +17,30 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/delta.c:203
-#, c-format
+#: src/delta.c:204
 msgid "COPIED ... done.\n"
 msgstr ""
 
-#: src/delta.c:205
-#, c-format
+#: src/delta.c:206
 msgid "done.\n"
 msgstr ""
 
-#: src/delta.c:604
+#: src/delta.c:605
 #, c-format
 msgid "     * editing path : %s ... "
 msgstr ""
 
-#: src/delta.c:611
+#: src/delta.c:612
 #, c-format
 msgid "     * adding path : %s ... "
 msgstr ""
 
-#: src/delta.c:618
+#: src/delta.c:619
 #, c-format
 msgid "     * deleting path : %s ... "
 msgstr ""
 
-#: src/dump.c:204
+#: src/dump.c:205
 #, c-format
 msgid "ERROR: URL '%s' not found in HEAD revision\n"
 msgstr ""
@@ -52,39 +50,55 @@ msgstr ""
 msgid "ERROR: URL '%s' not found in revision %ld\n"
 msgstr ""
 
-#: src/dump.c:446
+#: src/dump.c:364
+msgid "Preparing path hash... "
+msgstr ""
+
+#: src/dump.c:373 src/dump.c:441 src/dump.c:524 src/log.c:175 src/log.c:241
+msgid "done\n"
+msgstr ""
+
+#: src/dump.c:433
+#, c-format
+msgid "Fetching log for original revision %ld... "
+msgstr ""
+
+#: src/dump.c:436 src/log.c:168 src/log.c:234
+msgid "failed\n"
+msgstr ""
+
+#: src/dump.c:451
 #, c-format
 msgid "* Padded revision %ld.\n"
 msgstr ""
 
-#: src/dump.c:448
+#: src/dump.c:453
 #, c-format
 msgid ""
 "------ Padded revision %ld <<<\n"
 "\n"
 msgstr ""
 
-#: src/dump.c:490
+#: src/dump.c:494
 #, c-format
 msgid ">>> Dumping new revision, based on original revision %ld\n"
 msgstr ""
 
-#: src/dump.c:492
-#, c-format
+#: src/dump.c:496
 msgid "Fetching base revision... "
 msgstr ""
 
-#: src/dump.c:513
+#: src/dump.c:516
 #, c-format
 msgid "* Dumped revision %ld (local %ld).\n"
 msgstr ""
 
-#: src/dump.c:515
+#: src/dump.c:518
 #, c-format
 msgid "* Dumped revision %ld.\n"
 msgstr ""
 
-#: src/dump.c:519
+#: src/dump.c:522
 #, c-format
 msgid ""
 "\n"
@@ -92,90 +106,83 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dump.c:521 src/log.c:179 src/log.c:253
-#, c-format
-msgid "done\n"
-msgstr ""
-
 #: src/log.c:166
-#, c-format
 msgid "Determining start and end revision... "
 msgstr ""
 
-#: src/log.c:238
-#, c-format
+#: src/log.c:232
 msgid "Fetching logs... "
 msgstr ""
 
-#: src/main.c:53
+#: src/main.c:54
 #, c-format
 msgid "Released under the GNU General Public License.\n"
 msgstr ""
 
-#: src/main.c:62
+#: src/main.c:63
 #, c-format
 msgid "USAGE:"
 msgstr ""
 
-#: src/main.c:64
+#: src/main.c:65
 #, c-format
 msgid ""
 "[options] <url>\n"
 "\n"
 msgstr ""
 
-#: src/main.c:65
+#: src/main.c:66
 #, c-format
 msgid "Common options:\n"
 msgstr ""
 
-#: src/main.c:66
+#: src/main.c:67
 #, c-format
 msgid "    -h [--help]               print a nice help screen\n"
 msgstr ""
 
-#: src/main.c:67
+#: src/main.c:68
 #, c-format
 msgid "    --version                 print the program name and version\n"
 msgstr ""
 
-#: src/main.c:68
+#: src/main.c:69
 #, c-format
 msgid "    -q [--quiet]              be quiet\n"
 msgstr ""
 
-#: src/main.c:69
+#: src/main.c:70
 #, c-format
 msgid "    -v [--verbose]            print extra progress\n"
 msgstr ""
 
-#: src/main.c:71
+#: src/main.c:72
 #, c-format
 msgid "Dump options:\n"
 msgstr ""
 
-#: src/main.c:72
+#: src/main.c:73
 #, c-format
 msgid "    -r [--revision] ARG       specify revision number (or X:Y range)\n"
 msgstr ""
 
-#: src/main.c:73
+#: src/main.c:74
 #, c-format
 msgid "    --deltas                  use deltas in dump output\n"
 msgstr ""
 
-#: src/main.c:74
+#: src/main.c:75
 #, c-format
 msgid "    --incremental             dump incrementally\n"
 msgstr ""
 
-#: src/main.c:75
+#: src/main.c:76
 #, c-format
 msgid ""
 "    --prefix ARG              prepend ARG to the path that is being dumped\n"
 msgstr ""
 
-#: src/main.c:76
+#: src/main.c:77
 #, c-format
 msgid ""
 "    --keep-revnums            keep the dumped revision numbers in sync with\n"
@@ -183,60 +190,60 @@ msgid ""
 "                              padding\n"
 msgstr ""
 
-#: src/main.c:79
+#: src/main.c:80
 #, c-format
 msgid ""
 "    --no-incremental-header   don't print the dumpfile header when dumping\n"
 msgstr ""
 
-#: src/main.c:80
+#: src/main.c:81
 #, c-format
 msgid "                              with --incremental and not starting at\n"
 msgstr ""
 
-#: src/main.c:81
+#: src/main.c:82
 #, c-format
 msgid "                              revision 0\n"
 msgstr ""
 
-#: src/main.c:83
+#: src/main.c:84
 #, c-format
 msgid "Subversion compability options:\n"
 msgstr ""
 
-#: src/main.c:84
+#: src/main.c:85
 #, c-format
 msgid "    -u [--username] ARG       specify a username ARG\n"
 msgstr ""
 
-#: src/main.c:85
+#: src/main.c:86
 #, c-format
 msgid "    -p [--password] ARG       specify a password ARG\n"
 msgstr ""
 
-#: src/main.c:86
+#: src/main.c:87
 #, c-format
 msgid "    --no-auth-cache           do not cache authentication tokens\n"
 msgstr ""
 
-#: src/main.c:87
+#: src/main.c:88
 #, c-format
 msgid "    --non-interactive         do no interactive prompting\n"
 msgstr ""
 
-#: src/main.c:88
+#: src/main.c:89
 #, c-format
 msgid ""
 "    --config-dir ARG          read user configuration files from directory "
 "ARG\n"
 msgstr ""
 
-#: src/main.c:90
+#: src/main.c:91
 #, c-format
 msgid "Report bugs to <%s>\n"
 msgstr ""
 
-#: src/main.c:210
+#: src/main.c:212
 #, c-format
 msgid "ERROR: invalid revision range '%s'.\n"
 msgstr ""
@@ -255,42 +262,42 @@ msgstr ""
 msgid "ERROR: invalid revision number '%s'.\n"
 msgstr ""
 
-#: src/main.c:241 src/main.c:243
+#: src/main.c:239 src/main.c:241
 #, c-format
 msgid "WARNING: the '%s' option is deprecated.\n"
 msgstr ""
 
-#: src/main.c:246 src/main.c:248
+#: src/main.c:244 src/main.c:246
 #, c-format
 msgid "WARNING: the '%s' option is deprecated and will be IGNORED!.\n"
 msgstr ""
 
-#: src/main.c:254
+#: src/main.c:252
 #, c-format
 msgid "ERROR: multiple URLs detected.\n"
 msgstr ""
 
-#: src/main.c:261
+#: src/main.c:253 src/main.c:259
+#, c-format
+msgid "Please run with --help for usage information.\n"
+msgstr ""
+
+#: src/main.c:258
 #, c-format
 msgid "ERROR: Unkown argument or malformed url '%s'.\n"
 msgstr ""
 
-#: src/main.c:262
-#, c-format
-msgid "Type %s --help for usage information.\n"
-msgstr ""
-
-#: src/main.c:288 src/main.c:304
+#: src/main.c:281 src/main.c:293
 #, c-format
 msgid "ERROR: Unable to create temporary directory.\n"
 msgstr ""
 
-#: src/main.c:296
+#: src/main.c:287
 #, c-format
 msgid "ERROR: Unable to find a suitable temporary directory.\n"
 msgstr ""
 
-#: src/main.c:321
+#: src/main.c:310
 #, c-format
 msgid "NOTE: Please remove the temporary directory %s manually\n"
 msgstr ""
