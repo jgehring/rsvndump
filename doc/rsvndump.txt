@@ -48,7 +48,8 @@ Don't print any progress
 
 *-v*::
 *--verbose*::
-Print detailed progress, similar to "*svnadmin*(1) load".
+Print detailed progress, similar to "*svnadmin*(1) load". Can be specified
+multiple times.
 
 *-u*::
 *--username* 'username'::

@@ -192,7 +192,10 @@ int main(int argc, char **argv)
 		} else if (!strcmp(argv[i], "-q") || !strcmp(argv[i], "--quiet")) {
 			opts.verbosity = -1;
 		} else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")) {
-			opts.verbosity = 1;
+			if (opts.verbosity < 0) {
+				opts.verbosity = 0;
+			}
+			opts.verbosity++;
 		} else if (!strcmp(argv[i], "--no-auth-cache")) {
 			session.flags |= SF_NO_AUTH_CACHE;
 		} else if (!strcmp(argv[i], "--non-interactive")) {
