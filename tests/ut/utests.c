@@ -100,11 +100,12 @@ static char test_list()
 
 	l = list_create(sizeof(long));
 	for (i = 0; i < 10; i++) {
+		size_t t;
 		long s = (long)4 << i;
 		for (j = 0; j < s; j++) {
 			list_append(&l, &j);
 		}
-		size_t t = l.size;
+		t = l.size;
 		if (l.size != s) {
 			printf("\n\t%ld: FAIL: size corrupted after inserting: %ld instead of %ld\n", i, (long)t, s);
 			list_free(&l);
