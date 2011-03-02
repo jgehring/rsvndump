@@ -146,7 +146,7 @@ static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 /* Program entry point */
 int main(int argc, char **argv)
 {
-	char ret = 1;
+	char ret = 0;
 	const char *tdir = NULL;
 	int i;
 	session_t session;
@@ -183,12 +183,10 @@ int main(int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
 			print_usage();
-			return EXIT_SUCCESS;
+			goto finish;
 		} else if (!strcmp(argv[i], "--version")) {
 			print_version();
-			session_free(&session);
-			dump_options_free(&opts);
-			return EXIT_SUCCESS;
+			goto finish;
 		} else if (!strcmp(argv[i], "-q") || !strcmp(argv[i], "--quiet")) {
 			opts.verbosity = -1;
 		} else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")) {
@@ -211,9 +209,7 @@ int main(int argc, char **argv)
 		} else if (i+1 < argc && (!strcmp(argv[i], "-r") || !strcmp(argv[i], "--revision"))) {
 			if (parse_revnum(argv[++i], &opts.start, &opts.end)) {
 				fprintf(stderr, _("ERROR: invalid revision range '%s'.\n"), argv[i]);
-				session_free(&session);
-				dump_options_free(&opts);
-				return EXIT_FAILURE;
+				goto failure;
 			}
 		} else if (i+1 < argc && (!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username"))) {
 			session.username = apr_pstrdup(session.pool, argv[++i]);
@@ -236,9 +232,7 @@ int main(int argc, char **argv)
 			opts.start = 0;
 			if (parse_revnum(argv[++i], &opts.end, &opts.end)) {
 				fprintf(stderr, _("ERROR: invalid revision number '%s'.\n"), argv[i]);
-				session_free(&session);
-				dump_options_free(&opts);
-				return EXIT_FAILURE;
+				goto failure;
 			}
 		} else if (!strcmp(argv[i], "--online") || !strcmp(argv[i], "--dump-uuid")) {
 			fprintf(stderr, _("WARNING: the '%s' option is deprecated.\n"), argv[i]);
@@ -255,26 +249,21 @@ int main(int argc, char **argv)
 		} else if (svn_path_is_url(argv[i])) {
 			if (session.url != NULL) {
 				fprintf(stderr, _("ERROR: multiple URLs detected.\n"));
-				session_free(&session);
-				dump_options_free(&opts);
-				return EXIT_FAILURE;
+				fprintf(stderr, _("Please run with --help for usage information.\n"));
+				goto failure;
 			}
 			session.url = apr_pstrdup(session.pool, argv[i]);
 		} else {
 			fprintf(stderr, _("ERROR: Unkown argument or malformed url '%s'.\n"), argv[i]);
-			fprintf(stderr, _("Type %s --help for usage information.\n"), argv[0]);
-			session_free(&session);
-			dump_options_free(&opts);
-			return EXIT_FAILURE;
+			fprintf(stderr, _("Please run with --help for usage information.\n"));
+			goto failure;
 		}
 	}
 
 	/* URL given ? */
 	if (session.url == NULL) {
-		session_free(&session);
-		dump_options_free(&opts);
 		print_usage();
-		return EXIT_FAILURE;
+		goto failure;
 	}
 
 	/* Generate temporary directory */
@@ -289,17 +278,13 @@ int main(int argc, char **argv)
 	opts.temp_dir = mkdtemp(opts.temp_dir);
 	if (opts.temp_dir == NULL) {
 		fprintf(stderr, _("ERROR: Unable to create temporary directory.\n"));
-		session_free(&session);
-		dump_options_free(&opts);
-		return EXIT_FAILURE;
+		goto failure;
 	}
 #else /* !WIN32 */
 	tdir = getenv("TEMP");
 	if (tdir == NULL) {
 		fprintf(stderr, _("ERROR: Unable to find a suitable temporary directory.\n"));
-		session_free(&session);
-		dump_options_free(&opts);
-		return EXIT_FAILURE;
+		goto failure;
 	}
 	opts.temp_dir = utils_canonicalize_pstrdup(session.pool, apr_psprintf(session.pool, "%s/"PACKAGE"XXXXXX", tdir));
 	opts.temp_dir = _mktemp(opts.temp_dir);
@@ -328,13 +313,20 @@ int main(int argc, char **argv)
 		utils_rrmdir(session.pool, opts.temp_dir, 1);
 	}
 
+	if (ret != 0) {
+		goto failure;
+	}
+
+	/* Program termination: success */
+	ret = 0;
+	goto finish;
+
+failure:
+	ret = 1;
+finish:
 	session_free(&session);
 	dump_options_free(&opts);
-	if (ret == 0) {
-		return EXIT_SUCCESS;
-	} else {
-		return EXIT_FAILURE;
-	}
+	return (ret == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
 #endif /* !UNIT_TESTS */
