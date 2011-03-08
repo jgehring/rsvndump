@@ -90,6 +90,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\src\log.h" />
+		<Unit filename="..\src\logger.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\src\logger.h" />
 		<Unit filename="..\src\main.c">
 			<Option compilerVar="CC" />
 		</Unit>

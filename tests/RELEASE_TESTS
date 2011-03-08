@@ -18,3 +18,5 @@ Tests that should be run prior to a release
     may be dumped with their contents even if they are full copies.
     The incremental dump simply doesn't have information about checksums
     of files in previous revisions.
+
+> Don't forget to test on Windows!
