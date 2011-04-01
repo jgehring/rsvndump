@@ -56,6 +56,12 @@ typedef struct {
 } log_receiver_list_baton_t;
 
 
+/* A baton for log_receiver_revnum() */
+typedef struct {
+	svn_revnum_t revnum;
+} log_receiver_revnum_baton_t;
+
+
 /*---------------------------------------------------------------------------*/
 /* Static functions                                                          */
 /*---------------------------------------------------------------------------*/
@@ -72,6 +78,8 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 	data->log->date = apr_pstrdup(data->pool, date);
 	data->log->message = apr_pstrdup(data->pool, message);
 	data->log->changed_paths = apr_hash_make(data->pool);
+
+	DEBUG_MSG("log_receiver: got log for revision %ld\n", revision);
 
 	/* Deep-copy the changed_paths hash */
 	if (changed_paths == NULL) {
@@ -139,6 +147,15 @@ static svn_error_t *log_receiver_list(void *baton, apr_hash_t *changed_paths, sv
 }
 
 
+/* Callback for svn_ra_get_log() */
+static svn_error_t *log_receiver_revnum(void *baton, apr_hash_t *changed_paths, svn_revnum_t revision, const char *author, const char *date, const char *message, apr_pool_t *pool)
+{
+	log_receiver_revnum_baton_t *data = (log_receiver_revnum_baton_t *)baton;
+	data->revnum = revision;
+	return SVN_NO_ERROR;
+}
+
+
 /*---------------------------------------------------------------------------*/
 /* Global functions                                                          */
 /*---------------------------------------------------------------------------*/
@@ -150,34 +167,33 @@ char log_get_range(session_t *session, svn_revnum_t *start, svn_revnum_t *end)
 	svn_error_t *err;
 	apr_array_header_t *paths;
 	apr_pool_t *subpool;
-	list_t list;
-	log_receiver_list_baton_t baton;
+	log_receiver_revnum_baton_t baton;
 
 	/* We just need the root */
 	subpool = svn_pool_create(session->pool);
 	paths = apr_array_make(subpool, 1, sizeof (const char *));
 	APR_ARRAY_PUSH(paths, const char *) = svn_path_canonicalize(".", subpool);
 
-	list = list_create(sizeof(log_revision_t));
-	baton.list = &list;
-	baton.session = session;
-	baton.pool = subpool;
-
 	L1(_("Determining start and end revision... "));
-	if ((err = svn_ra_get_log(session->ra, paths, *start, *end, 0, FALSE, TRUE, log_receiver_list, &baton, subpool))) {
+	if ((err = svn_ra_get_log(session->ra, paths, *start, *end, 1, FALSE, TRUE, log_receiver_revnum, &baton, subpool))) {
 		L1(_("failed\n"));
 		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
-		list_free(&list);
 		svn_pool_destroy(subpool);
 		return 1;
 	}
+	*start = baton.revnum;
+
+	if ((err = svn_ra_get_log(session->ra, paths, *end, *start, 1, FALSE, TRUE, log_receiver_revnum, &baton, subpool))) {
+		L1(_("failed\n"));
+		utils_handle_error(err, stderr, FALSE, "ERROR: ");
+		svn_error_clear(err);
+		svn_pool_destroy(subpool);
+		return 1;
+	}
+	*end = baton.revnum;
 	L1(_("done\n"));
 
-	*start = ((log_revision_t *)list.elements)[0].revision;
-	*end = ((log_revision_t *)list.elements)[list.size-1].revision;
-
-	list_free(&list);
 	svn_pool_destroy(subpool);
 	return 0;
 }
