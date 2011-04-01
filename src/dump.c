@@ -327,7 +327,7 @@ char dump(session_t *session, dump_options_t *opts)
 	/*
 	 * Check if we need to reparent the RA session. This is needed if we
 	 * are only dumping the history of a single file. Else, svn_ra_do_diff()
-	 * will nor work.
+	 * will not work.
 	 */
 	if (session_check_reparent(session, opts->start)) {
 		return 1;
@@ -403,6 +403,7 @@ char dump(session_t *session, dump_options_t *opts)
 	/* Determine end revision if neccessary */
 	if (logs_fetched) {
 		opts->end = ((log_revision_t *)logs.elements)[logs.size-1].revision;
+		DEBUG_MSG("logs_fetched, opts->end set to %ld\n", opts->end);
 	}
 
 	/* Pre-dumping initialization */
@@ -416,6 +417,7 @@ char dump(session_t *session, dump_options_t *opts)
 			local_rev = opts->start;
 		}
 	}
+	DEBUG_MSG("start_mid = %d, list_idx = %d\n", start_mid, list_idx);
 
 	if ((opts->flags & DF_KEEP_REVNUMS) || ((strlen(session->prefix) == 0) && (opts->start == 0))) {
 		show_local_rev = 0;
@@ -427,6 +429,8 @@ char dump(session_t *session, dump_options_t *opts)
 		void *editor_baton;
 		svn_revnum_t diff_rev;
 		apr_pool_t *revpool = svn_pool_create(session->pool);
+
+		DEBUG_MSG("dump loop start: local_rev = %ld, global_rev = %ld, list_idx = %ld\n", local_rev, global_rev, list_idx);
 
 		if (logs_fetched == 0) {
 			log_revision_t log;
