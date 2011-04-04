@@ -80,6 +80,7 @@ static void print_usage()
 	printf(_("    --no-incremental-header   don't print the dumpfile header when dumping\n"));
 	printf(_("                              with --incremental and not starting at\n"));
 	printf(_("                              revision 0\n"));
+	printf(_("    --svnbridge               needed when accessing a SvnBridge server\n"));
 	printf("\n");
 	printf(_("Subversion compability options:\n"));
 	printf(_("    -u [--username] ARG       specify a username ARG\n"));
@@ -207,6 +208,8 @@ int main(int argc, char **argv)
 			opts.flags |= DF_USE_DELTAS;
 		} else if (!strcmp(argv[i], "--incremental")) {
 			opts.flags |= DF_INCREMENTAL;
+		} else if (!strcmp(argv[i], "--svnbridge")) {
+			opts.flags |= DF_SVNBRIDGE;
 		} else if (i+1 < argc && (!strcmp(argv[i], "-r") || !strcmp(argv[i], "--revision"))) {
 			if (parse_revnum(argv[++i], &opts.start, &opts.end)) {
 				fprintf(stderr, _("ERROR: invalid revision range '%s'.\n"), argv[i]);
