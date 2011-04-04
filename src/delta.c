@@ -24,6 +24,7 @@
 #include <svn_delta.h>
 #include <svn_io.h>
 #include <svn_md5.h>
+#include <svn_path.h>
 #include <svn_pools.h>
 #include <svn_props.h>
 #include <svn_repos.h>
@@ -192,7 +193,9 @@ static de_node_baton_t *delta_create_node_no_parent(const char *path, de_baton_t
 static void delta_mark_node(de_node_baton_t *node)
 {
 	de_baton_t *de_baton = node->de_baton;
-	apr_hash_set(de_baton->dumped_entries, apr_pstrdup(de_baton->revision_pool, node->path), APR_HASH_KEY_STRING, de_baton /* The value doesn't matter */);
+	char *action = apr_pcalloc(de_baton->revision_pool, 1);
+	*action = node->action;
+	apr_hash_set(de_baton->dumped_entries, apr_pstrdup(de_baton->revision_pool, node->path), APR_HASH_KEY_STRING, action);
 	if (node->kind == svn_node_file) {
 		rhash_set(md5_hash, node->path, APR_HASH_KEY_STRING, node->md5sum, APR_MD5_DIGESTSIZE);
 		DEBUG_MSG("md5_hash += %s : %s\n", node->path, svn_md5_digest_to_cstring(node->md5sum, node->pool));
@@ -1262,8 +1265,10 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 		apr_hash_this(hi, (const void **)(void *)&path, NULL, (void **)(void *)&log);
 		DEBUG_MSG("Checking %s (%c)\n", path, log->action);
 		if (log->action == 'D') {
+			char *filename, *parent, parent_deleted = 0;
+
 			/* We can unlink a possible temporary file now */
-			char *filename = rhash_get(delta_hash, path, APR_HASH_KEY_STRING);
+			filename = rhash_get(delta_hash, path, APR_HASH_KEY_STRING);
 			if (filename) {
 #ifndef DUMP_DEBUG
 				DEBUG_MSG("de_close_edit(): Removing %s\n", filename);
@@ -1274,7 +1279,23 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 				rhash_set(delta_hash, path, APR_HASH_KEY_STRING, NULL, 0);
 			}
 
-			if (apr_hash_get(de_baton->dumped_entries, path, APR_HASH_KEY_STRING) == NULL) {
+			/*
+			 * If this file is part of a deleted tree (that has been dumped as being
+			 * deleted), we can safely ignore it.
+			 */
+			parent = svn_path_dirname(path, pool);
+			while (parent && *parent) {
+				char *action = apr_hash_get(de_baton->dumped_entries, parent, APR_HASH_KEY_STRING);
+				if (action && *action == 'D') {
+					DEBUG_MSG("de_close_edit(): Parent %s already deleted, ignoring\n");
+					parent_deleted = 1;
+					break;
+				}
+
+				parent = svn_path_dirname(parent, pool);
+			}
+
+			if (!parent_deleted && apr_hash_get(de_baton->dumped_entries, path, APR_HASH_KEY_STRING) == NULL) {
 				de_node_baton_t *node = delta_create_node_no_parent(path, de_baton, pool);
 				node->action = log->action;
 				node->dump_needed = 1;
