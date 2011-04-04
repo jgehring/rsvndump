@@ -430,7 +430,7 @@ char dump(session_t *session, dump_options_t *opts)
 		svn_revnum_t diff_rev;
 		apr_pool_t *revpool = svn_pool_create(session->pool);
 
-		DEBUG_MSG("dump loop start: local_rev = %ld, global_rev = %ld, list_idx = %ld\n", local_rev, global_rev, list_idx);
+		DEBUG_MSG("dump loop start: local_rev = %ld, global_rev = %ld, list_idx = %d\n", local_rev, global_rev, list_idx);
 
 		if (logs_fetched == 0) {
 			log_revision_t log;
