@@ -413,7 +413,7 @@ char dump(session_t *session, dump_options_t *opts)
 
 	/* Pre-dumping initialization */
 	global_rev = opts->start;
-	if (opts->flags & DF_SVNBRIDGE)  {
+	if (!start_mid) {
 		local_rev = global_rev == 0 ? 0 : 1;
 		list_idx = (logs_fetched ? -1 : 0);
 	} else {
