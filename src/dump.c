@@ -311,7 +311,7 @@ char dump(session_t *session, dump_options_t *opts)
 	if (dump_determine_end(session, &opts->end)) {
 		return 1;
 	}
-	if ((opts->start == 0) && (strlen(session->prefix) > 0)) {
+	if ((opts->start == 0) && (strlen(session->prefix) > 0) && !(opts->flags & DF_SVNBRIDGE)) {
 		if (log_get_range(session, &opts->start, &opts->end)) {
 			return 1;
 		}
@@ -354,32 +354,37 @@ char dump(session_t *session, dump_options_t *opts)
 	 * Decide whether the whole repository log should be fetched
 	 * prior to dumping.
 	 */
-	if (start_mid) {
+	if (start_mid || (opts->flags & DF_SVNBRIDGE)) {
 		if (log_fetch_all(session, 0, opts->end, &logs)) {
 			return 1;
 		}
 		logs_fetched = 1;
 
-		/* Jump to local revision and fill the path hash for previous revisions */
-		L2(_("Preparing path hash... "));
-		local_rev = 0;
-		while ((local_rev < (long int)logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
-			svn_revnum_t phrev = ((opts->flags & DF_KEEP_REVNUMS) ? ((log_revision_t *)logs.elements)[local_rev].revision : local_rev);
-			if (path_hash_commit(session, opts, (log_revision_t *)logs.elements + local_rev, phrev, &logs)) {
-				return 1;
+		if (start_mid) {
+			/* Jump to local revision and fill the path hash for previous revisions */
+			L2(_("Preparing path hash... "));
+			local_rev = 0;
+			while ((local_rev < (long int)logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
+				svn_revnum_t phrev = ((opts->flags & DF_KEEP_REVNUMS) ? ((log_revision_t *)logs.elements)[local_rev].revision : local_rev);
+				if (path_hash_commit(session, opts, (log_revision_t *)logs.elements + local_rev, phrev, &logs)) {
+					return 1;
+				}
+				++local_rev;
 			}
-			++local_rev;
-		}
-		L2(_("done\n"));
+			L2(_("done\n"));
 
-		/* The first revision is a dry run.
-		   This is because we need to get the data of the previous
-		   revision first in order to properly apply the received deltas. */
-		opts->flags |= DF_DRY_RUN;
-		if (strlen(session->prefix) == 0) {
-			--local_rev;
+			/* The first revision is a dry run.
+			   This is because we need to get the data of the previous
+			   revision first in order to properly apply the received deltas. */
+			opts->flags |= DF_DRY_RUN;
+			if (strlen(session->prefix) == 0) {
+				--local_rev;
+			}
+
+			opts->start = ((log_revision_t *)logs.elements)[local_rev].revision;
+		} else if (logs.size > 0) {
+			opts->start = ((log_revision_t *)logs.elements)[0].revision;
 		}
-		opts->start = ((log_revision_t *)logs.elements)[local_rev].revision;
 	} else {
 		/* There aren't any subdirectories at revision 0 */
 		if ((strlen(session->prefix) > 0) && opts->start == 0) {
@@ -408,9 +413,9 @@ char dump(session_t *session, dump_options_t *opts)
 
 	/* Pre-dumping initialization */
 	global_rev = opts->start;
-	if (!start_mid) {
+	if (opts->flags & DF_SVNBRIDGE)  {
 		local_rev = global_rev == 0 ? 0 : 1;
-		list_idx = 0;
+		list_idx = (logs_fetched ? -1 : 0);
 	} else {
 		list_idx = local_rev-1;
 		if (opts->flags & DF_KEEP_REVNUMS) {
