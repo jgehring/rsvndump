@@ -3,9 +3,9 @@ dnl custom autoconf rules for rsvndump
 dnl
 
 dnl
-dnl RSVND_FIND_APR: figure out where APR is located
+dnl RSVND_FIND_APR: figure out where APR and APU is located
 dnl
-dnl This method is taken from the apr-util package
+dnl Parts of this method are taken from the apr-util package
 dnl
 AC_DEFUN([RSVND_FIND_APR], [
 
@@ -26,8 +26,21 @@ AC_DEFUN([RSVND_FIND_APR], [
 	APR_INCLUDES="`$apr_config --includes`"
 	APR_LIBS="`$apr_config --link-ld --libs`"
 
+	AC_SUBST(APR_CFLAGS)
+	AC_SUBST(APR_CPPFLAGS)
 	AC_SUBST(APR_INCLUDES)
 	AC_SUBST(APR_LIBS)
+
+	APR_FIND_APU(,,[1],[1])
+	if test "$apu_found" = "no"; then
+		AC_MSG_ERROR([APU could not be located. Please use the --with-apu option.])
+	fi
+
+	APU_INCLUDES="`$apu_config --includes`"
+	APU_LIBS="`$apu_config --link-ld --libs`"
+
+	AC_SUBST(APU_INCLUDES)
+	AC_SUBST(APU_LIBS)
 ])
 
 dnl

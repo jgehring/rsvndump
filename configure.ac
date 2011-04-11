@@ -10,6 +10,7 @@ AC_CONFIG_HEADER([config.h])
 AC_CONFIG_LIBOBJ_DIR([lib])
 
 sinclude(m4/find_apr.m4)
+sinclude(m4/find_apu.m4)
 sinclude(m4/find_svn.m4)
 sinclude(m4/rsvndump_conf.m4)
 

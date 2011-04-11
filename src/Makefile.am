@@ -14,5 +14,9 @@ rsvndump_SOURCES = \
 
 
 localedir = $(datadir)/locale
-AM_LDFLAGS = $(APR_LIBS) $(SVN_LDFLAGS) $(COMPAT_LIBS) $(LIBINTL)
-AM_CFLAGS = -DLOCALEDIR=\"$(localedir)\" $(APR_CFLAGS) $(APR_CPPFLAGS) $(APR_INCLUDES) $(SVN_CFLAGS) -Wall -Wno-deprecated-declarations
+AM_LDFLAGS = $(APR_LIBS) $(APU_LIBS) $(SVN_LDFLAGS) $(COMPAT_LIBS) $(LIBINTL)
+AM_CFLAGS = -DLOCALEDIR=\"$(localedir)\" \
+	$(APR_CFLAGS) $(APR_CPPFLAGS) $(APR_INCLUDES) \
+	$(APU_INCLUDES) \
+	$(SVN_CFLAGS) \
+	-Wall -Wno-deprecated-declarations
