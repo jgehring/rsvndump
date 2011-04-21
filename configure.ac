@@ -19,6 +19,15 @@ USE_MAN="no"
 AC_ARG_ENABLE(man, [  --enable-man            generate the man page], USE_MAN="$enableval", USE_MAN="no")
 USE_UT="no"
 AC_ARG_ENABLE(tests, [  --enable-tests          enable unit tests], USE_UT="$enableval", USE_UT="no")
+AC_ARG_ENABLE([debug], [AS_HELP_STRING([--enable-debug], [Turn on debugging])], [debug="$enableval"], [debug="no"])
+AM_CONDITIONAL([DEBUG], [test "x$debug" = "xyes"])
+if test "x$debug" = "xyes"; then
+	CXXFLAGS="-O0 -g -DDEBUG"
+	CFLAGS="-O0 -g -DDEBUG"
+else
+	CXXFLAGS="-O2 -DNDEBUG"
+	CFLAGS="-O2 -DNDEBUG"
+fi
 
 # Checks for programs.
 AC_PROG_INSTALL
