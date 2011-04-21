@@ -67,13 +67,15 @@ int L2(const char *format, ...)
 	LOG_STDERR();
 }
 
+#ifdef DEBUG
+
 /* Logging for debugging purposes */
 int LDEBUG(const char *format, ...)
 {
-#ifndef DEBUG
-	(void)format;
-	return 0;
-#else
+	if (loglevel < 3) {
+		return 0;
+	}
 	LOG_STDERR();
-#endif
 }
+
+#endif
