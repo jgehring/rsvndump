@@ -447,6 +447,51 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 }
 
 
+/* Reconstructs a tree, utilizing the cache */
+static apr_hash_t *path_hash_reconstruct_cache(svn_revnum_t rev, apr_pool_t *pool)
+{
+	apr_hash_t *recon = NULL;
+	int i;
+
+	/* Check the cache first */
+	for (i = 0; i < CACHE_SIZE; i++) {
+		cached_tree_t *entry = &APR_ARRAY_IDX(ph_cache, i, cached_tree_t);
+		if (entry->tree != NULL && entry->revnum == rev) {
+			recon = entry->tree;
+			break;
+		}
+	}
+
+	/* If it isn't cached, reconstruct the tree at the given revision */
+	if (recon == NULL) {
+		recon = path_hash_reconstruct(rev, pool);
+		if (recon == NULL) {
+			DEBUG_MSG("path_hash: unable to reconstruct hash for revision %ld\n", rev);
+			return NULL;
+		} else {
+			/* Insert the tree into the cache */
+			cached_tree_t *entry = &APR_ARRAY_IDX(ph_cache, ph_cache_pos, cached_tree_t);
+
+			/* Clear old entry if neccessary */
+			if (entry->tree) {
+				svn_pool_destroy(entry->pool);
+			}
+
+			entry->revnum = rev;
+			entry->pool = svn_pool_create(ph_pool);
+			entry->tree = apr_hash_make(entry->pool);
+			path_hash_copy_deep(entry->tree, recon, pool);
+
+			/* Move to next cache entry */
+			if (++ph_cache_pos >= CACHE_SIZE) {
+				ph_cache_pos = 0;
+			}
+		}
+	}
+
+	return recon;
+}
+
 /* Copies a path from a specific revision (recursively) */
 static char path_hash_copy(apr_hash_t *tree, const char *path, const char *from, svn_revnum_t revnum, apr_pool_t *pool)
 {
@@ -824,53 +869,20 @@ char path_hash_commit(session_t *session, dump_options_t *opts, log_revision_t *
 
 
 /* Checks the parent relation of two paths at a given revision */
-char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t revnum, apr_pool_t *pool)
+char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t revision, apr_pool_t *pool)
 {
-	int i;
 	apr_hash_t *recon = NULL, *subtree;
+	DEBUG_MSG("path_hash: check_parent(%s, %s, %ld): %ld revisions\n", parent, child, revision, ph_revisions->nelts);
 
-	DEBUG_MSG("path_hash: check_parent(%s, %s, %ld): %ld revisions\n", parent, child, revnum, ph_revisions->nelts);
-
-	/* Check the cache first */
-	for (i = 0; i < CACHE_SIZE; i++) {
-		cached_tree_t *entry = &APR_ARRAY_IDX(ph_cache, i, cached_tree_t);
-		if (entry->tree != NULL && entry->revnum == revnum) {
-			recon = entry->tree;
-			break;
-		}
-	}
-
-	/* If it isn't cached, reconstruct the tree at the given revision */
+	recon = path_hash_reconstruct_cache(revision, pool);
 	if (recon == NULL) {
-		recon = path_hash_reconstruct(revnum, pool);
-		if (recon == NULL) {
-			DEBUG_MSG("path_hash: unable to reconstruct hash for revision %ld\n", revnum);
-			return 0;
-		} else {
-			/* Insert the tree into the cache */
-			cached_tree_t *entry = &APR_ARRAY_IDX(ph_cache, ph_cache_pos, cached_tree_t);
-
-			/* Clear old entry if neccessary */
-			if (entry->tree) {
-				svn_pool_destroy(entry->pool);
-			}
-
-			entry->revnum = revnum;
-			entry->pool = svn_pool_create(ph_pool);
-			entry->tree = apr_hash_make(entry->pool);
-			path_hash_copy_deep(entry->tree, recon, pool);
-
-			/* Move to next cache entry */
-			if (++ph_cache_pos >= CACHE_SIZE) {
-				ph_cache_pos = 0;
-			}
-		}
+		return 0;
 	}
 
 	/* Find the subtree of the parent node */
 	subtree = path_hash_subtree(recon, parent, pool);
 	if (subtree == NULL) {
-		DEBUG_MSG("path_hash: subtree for %s in %ld not found:\n", parent, revnum);
+		DEBUG_MSG("path_hash: subtree for %s in %ld not found:\n", parent, revision);
 #if 0 && defined(DEBUG)
 		path_hash_dump(recon, pool);
 #endif
@@ -878,6 +890,22 @@ char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t 
 
 	/* Find the subtree of the child */
 	return (subtree && path_hash_subtree(subtree, child, pool) != NULL);
+}
+
+
+/* Checks if a path is present at a given revision */
+char path_hash_check(const char *path, svn_revnum_t revision, apr_pool_t *pool)
+{
+	apr_hash_t *recon = NULL;
+	DEBUG_MSG("path_hash: check(%s, %ld): %ld revisions\n", path, revision, ph_revisions->nelts);
+
+	recon = path_hash_reconstruct_cache(revision, pool);
+	if (recon == NULL) {
+		return 0;
+	}
+
+	/* Find the subtree of the parent node */
+	return (path_hash_subtree(recon, path, pool) != NULL);
 }
 
 #ifdef DEBUG_PHASH
