@@ -76,6 +76,7 @@ typedef struct {
 	apr_pool_t        *revision_pool;
 	apr_hash_t        *dumped_entries;
 	svn_revnum_t      local_revnum;
+	svn_revnum_t      base_revnum;
 	void              *root_node;
 } de_baton_t;
 
@@ -879,6 +880,7 @@ static svn_error_t *de_open_root(void *edit_baton, svn_revnum_t base_revision, a
 	node = delta_create_node_no_parent("/", de_baton, de_baton->revision_pool);
 	node->action = 'M';
 	de_baton->root_node = node;
+	de_baton->base_revnum = base_revision;
 
 	*root_baton = node;
 #ifdef USE_TIMING
@@ -1075,7 +1077,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 	de_node_baton_t *node;
 	svn_log_changed_path_t *log;
 
-	DEBUG_MSG("de_add_file(%s), copy = %d\n", path, (int)parent->cp_info);
+	DEBUG_MSG("de_add_file(%s), parent->cp_info = %d\n", path, (int)parent->cp_info);
 
 	node = delta_create_node(path, parent);
 	node->kind = svn_node_file;
@@ -1111,6 +1113,26 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		 */
 		if (node->cp_info != CPI_FAILED) {
 			node->cp_info = CPI_NONE;
+		}
+	}
+
+	/*
+	 * SvnBridge might report a "change" action for renamed files
+	 * (that don't have a copy origin). This fixes the node action
+	 * to "add" if none of the parent nodes has been copied.
+	 */
+	if ((node->de_baton->opts->flags & DF_SVNBRIDGE) &&  node->action == 'M') {
+		if (!path_hash_check(node->path, node->de_baton->base_revnum, file_pool)) {
+			de_node_baton_t *n = node;
+			while (n != NULL && n->copyfrom_path == NULL) {
+				n = n->parent;
+			}
+			if (n == NULL) {
+				DEBUG_MSG("fixed node action M -> A, nonexistent and no parent copied\n");
+				node->action = 'A';
+			}
+		} else {
+			DEBUG_MSG("file existed in base revision %ld, action M ok\n", node->de_baton->base_revnum);
 		}
 	}
 
