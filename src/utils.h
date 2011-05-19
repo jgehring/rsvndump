@@ -57,5 +57,10 @@ extern char *utils_file_readln(struct apr_pool_t *pool, struct apr_file_t *file)
 /* itself it 'rmdir' is non-zero */
 extern void utils_rrmdir(struct apr_pool_t *pool, const char *path, char rmdir);
 
+/* Path splitting and joining */
+extern void utils_path_split(struct apr_pool_t *pool, const char *path, const char **dir, const char **base);
+extern const char *utils_path_join(struct apr_pool_t *pool, const char *dir, const char *base);
+
+
 
 #endif

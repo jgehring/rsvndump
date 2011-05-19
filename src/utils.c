@@ -238,3 +238,37 @@ void utils_rrmdir(struct apr_pool_t *pool, const char *path, char remove_dir)
 
 	svn_pool_destroy(subpool);
 }
+
+
+/* Path splitting, without canonicalization */
+void utils_path_split(struct apr_pool_t *pool, const char *path, const char **dir, const char **base)
+{
+	char *sep;
+
+	if ((sep = strrchr(path, '/')) == NULL) {
+		*dir = apr_pstrdup(pool, "");
+		if (path[0] == '\0') {
+			*base = apr_pstrdup(pool, "");
+		} else {
+			*base = apr_pstrdup(pool, path);
+		}
+	} else {
+		if (!strcmp(path, "/")) {
+			*dir = apr_pstrdup(pool, "/");
+			*base = apr_pstrdup(pool, "/");
+		} else {
+			*dir = apr_pstrndup(pool, path, (sep == path ? 1 : sep - path));
+			*base = apr_pstrdup(pool, sep + 1);
+		}
+	}
+}
+
+
+/* Path joining, without canonicalization */
+const char *utils_path_join(struct apr_pool_t *pool, const char *dir, const char *base)
+{
+	if (dir[strlen(dir)-1] == '/' || *base == '/') {
+		return apr_psprintf(pool, "%s%s", dir, base);
+	}
+	return apr_psprintf(pool, "%s/%s", dir, base);
+}

@@ -140,7 +140,7 @@ static apr_hash_t *path_hash_add(apr_hash_t *tree, const char *path, apr_pool_t 
 	apr_pool_t *hash_pool = apr_hash_pool_get(tree);
 
 	/* Determine tree of parent node via recursion */
-	svn_path_split(path, &parent, &child, pool);
+	utils_path_split(pool, path, &parent, &child);
 	if (!strcmp(parent, child)) {
 		return tree;
 	}
@@ -239,7 +239,7 @@ static apr_hash_t *path_hash_subtree(apr_hash_t *tree, const char *path, apr_poo
 	apr_hash_t *parent_tree;
 
 	/* Determine tree of parent node via recursion */
-	svn_path_split(path, &parent, &child, pool);
+	utils_path_split(pool, path, &parent, &child);
 	if (!strcmp(parent, child)) {
 		return tree;
 	}
@@ -260,7 +260,7 @@ static void path_hash_delete(apr_hash_t *tree, const char *path, apr_pool_t *poo
 	apr_hash_t *parent_tree;
 
 	/* Determine tree of parent node subtree method */
-	svn_path_split(path, &parent, &child, pool);
+	utils_path_split(pool, path, &parent, &child);
 	if (!strcmp(parent, child)) {
 		return;
 	}
@@ -436,7 +436,7 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 				apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
 
 				APR_ARRAY_PUSH(stack, apr_hash_t *) = value;
-				APR_ARRAY_PUSH(path, const char *) = svn_path_join(top_path, key, temp_pool);
+				APR_ARRAY_PUSH(path, const char *) = utils_path_join(temp_pool, top_path, key);
 			}
 		}
 	}
@@ -508,7 +508,7 @@ static char path_hash_write(apr_hash_t *tree, apr_file_t *file, apr_pool_t *pool
 			apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
 
 			APR_ARRAY_PUSH(recon_stack, apr_hash_t *) = value;
-			APR_ARRAY_PUSH(recon_path, const char *) = svn_path_join(top_path, key, pool);
+			APR_ARRAY_PUSH(recon_path, const char *) = utils_path_join(pool, top_path, key);
 		}
 	}
 
@@ -653,7 +653,7 @@ static void path_hash_dump_prefix(const char *prefix, apr_hash_t *tree, apr_pool
 			apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
 
 			APR_ARRAY_PUSH(recon_stack, apr_hash_t *) = value;
-			APR_ARRAY_PUSH(recon_path, const char *) = svn_path_join(top_path, key, pool);
+			APR_ARRAY_PUSH(recon_path, const char *) = utils_path_join(pool, top_path, key);
 		}
 	}
 	DEBUG_MSG("%s: ----------------------------------------------\n", prefix);
@@ -914,7 +914,7 @@ char path_hash_test_compare(apr_hash_t *orig, apr_hash_t *recon, apr_pool_t *poo
 			apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
 
 			APR_ARRAY_PUSH(recon_stack, apr_hash_t *) = value;
-			APR_ARRAY_PUSH(recon_path, const char *) = svn_path_join(top_path, key, pool);
+			APR_ARRAY_PUSH(recon_path, const char *) = utils_path_join(pool, top_path, key);
 		}
 	}
 
@@ -942,7 +942,7 @@ char path_hash_test_compare(apr_hash_t *orig, apr_hash_t *recon, apr_pool_t *poo
 			apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
 
 			APR_ARRAY_PUSH(recon_stack, apr_hash_t *) = value;
-			APR_ARRAY_PUSH(recon_path, const char *) = svn_path_join(top_path, key, pool);
+			APR_ARRAY_PUSH(recon_path, const char *) = utils_path_join(pool, top_path, key);
 		}
 	}
 
