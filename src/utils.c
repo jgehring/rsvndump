@@ -172,44 +172,6 @@ void utils_handle_error(svn_error_t *error, FILE *stream, svn_boolean_t fatal, c
 }
 
 
-/* Reads a single line from a file, allocating it in pool */
-char *utils_file_readln(struct apr_pool_t *pool, struct apr_file_t *file)
-{
-	char buffer[512];
-	char *dest = NULL;
-
-	while (1) {
-		char *bptr = buffer;
-		while ((bptr - buffer) < 511 && (bptr == buffer || *(bptr-1) != '\n')) {
-			if (apr_file_getc(bptr++, file)) {
-				if (bptr == buffer+1) {
-					return NULL;
-				} else {
-					*(bptr-1) = '\n';
-				}
-				break;
-			}
-		}
-		*bptr = '\0';
-
-		if (dest == NULL) {
-			dest = apr_pstrdup(pool, buffer);
-		} else {
-			dest = apr_pstrcat(pool, dest, buffer, NULL);
-		}
-
-		if (*(bptr-1) == '\n') {
-			break;
-		}
-	}
-
-	if (dest && strlen(dest) > 0) {
-		dest[strlen(dest)-1] = '\0'; /* Remove newline character */
-	}
-	return dest;
-}
-
-
 /* Recursively removes the contents of a directory and the directory */
 /* itself if 'remove_dir' is non-zero */
 void utils_rrmdir(struct apr_pool_t *pool, const char *path, char remove_dir)
