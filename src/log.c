@@ -25,12 +25,8 @@
 #include <svn_pools.h>
 #include <svn_ra.h>
 
-#include <apr_tables.h>
-
 #include "main.h"
-#include "list.h"
 #include "logger.h"
-#include "session.h"
 
 #include "log.h"
 
@@ -50,7 +46,7 @@ typedef struct {
 
 /* A baton for log_receiver_list() */
 typedef struct {
-	list_t		*list;
+	apr_array_header_t *list;
 	session_t	*session;
 	apr_pool_t	*pool;
 } log_receiver_list_baton_t;
@@ -140,9 +136,9 @@ static svn_error_t *log_receiver_list(void *baton, apr_hash_t *changed_paths, sv
 	receiver_baton.log = &log;
 	receiver_baton.session = data->session;
 	receiver_baton.pool = data->pool;
-	log_receiver(&receiver_baton, changed_paths, revision, author, date, message, pool);
-	list_append(data->list, &log);
+	SVN_ERR(log_receiver(&receiver_baton, changed_paths, revision, author, date, message, pool));
 
+	APR_ARRAY_PUSH(data->list, log_revision_t) = log;
 	return SVN_NO_ERROR;
 }
 
@@ -229,7 +225,7 @@ char log_fetch_single(session_t *session, svn_revnum_t rev, svn_revnum_t end, lo
 
 
 /* Fetches all revision logs for a given revision range */
-char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, list_t *list)
+char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, apr_array_header_t *list)
 {
 	svn_error_t *err;
 	apr_array_header_t *paths;
@@ -249,7 +245,6 @@ char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, lis
 	if ((err = svn_ra_get_log(session->ra, paths, start, end, 0, TRUE, FALSE, log_receiver_list, &baton, pool))) {
 		L1(_("failed\n"));
 		utils_handle_error(err, stderr, FALSE, "ERROR: ");
-		list_free(list);
 		svn_error_clear(err);
 		svn_pool_destroy(pool);
 		return 1;

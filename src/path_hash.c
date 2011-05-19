@@ -717,7 +717,7 @@ void path_hash_add_path(const char *path)
 
 
 /* Adds a new revision to the path hash */
-char path_hash_commit(session_t *session, dump_options_t *opts, log_revision_t *log, svn_revnum_t revnum, list_t *logs)
+char path_hash_commit(session_t *session, dump_options_t *opts, log_revision_t *log, svn_revnum_t revnum, apr_array_header_t *logs)
 {
 	apr_hash_index_t *hi;
 	apr_pool_t *pool = svn_pool_create(ph_pool);

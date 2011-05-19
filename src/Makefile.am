@@ -2,7 +2,6 @@ bin_PROGRAMS = rsvndump
 rsvndump_SOURCES = \
 	delta.c delta.h \
 	dump.c dump.h \
-	list.c list.h \
 	log.c log.h \
 	logger.c logger.h \
 	main.c main.h \

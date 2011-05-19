@@ -35,7 +35,6 @@
 
 #include "main.h"
 #include "dump.h"
-#include "list.h"
 #include "log.h"
 #include "logger.h"
 #include "path_hash.h"
@@ -71,7 +70,7 @@ typedef enum {
 typedef struct {
 	session_t         *session;
 	dump_options_t    *opts;
-	list_t            *logs;
+	apr_array_header_t *logs;
 	log_revision_t    *log_revision;
 	apr_pool_t        *revision_pool;
 	apr_hash_t        *dumped_entries;
@@ -1348,7 +1347,7 @@ const char *delta_get_local_copyfrom_path(const char *prefix, const char *path)
 
 
 /* Determines the local copyfrom_revision number */
-svn_revnum_t delta_get_local_copyfrom_rev(svn_revnum_t original, dump_options_t *opts, list_t *logs, svn_revnum_t local_revnum)
+svn_revnum_t delta_get_local_copyfrom_rev(svn_revnum_t original, dump_options_t *opts, apr_array_header_t *logs, svn_revnum_t local_revnum)
 {
 	svn_revnum_t rev;
 
@@ -1365,9 +1364,9 @@ svn_revnum_t delta_get_local_copyfrom_rev(svn_revnum_t original, dump_options_t 
 	 * NOTE: This algorithm assumes that list indexes are equal to their
 	 * respective local revision numbers. This is ensured in dump()
 	 */
-	rev = logs->size-1;
+	rev = logs->nelts-1;
 	while (--rev >= 0) {
-		log_revision_t *logrev = ((log_revision_t *)logs->elements) + rev;
+		log_revision_t *logrev = &APR_ARRAY_IDX(logs, rev, log_revision_t);;
 		DEBUG_MSG("node->copyfrom = %ld, logrev->revision = %ld, rev = %ld\n",  original, logrev->revision, rev);
 		if (original == logrev->revision) {
 			/* This is ideal, there's an exact match */
@@ -1389,7 +1388,7 @@ svn_revnum_t delta_get_local_copyfrom_rev(svn_revnum_t original, dump_options_t 
 
 
 /* Sets up a delta editor for dumping a revision */
-void delta_setup_editor(session_t *session, dump_options_t *options, list_t *logs, log_revision_t *log_revision, svn_revnum_t local_revnum, svn_delta_editor_t **editor, void **editor_baton, apr_pool_t *pool)
+void delta_setup_editor(session_t *session, dump_options_t *options, apr_array_header_t *logs, log_revision_t *log_revision, svn_revnum_t local_revnum, svn_delta_editor_t **editor, void **editor_baton, apr_pool_t *pool)
 {
 	de_baton_t *baton;
 

@@ -27,8 +27,9 @@
 
 #include <svn_pools.h>
 
+#include <apr_tables.h>
+
 #include "dump.h"
-#include "list.h"
 #include "log.h"
 #include "session.h"
 
@@ -40,7 +41,7 @@ extern void path_hash_initialize(const char *session_prefix, const char *temp_di
 extern void path_hash_add_path(const char *path);
 
 /* Adds a new revision to the path hash */
-extern char path_hash_commit(session_t *session, dump_options_t *opts, log_revision_t *log, svn_revnum_t revnum, list_t *logs);
+extern char path_hash_commit(session_t *session, dump_options_t *opts, log_revision_t *log, svn_revnum_t revnum, apr_array_header_t *logs);
 
 /* Checks the parent relation of two paths at a given revision */
 extern char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t revision, apr_pool_t *pool);

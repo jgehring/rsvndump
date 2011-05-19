@@ -33,7 +33,6 @@
 
 #include "main.h"
 #include "delta.h"
-#include "list.h"
 #include "log.h"
 #include "logger.h"
 #include "path_hash.h"
@@ -286,7 +285,7 @@ void dump_options_free(dump_options_t *opts)
 /* Start the dumping process, using the given session and options */
 char dump(session_t *session, dump_options_t *opts)
 {
-	list_t logs;
+	apr_array_header_t *logs = NULL;
 	char logs_fetched = 0, ret = 0;
 	char start_mid = 0, show_local_rev = 1;
 	svn_revnum_t global_rev, local_rev = -1;
@@ -333,19 +332,19 @@ char dump(session_t *session, dump_options_t *opts)
 		return 1;
 	}
 
-	logs = list_create(sizeof(log_revision_t));
+	logs = apr_array_make(session->pool, 0, sizeof(log_revision_t));
 	/*
 	 * delta_check_copy() assumes list indexes and local revisions to be equal,
 	 * so insert a empty revision '0' if a subdirectory is being dumped
 	 */
 	if (strlen(session->prefix) > 0) {
-		log_revision_t dummy;
+		log_revision_t dummy;//= apr_pcalloc(session->pool, sizeof(log_revision_t));
 		dummy.revision = 0;
 		dummy.author = NULL;
 		dummy.date = NULL;
 		dummy.message = NULL;
 		dummy.changed_paths = NULL;
-		list_append(&logs, &dummy);
+		APR_ARRAY_PUSH(logs, log_revision_t) = dummy;
 	}
 
 	path_hash_initialize(session->prefix, opts->temp_dir, session->pool);
@@ -355,7 +354,7 @@ char dump(session_t *session, dump_options_t *opts)
 	 * prior to dumping.
 	 */
 	if (start_mid) {
-		if (log_fetch_all(session, 0, opts->end, &logs)) {
+		if (log_fetch_all(session, 0, opts->end, logs)) {
 			return 1;
 		}
 		logs_fetched = 1;
@@ -363,9 +362,9 @@ char dump(session_t *session, dump_options_t *opts)
 		/* Jump to local revision and fill the path hash for previous revisions */
 		L2(_("Preparing path hash... "));
 		local_rev = 0;
-		while ((local_rev < (long int)logs.size) && (((log_revision_t *)logs.elements)[local_rev].revision < opts->start)) {
-			svn_revnum_t phrev = ((opts->flags & DF_KEEP_REVNUMS) ? ((log_revision_t *)logs.elements)[local_rev].revision : local_rev);
-			if (path_hash_commit(session, opts, (log_revision_t *)logs.elements + local_rev, phrev, &logs)) {
+		while ((local_rev < (long int)logs->nelts) && (APR_ARRAY_IDX(logs, local_rev, log_revision_t).revision < opts->start)) {
+			svn_revnum_t phrev = ((opts->flags & DF_KEEP_REVNUMS) ? APR_ARRAY_IDX(logs, local_rev, log_revision_t).revision : local_rev);
+			if (path_hash_commit(session, opts, &APR_ARRAY_IDX(logs, local_rev, log_revision_t), phrev, logs)) {
 				return 1;
 			}
 			++local_rev;
@@ -379,7 +378,7 @@ char dump(session_t *session, dump_options_t *opts)
 		if (strlen(session->prefix) == 0) {
 			--local_rev;
 		}
-		opts->start = ((log_revision_t *)logs.elements)[local_rev].revision;
+		opts->start = APR_ARRAY_IDX(logs, local_rev, log_revision_t).revision;
 	} else {
 		/* There aren't any subdirectories at revision 0 */
 		if ((strlen(session->prefix) > 0) && opts->start == 0) {
@@ -393,7 +392,6 @@ char dump(session_t *session, dump_options_t *opts)
 		if ((opts->prefix == NULL) && (strlen(session->prefix) == 0)) {
 			const char *uuid;
 			if (dump_fetch_uuid(session, &uuid)) {
-				list_free(&logs);
 				return 1;
 			}
 			printf("UUID: %s\n\n", uuid);
@@ -402,7 +400,7 @@ char dump(session_t *session, dump_options_t *opts)
 
 	/* Determine end revision if neccessary */
 	if (logs_fetched) {
-		opts->end = ((log_revision_t *)logs.elements)[logs.size-1].revision;
+		opts->end = APR_ARRAY_IDX(logs, logs->nelts-1, log_revision_t).revision;
 		DEBUG_MSG("logs_fetched, opts->end set to %ld\n", opts->end);
 	}
 
@@ -440,8 +438,8 @@ char dump(session_t *session, dump_options_t *opts)
 				L2(_("failed\n"));
 				break;
 			}
-			list_append(&logs, &log);
-			list_idx = logs.size-1;
+			APR_ARRAY_PUSH(logs, log_revision_t) = log;
+			list_idx = logs->nelts-1;
 			L2(_("done\n"));
 		} else {
 			++list_idx;
@@ -449,7 +447,7 @@ char dump(session_t *session, dump_options_t *opts)
 
 		if ((opts->flags & DF_KEEP_REVNUMS) && !(opts->flags & DF_DRY_RUN)) {
 			/* Padd with empty revisions if neccessary */
-			while (local_rev < ((log_revision_t *)logs.elements)[list_idx].revision) {
+			while (local_rev < APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision) {
 				dump_padding_revision(revpool, local_rev);
 				if (loglevel == 0) {
 					L0(_("* Padded revision %ld.\n"), local_rev);
@@ -466,7 +464,7 @@ char dump(session_t *session, dump_options_t *opts)
 
 		/* Dump the revision header */
 		if (!(opts->flags & DF_DRY_RUN)) {
-			dump_revision_header(revpool, (log_revision_t *)logs.elements + list_idx, local_rev, opts);
+			dump_revision_header(revpool, &APR_ARRAY_IDX(logs, list_idx, log_revision_t), local_rev, opts);
 
 			/* The first revision sets up the user prefix */
 			if (local_rev == 1) {
@@ -495,21 +493,21 @@ char dump(session_t *session, dump_options_t *opts)
 		DEBUG_MSG("global = %ld, diff = %ld, start = %ld\n", global_rev, diff_rev, opts->start);
 
 		if (!(opts->flags & DF_DRY_RUN)) {
-			L1(_(">>> Dumping new revision, based on original revision %ld\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
+			L1(_(">>> Dumping new revision, based on original revision %ld\n"), APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision);
 		} else {
 			L1(_("Fetching base revision... "));
 		}
 
 		/* Setup the delta editor and run a diff */
-		delta_setup_editor(session, opts, &logs, (log_revision_t *)logs.elements + list_idx, local_rev, &editor, &editor_baton, revpool);
-		if (dump_do_diff(session, diff_rev, ((log_revision_t *)logs.elements)[list_idx].revision, (global_rev == opts->start), editor, editor_baton, revpool)) {
+		delta_setup_editor(session, opts, logs, &APR_ARRAY_IDX(logs, list_idx, log_revision_t), local_rev, &editor, &editor_baton, revpool);
+		if (dump_do_diff(session, diff_rev, APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision, (global_rev == opts->start), editor, editor_baton, revpool)) {
 			ret = 1;
 			break;
 		}
 
 		/* Insert revision into path_hash */
 		if (!(opts->flags & DF_DRY_RUN) || strlen(session->prefix) != 0) {
-			if (path_hash_commit(session, opts, (log_revision_t *)logs.elements + list_idx, local_rev, &logs)) {
+			if (path_hash_commit(session, opts, &APR_ARRAY_IDX(logs, list_idx, log_revision_t), local_rev, logs)) {
 				ret = 1;
 				break;
 			}
@@ -517,9 +515,9 @@ char dump(session_t *session, dump_options_t *opts)
 
 		if (loglevel == 0 && !(opts->flags & DF_DRY_RUN)) {
 			if (show_local_rev) {
-				L0(_("* Dumped revision %ld (local %ld).\n"), ((log_revision_t *)logs.elements)[list_idx].revision, local_rev);
+				L0(_("* Dumped revision %ld (local %ld).\n"), APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision, local_rev);
 			} else {
-				L0(_("* Dumped revision %ld.\n"), ((log_revision_t *)logs.elements)[list_idx].revision);
+				L0(_("* Dumped revision %ld.\n"), APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision);
 			}
 		} else if (loglevel > 0) {
 			if (!(opts->flags & DF_DRY_RUN)) {
@@ -529,7 +527,7 @@ char dump(session_t *session, dump_options_t *opts)
 			}
 		}
 
-		global_rev = ((log_revision_t *)logs.elements)[list_idx].revision+1;
+		global_rev = APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision+1;
 		++local_rev;
 
 		/* Make sure no other revisions then the first one
@@ -544,6 +542,5 @@ char dump(session_t *session, dump_options_t *opts)
 #endif
 
 	delta_cleanup();
-	list_free(&logs);
 	return ret;
 }
