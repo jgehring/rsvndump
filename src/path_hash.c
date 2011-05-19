@@ -297,8 +297,8 @@ static void path_hash_copy_deep(apr_hash_t *dest, apr_hash_t *source, apr_pool_t
 static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool)
 {
 	apr_hash_t *tree;
-	apr_file_t *file = NULL;
-	apr_status_t status;
+	FILE *file;
+	char buffer[4096];
 	apr_pool_t *temp_pool;
 	unsigned long i, filename_idx = (rev / SNAPSHOT_DIST);
 
@@ -311,8 +311,8 @@ static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool
 
 	/* Try to open the file */
 	temp_pool = svn_pool_create(pool);
-	status = apr_file_open(&file, APR_ARRAY_IDX(ph_files, filename_idx, const char *), APR_READ | APR_BINARY, APR_OS_DEFAULT, temp_pool);
-	if (status) {
+	file = fopen(APR_ARRAY_IDX(ph_files, filename_idx, const char *), "rb");
+	if (file == NULL) {
 		fprintf(stderr, _("ERROR: Unable to open temporary file %s\n"), APR_ARRAY_IDX(ph_files, filename_idx, const char *));
 		svn_pool_destroy(temp_pool);
 		return NULL;
@@ -324,12 +324,17 @@ static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool
 	/* Read revisions */
 	i = filename_idx * SNAPSHOT_DIST;
 	while (i <= rev) {
-		char *buffer = utils_file_readln(temp_pool, file);
-		if (buffer == NULL) {
+		size_t len;
+		if (fgets(buffer, sizeof(buffer)-1, file) == NULL) {
 			fprintf(stderr, _("ERROR: Unable to read from temporary file %s\n"), APR_ARRAY_IDX(ph_files, filename_idx, const char *));
-			apr_file_close(file);
+			fclose(file);
 			svn_pool_destroy(temp_pool);
 			return NULL;
+		}
+
+		len = strlen(buffer);
+		if (buffer[len-1] == '\n') {
+			buffer[len-1] = '\0';
 		}
 
 		if (!strncmp(buffer, REV_ADD, sizeof(REV_ADD)-1)) {
@@ -342,7 +347,7 @@ static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool
 		}
 	}
 
-	apr_file_close(file);
+	fclose(file);
 	svn_pool_destroy(temp_pool);
 	return tree;
 }
