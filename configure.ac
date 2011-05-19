@@ -17,8 +17,6 @@ sinclude(m4/rsvndump_conf.m4)
 # Optional features
 USE_MAN="no"
 AC_ARG_ENABLE(man, [  --enable-man            generate the man page], USE_MAN="$enableval", USE_MAN="no")
-USE_UT="no"
-AC_ARG_ENABLE(tests, [  --enable-tests          enable unit tests], USE_UT="$enableval", USE_UT="no")
 AC_ARG_ENABLE([debug], [AS_HELP_STRING([--enable-debug], [Turn on debugging])], [debug="$enableval"], [debug="no"])
 AM_CONDITIONAL([DEBUG], [test "x$debug" = "xyes"])
 if test "x$debug" = "xyes"; then
@@ -100,10 +98,5 @@ if test "$USE_MAN" = "yes"; then
 	DOC_SUBDIRS="doc"
 	AC_SUBST([DOC_SUBDIRS])
 	AC_CONFIG_FILES([doc/Makefile])
-fi
-if test "$USE_UT" = "yes"; then
-	TESTS_SUBDIRS="tests"
-	AC_SUBST([TESTS_SUBDIRS])
-	AC_CONFIG_FILES([tests/Makefile tests/ut/Makefile])
 fi
 AC_OUTPUT

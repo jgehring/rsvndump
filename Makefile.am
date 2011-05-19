@@ -1,4 +1,4 @@
-SUBDIRS = po $(COMPAT_SUBDIRS) src $(DOC_SUBDIRS) $(TESTS_SUBDIRS)
+SUBDIRS = po $(COMPAT_SUBDIRS) src $(DOC_SUBDIRS)
 
 EXTRA_DIST = \
              README.win32 \
@@ -17,11 +17,6 @@ EXTRA_DIST = \
              lib/memset.c \
              lib/rmdir.c \
              lib/strdup.c \
-             tests/Makefile.am \
-             tests/Makefile.in \
-             tests/ut/Makefile.am \
-             tests/ut/Makefile.in \
-             tests/ut/utests.c \
              win/rsvndump.cbp
 
 ACLOCAL_AMFLAGS = -I m4
