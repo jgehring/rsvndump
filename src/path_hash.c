@@ -364,7 +364,7 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 
 	DEBUG_MSG("path_hash_reconstruct(%ld): started\n", rev);
 
-	if (ph_revisions->nelts < rev) {
+	if (rev < 0 || ph_revisions->nelts < rev) {
 		DEBUG_MSG("path_hash_reconstruct(%ld): revision not available (max = %d)\n", rev, ph_revisions->nelts);
 		return NULL;
 	}
