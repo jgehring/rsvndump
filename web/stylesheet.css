@@ -13,9 +13,16 @@ div.body {
 	background-color: #FFFFFF;
 }
 
-div.sflogo {
-	border: 1px solid #000000;
+div.logos {
 	float: right;
+}
+
+div.logos td {
+  padding-left: 20px;
+}
+
+div.logos img {
+  height: 3em;
 }
 
 div.index {
