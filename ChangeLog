@@ -1,3 +1,13 @@
+2011-07-15  --  version 0.5.6
+
+	* Faster revision range determination
+	* Performance improvements for the path hash
+	* Use APR's list implementation instead of a custom one
+	* Fixed possible invalid dumps if the server log contained 'deleted'
+	  entries for every child of a deleted tree
+	* Fixed potential segmentation fault during path hash reconstruction
+	* Fixed CodeBlocks project file for compilation on Windows
+
 2011-03-03  --  version 0.5.5
 
 	* Fixed possible crash when dumping a subdirectory (#2997558)
