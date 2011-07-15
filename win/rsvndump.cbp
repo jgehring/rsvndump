@@ -82,10 +82,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\src\dump.h" />
-		<Unit filename="..\src\list.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\src\list.h" />
 		<Unit filename="..\src\log.c">
 			<Option compilerVar="CC" />
 		</Unit>
