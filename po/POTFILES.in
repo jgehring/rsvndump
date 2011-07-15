@@ -1,7 +1,7 @@
 # List of source files which contain translatable strings.
 src/delta.c
 src/dump.c
-src/list.c
+src/logger.c
 src/log.c
 src/main.c
 src/property.c
