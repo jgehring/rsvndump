@@ -20,11 +20,11 @@ AC_ARG_ENABLE(man, [  --enable-man            generate the man page], USE_MAN="$
 AC_ARG_ENABLE([debug], [AS_HELP_STRING([--enable-debug], [Turn on debugging])], [debug="$enableval"], [debug="no"])
 AM_CONDITIONAL([DEBUG], [test "x$debug" = "xyes"])
 if test "x$debug" = "xyes"; then
-	CXXFLAGS="-O0 -g -DDEBUG"
-	CFLAGS="-O0 -g -DDEBUG"
+	CXXFLAGS="${CXXFLAGS} -O0 -g -DDEBUG"
+	CFLAGS="${CFLAGS} -O0 -g -DDEBUG"
 else
-	CXXFLAGS="-O2 -DNDEBUG"
-	CFLAGS="-O2 -DNDEBUG"
+	CXXFLAGS="-O2 ${CXXFLAGS} -DNDEBUG"
+	CFLAGS="-O2 ${CFLAGS} -DNDEBUG"
 fi
 
 # Checks for programs.
