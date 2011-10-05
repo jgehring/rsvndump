@@ -24,7 +24,6 @@
 #include <stdio.h>
 
 #include <svn_pools.h>
-#include <svn_props.h>
 #include <svn_ra.h>
 #include <svn_repos.h>
 
@@ -37,7 +36,6 @@
 #include "logger.h"
 #include "path_hash.h"
 #include "property.h"
-#include "utils.h"
 
 #include "dump.h"
 

@@ -33,8 +33,6 @@
 
 #include <svn_cmdline.h>
 #include <svn_path.h>
-#include <svn_pools.h>
-#include <svn_opt.h>
 
 #include "main.h"
 #include "dump.h"

@@ -41,7 +41,6 @@
 #include "property.h"
 #include "rhash.h"
 #include "session.h"
-#include "utils.h"
 
 #include "delta.h"
 

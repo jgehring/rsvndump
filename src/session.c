@@ -31,8 +31,6 @@
 #include <svn_ra.h>
 #include <svn_utf.h>
 
-#include <apr_lib.h>
-
 #include "main.h"
 
 #include "session.h"
