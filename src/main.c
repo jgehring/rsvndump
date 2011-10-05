@@ -66,6 +66,7 @@ static void print_usage()
 	printf(_("    --version                 print the program name and version\n"));
 	printf(_("    -q [--quiet]              be quiet\n"));
 	printf(_("    -v [--verbose]            print extra progress\n"));
+	printf(_("    -n [--dry-run]            don't fetch text deltas\n"));
 	printf("\n");
 	printf(_("Dump options:\n"));
 	printf(_("    -r [--revision] ARG       specify revision number (or X:Y range)\n"));
@@ -193,6 +194,8 @@ int main(int argc, char **argv)
 				loglevel = 0;
 			}
 			loglevel++;
+		} else if (!strcmp(argv[i], "-n") || !strcmp(argv[i], "--dry-run")) {
+			opts.flags |= DF_DRY_RUN;
 		} else if (!strcmp(argv[i], "--no-auth-cache")) {
 			session.flags |= SF_NO_AUTH_CACHE;
 		} else if (!strcmp(argv[i], "--non-interactive")) {

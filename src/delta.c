@@ -200,7 +200,7 @@ static void delta_mark_node(de_node_baton_t *node)
 	}
 	node->dump_needed = 0;
 
-	if (!(de_baton->opts->flags & DF_DRY_RUN)) {
+	if (!(de_baton->opts->flags & DF_INITIAL_DRY_RUN)) {
 		if (node->cp_info == CPI_COPY) {
 			L1(_("COPIED ... done.\n"));
 		} else {
@@ -310,7 +310,7 @@ static char delta_check_copy(de_node_baton_t *node)
 
 	/* If the parent could not be copied, this node won't be copied, too */
 	if (node->cp_info == CPI_FAILED) {
-		if (!(opts->flags & DF_DRY_RUN)) {
+		if (!(opts->flags & DF_INITIAL_DRY_RUN)) {
 			/* Inform the path_hash */
 			path_hash_add_path(node->path);
 		}
@@ -359,7 +359,7 @@ static char delta_check_copy(de_node_baton_t *node)
 	}
 
 	/* If a copy must be resolved "manually", we need to inform the path_hash */
-	if (node->cp_info == CPI_FAILED && !(opts->flags & DF_DRY_RUN)) {
+	if (node->cp_info == CPI_FAILED && !(opts->flags & DF_INITIAL_DRY_RUN)) {
 		path_hash_add_path(node->path);
 	}
 
@@ -553,9 +553,9 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	}
 
 	/* Check if this is a dry run */
-	if (opts->flags & DF_DRY_RUN) {
+	if (opts->flags & DF_INITIAL_DRY_RUN) {
 		node->dump_needed = 0;
-		DEBUG_MSG("delta_dump_node(%s): aborting: DF_DRY_RUN\n", node->path);
+		DEBUG_MSG("delta_dump_node(%s): aborting: DF_INITIAL_DRY_RUN\n", node->path);
 		return SVN_NO_ERROR;
 	}
 
@@ -602,21 +602,21 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	switch (node->action) {
 		case 'M':
 			printf("change\n");
-			if (!(de_baton->opts->flags & DF_DRY_RUN)) {
+			if (!(de_baton->opts->flags & DF_INITIAL_DRY_RUN)) {
 				L1(_("     * editing path : %s ... "), path);
 			}
 			break;
 
 		case 'A':
 			printf("add\n");
-			if (!(de_baton->opts->flags & DF_DRY_RUN)) {
+			if (!(de_baton->opts->flags & DF_INITIAL_DRY_RUN)) {
 				L1(_("     * adding path : %s ... "), path);
 			}
 			break;
 
 		case 'D':
 			printf("delete\n");
-			if (!(de_baton->opts->flags & DF_DRY_RUN)) {
+			if (!(de_baton->opts->flags & DF_INITIAL_DRY_RUN)) {
 				L1(_("     * deleting path : %s ... "), path);
 			}
 

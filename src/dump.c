@@ -137,7 +137,7 @@ static void dump_create_user_prefix(dump_options_t *opts, apr_pool_t *pool)
 
 
 /* Runs a diff against two revisions */
-static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest, int start_empty, const svn_delta_editor_t *editor, void *editor_baton, apr_pool_t *pool)
+static char dump_do_diff(session_t *session, dump_options_t *opts, svn_revnum_t src, svn_revnum_t dest, int start_empty, const svn_delta_editor_t *editor, void *editor_baton, apr_pool_t *pool)
 {
 	const svn_ra_reporter2_t *reporter;
 	void *report_baton;
@@ -151,7 +151,7 @@ static char dump_do_diff(session_t *session, svn_revnum_t src, svn_revnum_t dest
 #ifdef USE_SINGLEFILE_DUMP
 	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, (session->file ? session->file : ""), TRUE, TRUE, TRUE, session->encoded_url, editor, editor_baton, subpool);
 #else
-	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, "", TRUE, TRUE, TRUE, session->encoded_url, editor, editor_baton, subpool);
+	err = svn_ra_do_diff2(session->ra, &reporter, &report_baton, dest, "", TRUE, TRUE, !(opts->flags & DF_DRY_RUN), session->encoded_url, editor, editor_baton, subpool);
 #endif
 	if (err) {
 		utils_handle_error(err, stderr, FALSE, "ERROR: ");
@@ -372,7 +372,7 @@ char dump(session_t *session, dump_options_t *opts)
 		/* The first revision is a dry run.
 		   This is because we need to get the data of the previous
 		   revision first in order to properly apply the received deltas. */
-		opts->flags |= DF_DRY_RUN;
+		opts->flags |= DF_INITIAL_DRY_RUN;
 		if (strlen(session->prefix) == 0) {
 			--local_rev;
 		}
@@ -443,7 +443,7 @@ char dump(session_t *session, dump_options_t *opts)
 			++list_idx;
 		}
 
-		if ((opts->flags & DF_KEEP_REVNUMS) && !(opts->flags & DF_DRY_RUN)) {
+		if ((opts->flags & DF_KEEP_REVNUMS) && !(opts->flags & DF_INITIAL_DRY_RUN)) {
 			/* Padd with empty revisions if neccessary */
 			while (local_rev < APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision) {
 				dump_padding_revision(revpool, local_rev);
@@ -461,7 +461,7 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 
 		/* Dump the revision header */
-		if (!(opts->flags & DF_DRY_RUN)) {
+		if (!(opts->flags & DF_INITIAL_DRY_RUN)) {
 			dump_revision_header(revpool, &APR_ARRAY_IDX(logs, list_idx, log_revision_t), local_rev, opts);
 
 			/* The first revision sets up the user prefix */
@@ -490,7 +490,7 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 		DEBUG_MSG("global = %ld, diff = %ld, start = %ld\n", global_rev, diff_rev, opts->start);
 
-		if (!(opts->flags & DF_DRY_RUN)) {
+		if (!(opts->flags & DF_INITIAL_DRY_RUN)) {
 			L1(_(">>> Dumping new revision, based on original revision %ld\n"), APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision);
 		} else {
 			L1(_("Fetching base revision... "));
@@ -498,27 +498,27 @@ char dump(session_t *session, dump_options_t *opts)
 
 		/* Setup the delta editor and run a diff */
 		delta_setup_editor(session, opts, logs, &APR_ARRAY_IDX(logs, list_idx, log_revision_t), local_rev, &editor, &editor_baton, revpool);
-		if (dump_do_diff(session, diff_rev, APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision, (global_rev == opts->start), editor, editor_baton, revpool)) {
+		if (dump_do_diff(session, opts, diff_rev, APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision, (global_rev == opts->start), editor, editor_baton, revpool)) {
 			ret = 1;
 			break;
 		}
 
 		/* Insert revision into path_hash */
-		if (!(opts->flags & DF_DRY_RUN) || strlen(session->prefix) != 0) {
+		if (!(opts->flags & DF_INITIAL_DRY_RUN) || strlen(session->prefix) != 0) {
 			if (path_hash_commit(session, opts, &APR_ARRAY_IDX(logs, list_idx, log_revision_t), local_rev, logs)) {
 				ret = 1;
 				break;
 			}
 		}
 
-		if (loglevel == 0 && !(opts->flags & DF_DRY_RUN)) {
+		if (loglevel == 0 && !(opts->flags & DF_INITIAL_DRY_RUN)) {
 			if (show_local_rev) {
 				L0(_("* Dumped revision %ld (local %ld).\n"), APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision, local_rev);
 			} else {
 				L0(_("* Dumped revision %ld.\n"), APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision);
 			}
 		} else if (loglevel > 0) {
-			if (!(opts->flags & DF_DRY_RUN)) {
+			if (!(opts->flags & DF_INITIAL_DRY_RUN)) {
 				L1(_("\n------ Dumped revision %ld <<<\n\n"), local_rev);
 			} else {
 				L1(_("done\n"));
@@ -530,7 +530,7 @@ char dump(session_t *session, dump_options_t *opts)
 
 		/* Make sure no other revisions then the first one
 		   are dumped dry */
-		opts->flags &= ~DF_DRY_RUN;
+		opts->flags &= ~DF_INITIAL_DRY_RUN;
 
 		apr_pool_destroy(revpool);
 	} while (global_rev <= opts->end);
