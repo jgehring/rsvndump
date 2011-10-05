@@ -32,15 +32,7 @@ extern int L0(const char *format, ...);
 extern int L1(const char *format, ...);
 extern int L2(const char *format, ...);
 
-#ifndef DEBUG
- // Fix inline for MSVC
- #if defined(_MSC_VER) && !defined(__cplusplus)
-  #define inline __inline
- #endif
-extern inline int LDEBUG(const char *format, ...) { (void)format; return 0; }
-#else
 extern int LDEBUG(const char *format, ...);
-#endif
 #define DEBUG_MSG LDEBUG
 
 

@@ -67,8 +67,6 @@ int L2(const char *format, ...)
 	LOG_STDERR();
 }
 
-#ifdef DEBUG
-
 /* Logging for debugging purposes */
 int LDEBUG(const char *format, ...)
 {
@@ -77,5 +75,3 @@ int LDEBUG(const char *format, ...)
 	}
 	LOG_STDERR();
 }
-
-#endif
