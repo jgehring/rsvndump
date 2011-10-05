@@ -65,9 +65,11 @@ char *session_make_obfuscated(apr_pool_t *pool, apr_hash_t *taken)
 			}
 			obf[i] = rchars[j];
 		}
-	} while (apr_hash_get(taken, obf, APR_HASH_KEY_STRING) != NULL);
+	} while (taken && apr_hash_get(taken, obf, APR_HASH_KEY_STRING) != NULL);
 
-	apr_hash_set(taken, obf, APR_HASH_KEY_STRING, obf);
+	if (taken) {
+		apr_hash_set(taken, obf, APR_HASH_KEY_STRING, obf);
+	}
 	return obf;
 }
 
@@ -272,11 +274,21 @@ char session_check_reparent(session_t *session, svn_revnum_t rev)
 }
 
 
-/* Returns the obfuscated name for a path */
+/* Returns the obfuscated name for a path if necessary */
 const char *session_obfuscate(session_t *session, struct apr_pool_t *pool, const char *path)
 {
 	if (path == NULL || !(session->flags & SF_OBFUSCATE)) {
 		return path;
 	}
 	return session_obfuscate_rec(pool, session->obf_hash, session->obf_taken, path);
+}
+
+
+/* Returns a one-time obfuscated string if necesssary */
+const char *session_obfuscate_once(session_t *session, struct apr_pool_t *pool, const char *str)
+{
+	if (str== NULL || !(session->flags & SF_OBFUSCATE)) {
+		return str;
+	}
+	return session_make_obfuscated(pool, NULL);
 }

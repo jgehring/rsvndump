@@ -74,8 +74,11 @@ extern char session_close(session_t *session);
 /* Reparents the session if the current root is a file */
 extern char session_check_reparent(session_t *session, svn_revnum_t rev);
 
-/* Returns the obfuscated name for a path */
+/* Returns the obfuscated name for a path if necessary */
 extern const char *session_obfuscate(session_t *session, struct apr_pool_t *pool, const char *path);
+
+/* Returns a one-time obfuscated string if necesssary */
+extern const char *session_obfuscate_once(session_t *session, struct apr_pool_t *pool, const char *str);
 
 
 #endif
