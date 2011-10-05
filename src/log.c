@@ -92,6 +92,7 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 			DEBUG_MSG("%c %s [skipped]\n", svalue->action, key);
 			continue;
 		}
+		key = session_obfuscate(data->session, pool, key);
 
 		dvalue = apr_palloc(data->pool, sizeof(svn_log_changed_path_t));
 		dvalue->action = svalue->action;
@@ -104,6 +105,7 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 		} else {
 			dvalue->copyfrom_path = NULL;
 		}
+		dvalue->copyfrom_path = session_obfuscate(data->session, data->pool, dvalue->copyfrom_path);
 		dvalue->copyfrom_rev = svalue->copyfrom_rev;
 
 		/* Strip the prefix (or the leading slash) from the path */

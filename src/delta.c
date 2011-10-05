@@ -82,7 +82,7 @@ typedef struct {
 typedef struct {
 	de_baton_t        *de_baton;
 	apr_pool_t        *pool;
-	char              *path;
+	const char        *path;
 	char              *filename;
 	char              *old_filename;
 	char              *delta_filename;
@@ -371,7 +371,7 @@ static char delta_check_copy(de_node_baton_t *node)
 static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child)
 {
 	apr_pool_t *check_pool;
-	char *child_relpath;
+	const char *child_relpath;
 	const char *path;
 	svn_revnum_t revision;
 
@@ -513,7 +513,7 @@ static svn_error_t *delta_dump_replace(de_node_baton_t *node)
 {
 	de_baton_t *de_baton = node->de_baton;
 	dump_options_t *opts = de_baton->opts;
-	char *path = node->path;
+	const char *path = node->path;
 
 	/*
 	 * A replacement implies deleting and adding the node
@@ -541,7 +541,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	de_baton_t *de_baton = node->de_baton;
 	session_t *session = de_baton->session;
 	dump_options_t *opts = de_baton->opts;
-	char *path = node->path;
+	const char *path = node->path;
 	unsigned long prop_len, content_len;
 	char dump_content = 0, dump_props = 0;
 	apr_hash_index_t *hi;
@@ -894,6 +894,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 	apr_hash_index_t *hi;
 	int pathlen;
 
+	path = session_obfuscate(parent->de_baton->session, pool, path);
 	DEBUG_MSG("de_delete_entry(%s@%ld)\n", path, revision);
 
 	/* We can dump this entry directly */
@@ -962,6 +963,7 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 	de_node_baton_t *node;
 	svn_log_changed_path_t *log;
 
+	path = session_obfuscate(parent->de_baton->session, dir_pool, path);
 	DEBUG_MSG("de_add_directory(%s), copy = %d\n", path, (int)parent->cp_info);
 
 	node = delta_create_node(path, parent);
@@ -1011,6 +1013,7 @@ static svn_error_t *de_open_directory(const char *path, void *parent_baton, svn_
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
 	de_node_baton_t *node;
 
+	path = session_obfuscate(parent->de_baton->session, dir_pool, path);
 	node = delta_create_node(path, parent);
 	node->kind = svn_node_dir;
 	node->action = 'M';
@@ -1061,6 +1064,8 @@ static svn_error_t *de_close_directory(void *dir_baton, apr_pool_t *pool)
 /* Subversion delta editor callback */
 static svn_error_t *de_absent_directory(const char *path, void *parent_baton, apr_pool_t *pool)
 {
+	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
+	path = session_obfuscate(parent->de_baton->session, pool, path);
 	DEBUG_MSG("absent_directory(%s)\n", path);
 	return SVN_NO_ERROR;
 }
@@ -1073,6 +1078,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 	de_node_baton_t *node;
 	svn_log_changed_path_t *log;
 
+	path = session_obfuscate(parent->de_baton->session, file_pool, path);
 	DEBUG_MSG("de_add_file(%s), copy = %d\n", path, (int)parent->cp_info);
 
 	node = delta_create_node(path, parent);
@@ -1131,6 +1137,7 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
 	de_node_baton_t *node;
 
+	path = session_obfuscate(parent->de_baton->session, file_pool, path);
 	DEBUG_MSG("de_open_file(%s)\n", path);
 
 	node = delta_create_node(path, parent);
@@ -1235,6 +1242,8 @@ static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, a
 /* Subversion delta editor callback */
 static svn_error_t *de_absent_file(const char *path, void *parent_baton, apr_pool_t *pool)
 {
+	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
+	path = session_obfuscate(parent->de_baton->session, pool, path);
 	DEBUG_MSG("absent_file(%s)\n", path);
 	return SVN_NO_ERROR;
 }

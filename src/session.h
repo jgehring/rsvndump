@@ -34,7 +34,8 @@
 enum session_flags {
 	SF_NO_CHECK_CERTIFICATE = 0x01,
 	SF_NON_INTERACTIVE = 0x02,
-	SF_NO_AUTH_CACHE = 0x04
+	SF_NO_AUTH_CACHE = 0x04,
+	SF_OBFUSCATE = 0x08
 };
 
 /* Session data */
@@ -52,6 +53,9 @@ typedef struct {
 	char *password;
 	char *config_dir;
 	int flags;
+
+	struct apr_hash_t *obf_hash;
+	struct apr_hash_t *obf_taken;
 } session_t;
 
 
@@ -69,6 +73,9 @@ extern char session_close(session_t *session);
 
 /* Reparents the session if the current root is a file */
 extern char session_check_reparent(session_t *session, svn_revnum_t rev);
+
+/* Returns the obfuscated name for a path */
+extern const char *session_obfuscate(session_t *session, struct apr_pool_t *pool, const char *path);
 
 
 #endif

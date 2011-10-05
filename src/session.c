@@ -31,9 +31,66 @@
 #include <svn_ra.h>
 #include <svn_utf.h>
 
+#include <time.h>
+
 #include "main.h"
+#include "utils.h"
 
 #include "session.h"
+
+
+/*---------------------------------------------------------------------------*/
+/* Static functions                                                          */
+/*---------------------------------------------------------------------------*/
+
+
+/* Creates a new obfuscated path name */
+char *session_make_obfuscated(apr_pool_t *pool, apr_hash_t *taken)
+{
+	static const char rchars[] = {"abcdefghijklmnopqrstuvwxyz"};
+	static const int probs[] = {
+		81, 96, 124, 156, 283, 305, 325, 386, 456, 458, 466, 506, 530,
+		597, 672, 691, 692, 752, 815, 906, 934, 944, 968, 970, 999, 1000
+	};
+	int i, j, len, lfac = 8;
+	char *obf;
+
+	do {
+		len = 3 + (rand() % lfac++);
+		obf = apr_pcalloc(pool, len+1);
+		for (i = 0; i < len; i++) {
+			int n = rand() % 1000;
+			for (j = 0; j < sizeof(rchars)-1; j++) {
+				if (probs[j] >= n) break;
+			}
+			obf[i] = rchars[j];
+		}
+	} while (apr_hash_get(taken, obf, APR_HASH_KEY_STRING) != NULL);
+
+	apr_hash_set(taken, obf, APR_HASH_KEY_STRING, obf);
+	return obf;
+}
+
+
+/* Recursively obfuscate path components */
+const char *session_obfuscate_rec(apr_pool_t *pool, apr_hash_t *hash, apr_hash_t *taken, const char *path)
+{
+	const char *obf = NULL, *dir, *base;
+
+	utils_path_split(pool, path, &dir, &base);
+	if (strcmp(dir, "/") && strlen(dir)) {
+		dir = session_obfuscate_rec(pool, hash, taken, dir);
+	}
+	if (strlen(base) == 0) {
+		return apr_pstrdup(pool, "");;
+	}
+
+	if ((obf = apr_hash_get(hash, base, APR_HASH_KEY_STRING)) == NULL) {
+		obf = session_make_obfuscated(apr_hash_pool_get(hash), taken);
+		apr_hash_set(hash, apr_pstrdup(apr_hash_pool_get(hash), base), APR_HASH_KEY_STRING, obf);
+	}
+	return (strlen(dir) ? utils_path_join(pool, dir, obf) : obf);
+}
 
 
 /*---------------------------------------------------------------------------*/
@@ -60,6 +117,10 @@ session_t session_create()
 	session.flags = 0x00;
 
 	session.pool = svn_pool_create(NULL);
+
+	session.obf_hash = apr_hash_make(session.pool);
+	session.obf_taken = apr_hash_make(session.pool);
+	srand(time(NULL));
 
 	return session;
 }
@@ -208,4 +269,14 @@ char session_check_reparent(session_t *session, svn_revnum_t rev)
 
 	svn_pool_destroy(pool);
 	return 0;
+}
+
+
+/* Returns the obfuscated name for a path */
+const char *session_obfuscate(session_t *session, struct apr_pool_t *pool, const char *path)
+{
+	if (path == NULL || !(session->flags & SF_OBFUSCATE)) {
+		return path;
+	}
+	return session_obfuscate_rec(pool, session->obf_hash, session->obf_taken, path);
 }

@@ -196,6 +196,8 @@ int main(int argc, char **argv)
 			loglevel++;
 		} else if (!strcmp(argv[i], "-n") || !strcmp(argv[i], "--dry-run")) {
 			opts.flags |= DF_DRY_RUN;
+		} else if (!strcmp(argv[i], "--obfuscate")) {
+			session.flags |= SF_OBFUSCATE;
 		} else if (!strcmp(argv[i], "--no-auth-cache")) {
 			session.flags |= SF_NO_AUTH_CACHE;
 		} else if (!strcmp(argv[i], "--non-interactive")) {

@@ -125,6 +125,10 @@ Don't fetch text deltas, resulting in a dump without file contents.
 This is mainly used for debugging purposes, as the program operates
 normally but runs much faster.
 
+*--obfuscate*::
+Replaces all file and directory names with random strings. This is
+useful for bug reports in combination with *--dry-run*.
+
 
 REVISION NUMBERS
 ----------------
