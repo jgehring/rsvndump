@@ -828,6 +828,16 @@ char path_hash_commit(session_t *session, dump_options_t *opts, log_revision_t *
 }
 
 
+/* Adds a new padding revision to the path hash */
+char path_hash_commit_padding()
+{
+	apr_pool_t *pool = svn_pool_create(ph_pool);
+	char ret = path_hash_add_delta(NULL, pool);
+	svn_pool_destroy(pool);
+	return ret;
+}
+
+
 /* Checks the parent relation of two paths at a given revision */
 char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t revnum, apr_pool_t *pool)
 {

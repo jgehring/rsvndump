@@ -456,7 +456,16 @@ char dump(session_t *session, dump_options_t *opts)
 				if (local_rev == 1) {
 					dump_create_user_prefix(opts, session->pool);
 				}
+
+				if (path_hash_commit_padding()) {
+					ret = 1;
+					break;
+				}
 				++local_rev;
+			}
+
+			if (ret != 0) {
+				break;
 			}
 		}
 
