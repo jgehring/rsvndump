@@ -45,7 +45,7 @@ typedef struct {
 	char *url;
 	const char *encoded_url;
 	const char *root;
-	char*prefix;
+	const char *prefix;
 #ifdef USE_SINGLEFILE_DUMP
 	const char *file; /* Only set if the target is a file */
 #endif

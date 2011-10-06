@@ -86,13 +86,13 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 		const char *key;
 		svn_log_changed_path_t *svalue, *dvalue;
 		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&svalue);
+		key = session_obfuscate(data->session, pool, key);
 
 		/* Skip this entry? */
 		if ((strlen(key) < 1) || strncmp(data->session->prefix, key+1, strlen(data->session->prefix))) {
 			DEBUG_MSG("%c %s [skipped]\n", svalue->action, key);
 			continue;
 		}
-		key = session_obfuscate(data->session, pool, key);
 
 		dvalue = apr_palloc(data->pool, sizeof(svn_log_changed_path_t));
 		dvalue->action = svalue->action;

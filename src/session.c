@@ -219,6 +219,7 @@ char session_open(session_t *session)
 	} else {
 		session->prefix = apr_pstrdup(session->pool, session->encoded_url + strlen(root) + 1);
 	}
+	session->prefix = session_obfuscate(session, session->pool, session->prefix);
 
 	return 0;
 }
