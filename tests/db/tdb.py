@@ -45,9 +45,9 @@ def runtests(tests, args):
 		try:
 			targs = list(args)
 			if test.run(t, tid, targs):
-				print("OK     : "+test.info(t)+" [ID: "+tid+"]");
+				print("OK     : "+test.info(t)+" ["+tid+"]");
 			else:
-				print("FAIL   : "+test.info(t)+" [ID: "+tid+"]");
+				print("FAIL   : "+test.info(t)+" ["+tid+"]");
 		except:
 			print("EXCEPTION while running test with ID: "+tid);
 			raise
