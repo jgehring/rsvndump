@@ -1,3 +1,10 @@
+2011-11-21  --  version 0.5.7
+
+	* Fixed invalid dump output when paths had been copied from padded
+	  revisions (when running with --keep-revnums)
+	* Added --dry-run and --obfuscate for more expressive bug reports
+	* Respect CFLAGS and CXXFLAGS from environment in configure
+
 2011-07-15  --  version 0.5.6
 
 	* Faster revision range determination

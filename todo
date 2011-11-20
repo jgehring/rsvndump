@@ -1,4 +1,4 @@
-== Schedule for 0.5.7 ==
+== Schedule for 0.5.8 ==
 > Include svnbridge patches
 > Add log-window-size option (part of github pull request #1)
 > Fix compilation without NLS (if gettext is not present)
