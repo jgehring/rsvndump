@@ -70,9 +70,9 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 	log_receiver_baton_t *data = (log_receiver_baton_t *)baton;
 
 	data->log->revision = revision;
-	data->log->author = session_obfuscate_once(data->session, data->pool, author);
+	data->log->author = session_obfuscate_once(data->session, data->pool, apr_pstrdup(data->pool, author));
 	data->log->date = apr_pstrdup(data->pool, date);
-	data->log->message = session_obfuscate_once(data->session, data->pool, message);
+	data->log->message = session_obfuscate_once(data->session, data->pool, apr_pstrdup(data->pool, message));
 	data->log->changed_paths = apr_hash_make(data->pool);
 
 	DEBUG_MSG("log_receiver: got log for revision %ld\n", revision);
