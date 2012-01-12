@@ -213,7 +213,7 @@ msgstr ""
 
 #: src/main.c:83
 #, c-format
-msgid "Subversion compability options:\n"
+msgid "Subversion compatibility options:\n"
 msgstr ""
 
 #: src/main.c:84
@@ -289,7 +289,7 @@ msgstr ""
 
 #: src/main.c:261
 #, c-format
-msgid "ERROR: Unkown argument or malformed url '%s'.\n"
+msgid "ERROR: Unknown argument or malformed url '%s'.\n"
 msgstr ""
 
 #: src/main.c:284 src/main.c:296

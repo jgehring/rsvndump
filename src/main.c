@@ -80,7 +80,7 @@ static void print_usage()
 	printf(_("                              with --incremental and not starting at\n"));
 	printf(_("                              revision 0\n"));
 	printf("\n");
-	printf(_("Subversion compability options:\n"));
+	printf(_("Subversion compatibility options:\n"));
 	printf(_("    -u [--username] ARG       specify a username ARG\n"));
 	printf(_("    -p [--password] ARG       specify a password ARG\n"));
 	printf(_("    --no-auth-cache           do not cache authentication tokens\n"));
@@ -258,7 +258,7 @@ int main(int argc, char **argv)
 			}
 			session.url = apr_pstrdup(session.pool, argv[i]);
 		} else {
-			fprintf(stderr, _("ERROR: Unkown argument or malformed url '%s'.\n"), argv[i]);
+			fprintf(stderr, _("ERROR: Unknown argument or malformed url '%s'.\n"), argv[i]);
 			fprintf(stderr, _("Please run with --help for usage information.\n"));
 			goto failure;
 		}

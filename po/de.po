@@ -227,7 +227,7 @@ msgstr "                              wurde\n"
 
 #: src/main.c:83
 #, c-format
-msgid "Subversion compability options:\n"
+msgid "Subversion compatibility options:\n"
 msgstr "Kompabilitäts-Optionen zu Subversion:\n"
 
 #: src/main.c:84
@@ -310,7 +310,7 @@ msgstr "Mit --help erhalten sie Informationen zur Benutzung.\n"
 
 #: src/main.c:261
 #, c-format
-msgid "ERROR: Unkown argument or malformed url '%s'.\n"
+msgid "ERROR: Unknown argument or malformed url '%s'.\n"
 msgstr "FEHLER: Ungültiges Argument oder ungültige URL '%s'.\n"
 
 #: src/main.c:284 src/main.c:296

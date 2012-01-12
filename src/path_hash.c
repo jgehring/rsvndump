@@ -728,7 +728,7 @@ char path_hash_commit(session_t *session, dump_options_t *opts, log_revision_t *
 	apr_pool_t *pool = svn_pool_create(ph_pool);
 
 	if (ph_revisions->nelts > revnum) {
-		DEBUG_MSG("path_hash: not commiting previous revision %ld\n", revnum);
+		DEBUG_MSG("path_hash: not committing previous revision %ld\n", revnum);
 		return 1;
 	}
 
@@ -822,7 +822,7 @@ char path_hash_commit(session_t *session, dump_options_t *opts, log_revision_t *
 	path_hash_dump(path_hash_reconstruct(revnum, pool), pool);
 #endif
 
-	DEBUG_MSG("path_hash: commited revision %ld\n", revnum);
+	DEBUG_MSG("path_hash: committed revision %ld\n", revnum);
 	svn_pool_destroy(pool);
 	return 0;
 }
