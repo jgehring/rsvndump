@@ -33,7 +33,7 @@ AC_DEFUN([RSVND_FIND_APR], [
 
 	APR_FIND_APU(,,[1],[1])
 	if test "$apu_found" = "no"; then
-		AC_MSG_ERROR([APU could not be located. Please use the --with-apu option.])
+		AC_MSG_ERROR([APR-UTIL could not be located. Please use the --with-apr-util option.])
 	fi
 
 	APU_INCLUDES="`$apu_config --includes`"
