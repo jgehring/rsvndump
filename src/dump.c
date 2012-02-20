@@ -518,6 +518,12 @@ char dump(session_t *session, dump_options_t *opts)
 				ret = 1;
 				break;
 			}
+#ifdef DEBUG_PHASH
+			if (path_hash_verify(session, local_rev, APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision) != 0) {
+				ret = 1;
+				break;
+			}
+#endif
 		}
 
 		if (loglevel == 0 && !(opts->flags & DF_INITIAL_DRY_RUN)) {
@@ -543,10 +549,6 @@ char dump(session_t *session, dump_options_t *opts)
 
 		apr_pool_destroy(revpool);
 	} while (global_rev <= opts->end);
-
-#ifdef DEBUG_PHASH
-	path_hash_test(session);
-#endif
 
 	delta_cleanup();
 	return ret;

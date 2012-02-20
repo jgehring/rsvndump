@@ -50,6 +50,7 @@ extern char path_hash_commit_padding(void);
 extern char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t revision, apr_pool_t *pool);
 
 #ifdef DEBUG_PHASH
+ extern char path_hash_verify(session_t *session, svn_revnum_t local_revision, svn_revnum_t global_revision);
  extern void path_hash_test(session_t *session);
 #endif
 
