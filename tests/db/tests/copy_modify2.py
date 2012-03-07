@@ -12,7 +12,7 @@ wc_dir = ""
 
 
 def info():
-	return "Copying test with modifcations in the same revision [bugreport from Joel Jirak]"
+	return "Copying test with modifications in the same revision [bugreport from Joel Jirak]"
 
 
 def setup(step, log):
