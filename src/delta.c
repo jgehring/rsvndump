@@ -148,6 +148,7 @@ static de_node_baton_t *delta_create_node(const char *path, de_node_baton_t *par
 	node->delta_filename = NULL;
 	node->cp_info = parent->cp_info;
 	node->copyfrom_path = NULL;
+	node->copyfrom_revision = 0;
 	node->applied_delta = 0;
 	node->dump_needed = 0;
 	node->props_changed = 0;
@@ -307,6 +308,11 @@ static char delta_check_copy(de_node_baton_t *node)
 {
 	session_t *session = node->de_baton->session;
 	dump_options_t *opts = node->de_baton->opts;
+
+	/* Propagated copies should have been checked already */
+	if ((node->cp_info == CPI_COPY) && (node->copyfrom_path == NULL)) {
+		return 0;
+	}
 
 	/* If the parent could not be copied, this node won't be copied, too */
 	if (node->cp_info == CPI_FAILED) {
@@ -642,7 +648,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	}
 
 	/* Output copy information if neccessary */
-	if (node->cp_info == CPI_COPY) {
+	if (node->cp_info == CPI_COPY && node->copyfrom_path) {
 		const char *copyfrom_path = delta_get_local_copyfrom_path(session->prefix, node->copyfrom_path);
 
 		printf("%s: %ld\n", SVN_REPOS_DUMPFILE_NODE_COPYFROM_REV, node->copyfrom_rev_local);
