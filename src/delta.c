@@ -377,12 +377,16 @@ static char delta_check_copy(de_node_baton_t *node)
 static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child)
 {
 	apr_pool_t *check_pool;
+	de_node_baton_t *copied_parent;
 	const char *child_relpath;
 	const char *path;
+	char *check_path;
+	char *base, *end;
 	svn_revnum_t revision;
 
 	/* Easy case first */
-	if (parent->cp_info != CPI_COPY || parent->copyfrom_path == NULL) {
+	if (parent->cp_info != CPI_COPY) {
+		DEBUG_MSG("delta_propagate_copy(%s, %s): early out %d\n", parent->path, child->path, parent->cp_info);
 		child->cp_info = parent->cp_info;
 		return;
 	}
@@ -403,24 +407,65 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 	}
 
 	/* Determine copy information */
-	path = delta_get_local_copyfrom_path(parent->de_baton->session->prefix, parent->copyfrom_path);
-	if (path == NULL) {
-		DEBUG_MSG("delta_propagate_copy(%s, %s): copyfrom_path (%s) is out of scope\n", parent->copyfrom_path);
-		child->cp_info = CPI_NONE;
+	copied_parent = parent;
+	while (copied_parent && copied_parent->copyfrom_path == NULL) {
+		copied_parent = copied_parent->parent;
+	}
+	if (copied_parent == NULL) {
+		child->cp_info = parent->cp_info;
 		return;
 	}
 
-	revision = delta_get_local_copyfrom_rev(parent->copyfrom_revision, parent->de_baton->opts, parent->de_baton->logs, parent->de_baton->local_revnum);
+	path = delta_get_local_copyfrom_path(parent->de_baton->session->prefix, copied_parent->copyfrom_path);
+	if (path == NULL) {
+		DEBUG_MSG("delta_propagate_copy(%s, %s): copyfrom_path (%s) is out of scope\n", copied_parent->copyfrom_path);
+		child->cp_info = CPI_NONE;
+		return;
+	}
+	fprintf(stderr, "child = %s, parent = %s, copied_parent = %s\n", child->path, parent->path, copied_parent->path);
 
-	/* Check the old parent relationship */
+	revision = delta_get_local_copyfrom_rev(copied_parent->copyfrom_revision, parent->de_baton->opts, parent->de_baton->logs, parent->de_baton->local_revnum);
+
+	/* Check the old parent relationship for every directory level */
+	child_relpath = child->path + strlen(copied_parent->path);
+	while (*child_relpath == '/') {
+		++child_relpath;
+	}
+	check_path = apr_psprintf(child->pool, "%s/%s", path, child_relpath);
+	base = check_path;
+	end = check_path + strlen(check_path);
+
 	check_pool = svn_pool_create(child->pool);
-	if (path_hash_check_parent(path, child_relpath, revision, check_pool)) {
-		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld OK\n", path, child_relpath, revision);
-		child->cp_info = CPI_COPY;
-	} else {
+	while (1) {
+		char *tmp;
+
+		/* Extract directory and basename for current level */
+		if ((base = strchr(base, '/')) == NULL) {
+			break;
+		}
+		*base++ = '\0';
+		if ((tmp = strchr(base, '/')) == NULL) {
+			tmp = base + strlen(base);
+		}
+		*tmp = '\0';
+
+		if (path_hash_check_parent(check_path, base, revision, check_pool)) {
+			*(base-1) = '/';
+			if (tmp < end) {
+				*tmp = '/';
+			}
+			continue;
+		}
+
+		// Failure
 		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld FAIL\n", path, child_relpath, revision);
 		child->cp_info = CPI_NONE;
+		svn_pool_destroy(check_pool);
+		return;
 	}
+
+	DEBUG_MSG("path_hash: parent relation %s -> %s in %ld OK\n", path, child_relpath, revision);
+	child->cp_info = CPI_COPY;
 	svn_pool_destroy(check_pool);
 }
 
