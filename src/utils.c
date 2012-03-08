@@ -50,7 +50,6 @@
 	#include <windows.h>
 #else
 	#include <sys/time.h>
-	#include <sys/stat.h>
 #endif
 
 
