@@ -178,7 +178,7 @@ void utils_handle_error(svn_error_t *error, FILE *stream, svn_boolean_t fatal, c
 
 
 /* Creates a temporary file with a multi-directory template */
-extern int utils_mkstemp(apr_file_t **file, char *name, apr_pool_t *pool)
+int utils_mkstemp(apr_file_t **file, char *name, apr_pool_t *pool)
 {
 	apr_status_t status;
 	char *dir;
