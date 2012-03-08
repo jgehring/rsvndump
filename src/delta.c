@@ -422,7 +422,6 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 		child->cp_info = CPI_NONE;
 		return;
 	}
-	fprintf(stderr, "child = %s, parent = %s, copied_parent = %s\n", child->path, parent->path, copied_parent->path);
 
 	revision = delta_get_local_copyfrom_rev(copied_parent->copyfrom_revision, parent->de_baton->opts, parent->de_baton->logs, parent->de_baton->local_revnum);
 
