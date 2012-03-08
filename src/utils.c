@@ -50,6 +50,7 @@
 	#include <windows.h>
 #else
 	#include <sys/time.h>
+	#include <sys/stat.h>
 #endif
 
 
@@ -173,6 +174,23 @@ void utils_handle_error(svn_error_t *error, FILE *stream, svn_boolean_t fatal, c
 		svn_error_clear(error);
 		exit(EXIT_FAILURE);
 	}
+}
+
+
+/* Creates a temporary file with a multi-directory template */
+extern int utils_mkstemp(apr_file_t **file, char *name, apr_pool_t *pool)
+{
+	apr_status_t status;
+	char *dir;
+
+	/* Create intermediate directories if needed */
+	dir = svn_path_dirname(name, pool);
+	status = apr_dir_make_recursive(dir, APR_UREAD | APR_UWRITE | APR_UEXECUTE, pool);
+	if (status != APR_SUCCESS) {
+		return status;
+	}
+
+	return apr_file_mktemp(file, name, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL | APR_BINARY, pool);
 }
 
 

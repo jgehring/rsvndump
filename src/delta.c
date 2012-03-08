@@ -41,6 +41,7 @@
 #include "property.h"
 #include "rhash.h"
 #include "session.h"
+#include "utils.h"
 
 #include "delta.h"
 
@@ -237,8 +238,8 @@ static svn_error_t *delta_write_properties(de_node_baton_t *node)
 	}
 
 	/* Create a new temporary file */
-	filename = apr_psprintf(node->pool, "%s/XXXXXX", opts->temp_dir);
-	status = apr_file_mktemp(&file, filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
+	filename = apr_psprintf(node->pool, "%s/pr/XXXXXX", opts->temp_dir);
+	status = utils_mkstemp(&file, filename, pool);
 	if (status) {
 		DEBUG_MSG("delta_write_properties(%s): Error creating temporary file in %s\n", node->path, opts->temp_dir);
 		return svn_error_wrap_apr(status, "Unable to create temporary file in %s", opts->temp_dir);
@@ -503,8 +504,8 @@ static svn_error_t *delta_deltify_node(de_node_baton_t *node)
 	}
 
 	/* Open temporary output file */
-	node->delta_filename = apr_psprintf(node->pool, "%s/XXXXXX", opts->temp_dir);
-	status = apr_file_mktemp(&dest_file, node->delta_filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
+	node->delta_filename = apr_psprintf(node->pool, "%s/df/XXXXXX", opts->temp_dir);
+	status = utils_mkstemp(&dest_file, node->delta_filename, pool);
 	if (status) {
 		DEBUG_MSG("delta_deltify_node(%s): Error creating temporary file in %s\n", node->path, opts->temp_dir);
 		return svn_error_wrap_apr(status, "Unable to create temporary file in %s", opts->temp_dir);
@@ -1217,8 +1218,8 @@ static svn_error_t *de_apply_textdelta(void *file_baton, const char *base_checks
 	DEBUG_MSG("de_apply_textdelta(%s)\n", node->path);
 
 	/* Create a new temporary file to write to */
-	node->filename = apr_psprintf(node->pool, "%s/XXXXXX", opts->temp_dir);
-	status = apr_file_mktemp(&dest_file, node->filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, pool);
+	node->filename = apr_psprintf(node->pool, "%s/td/XXXXXX", opts->temp_dir);
+	status = utils_mkstemp(&dest_file, node->filename, pool);
 	if (status) {
 		DEBUG_MSG("de_apply_textdelta(%s): Error creating temporary file in %s\n", node->path, opts->temp_dir);
 		return svn_error_wrap_apr(status, "Unable to create temporary file in %s", opts->temp_dir);

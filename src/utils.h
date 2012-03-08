@@ -48,19 +48,21 @@ extern float stopwatch_elapsed(stopwatch_t *watch);
 #endif /* USE_TIMING */
 
 /* Returns a canonicalized path that has been allocated using strdup() */
-extern char *utils_canonicalize_pstrdup(struct apr_pool_t *pool, char *path);
+extern char *utils_canonicalize_pstrdup(apr_pool_t *pool, char *path);
 
+/* Creates a temporary file with a multi-directory template */
+extern int utils_mkstemp(apr_file_t **file, char *name, apr_pool_t *pool);
 
 /* Returns the file descriptor of an APR file */
-extern int utils_apr_file_fd(struct apr_file_t *file);
+extern int utils_apr_file_fd(apr_file_t *file);
 
 /* Recursively removes the contents of a directory and the directory */
 /* itself it 'rmdir' is non-zero */
-extern void utils_rrmdir(struct apr_pool_t *pool, const char *path, char rmdir);
+extern void utils_rrmdir(apr_pool_t *pool, const char *path, char rmdir);
 
 /* Path splitting and joining */
-extern void utils_path_split(struct apr_pool_t *pool, const char *path, const char **dir, const char **base);
-extern const char *utils_path_join(struct apr_pool_t *pool, const char *dir, const char *base);
+extern void utils_path_split(apr_pool_t *pool, const char *path, const char **dir, const char **base);
+extern const char *utils_path_join(apr_pool_t *pool, const char *dir, const char *base);
 
 
 

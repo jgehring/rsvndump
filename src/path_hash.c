@@ -692,8 +692,9 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 #endif
 	apr_pool_t *delta_pool = svn_pool_create(pool);
 
-	filename = apr_psprintf(pool, "%s/XXXXXX", ph_temp_dir);
-	status = apr_file_mktemp(&aprfile, filename, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL | APR_BINARY, pool);
+	filename = apr_psprintf(pool, "%s/ph/XXXXXX", ph_temp_dir);
+	status = utils_mkstemp(&aprfile, filename, pool);
+
 	DEBUG_MSG("path_hash: temp_file = %s : %d\n", filename, status);
 	if (status) {
 		fprintf(stderr, _("ERROR: Unable to create temporary file (%d)\n"), status);
