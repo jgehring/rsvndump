@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: rsvndump 0.5.7\n"
+"Project-Id-Version: rsvndump 0.5.8\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2011-11-21 00:23+0100\n"
+"POT-Creation-Date: 2012-03-11 21:55+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,25 +17,25 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/delta.c:205
+#: src/delta.c:206
 msgid "COPIED ... done.\n"
 msgstr ""
 
-#: src/delta.c:207
+#: src/delta.c:208
 msgid "done.\n"
 msgstr ""
 
-#: src/delta.c:606
+#: src/delta.c:656
 #, c-format
 msgid "     * editing path : %s ... "
 msgstr ""
 
-#: src/delta.c:613
+#: src/delta.c:663
 #, c-format
 msgid "     * adding path : %s ... "
 msgstr ""
 
-#: src/delta.c:620
+#: src/delta.c:670
 #, c-format
 msgid "     * deleting path : %s ... "
 msgstr ""
@@ -54,7 +54,7 @@ msgstr ""
 msgid "Preparing path hash... "
 msgstr ""
 
-#: src/dump.c:370 src/dump.c:441 src/dump.c:533 src/log.c:193 src/log.c:254
+#: src/dump.c:370 src/dump.c:441 src/dump.c:539 src/log.c:193 src/log.c:254
 msgid "done\n"
 msgstr ""
 
@@ -88,17 +88,17 @@ msgstr ""
 msgid "Fetching base revision... "
 msgstr ""
 
-#: src/dump.c:525
+#: src/dump.c:531
 #, c-format
 msgid "* Dumped revision %ld (local %ld).\n"
 msgstr ""
 
-#: src/dump.c:527
+#: src/dump.c:533
 #, c-format
 msgid "* Dumped revision %ld.\n"
 msgstr ""
 
-#: src/dump.c:531
+#: src/dump.c:537
 #, c-format
 msgid ""
 "\n"
