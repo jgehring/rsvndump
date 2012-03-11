@@ -1,3 +1,10 @@
+2012-03-11  --  version 0.5.8
+
+	* Fixed invalid dump output when directories have been copied and
+	  subdirectories have been changed in the same revision (#3489637)
+	* Fixed invalid dump output when previously replaced directories
+	  are being copied (#3483858)
+
 2011-11-21  --  version 0.5.7
 
 	* Fixed invalid dump output when paths had been copied from padded
