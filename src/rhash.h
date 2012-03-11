@@ -57,7 +57,7 @@ extern apr_hash_index_t *rhash_next(apr_hash_index_t *hi);
 extern void rhash_this(apr_hash_index_t *hi, const void **key, apr_ssize_t *klen, void **val);
 
 /* Wrapper for apr_hash_count */
-unsigned int rhash_count(rhash_t *ht);
+extern unsigned int rhash_count(rhash_t *ht);
 
 
 #endif

@@ -215,44 +215,13 @@ static void delta_mark_node(de_node_baton_t *node)
 /* Writes the properties of a node to a temporary file */
 static svn_error_t *delta_write_properties(de_node_baton_t *node)
 {
-	char *filename;
-	apr_file_t *file = NULL;
-	apr_status_t status;
-	apr_hash_index_t *hi;
-	dump_options_t *opts = node->de_baton->opts;
 	apr_pool_t *pool = svn_pool_create(node->pool);
+	int ret;
 
-	/* Remove the properties that have been deleted from the hash */
-	for (hi = apr_hash_first(pool, node->del_properties); hi; hi = apr_hash_next(hi)) {
-		const char *key;
-		void *value;
-		apr_hash_this(hi, (const void **)(void *)&key, NULL, &value);
-		apr_hash_set(node->properties, key, APR_HASH_KEY_STRING, NULL);
+	ret = property_store(node->path, node->properties, pool);
+	if (ret != 0) {
+		return svn_error_createf(1, NULL, "Error loading properties (%d)\n", ret);
 	}
-
-	/* We don't need to save anything if there are no properties */
-	if (apr_hash_count(node->properties) == 0) {
-		rhash_set(prop_hash, node->path, APR_HASH_KEY_STRING, NULL, 0);
-		svn_pool_destroy(pool);
-		return SVN_NO_ERROR;
-	}
-
-	/* Create a new temporary file */
-	filename = apr_psprintf(node->pool, "%s/pr/XXXXXX", opts->temp_dir);
-	status = utils_mkstemp(&file, filename, pool);
-	if (status) {
-		DEBUG_MSG("delta_write_properties(%s): Error creating temporary file in %s\n", node->path, opts->temp_dir);
-		return svn_error_wrap_apr(status, "Unable to create temporary file in %s", opts->temp_dir);
-	}
-
-	property_hash_write(node->properties, file, pool);
-	status = apr_file_close(file);
-	if (status) {
-		DEBUG_MSG("delta_write_properties(%s): Error closing file %s\n", node->path, filename);
-		return svn_error_wrap_apr(status, "Unable to finish writing to %s", filename);
-	}
-
-	rhash_set(prop_hash, node->path, APR_HASH_KEY_STRING, filename, RHASH_VAL_STRING);
 
 	svn_pool_destroy(pool);
 	return SVN_NO_ERROR;
@@ -262,44 +231,14 @@ static svn_error_t *delta_write_properties(de_node_baton_t *node)
 /* Loads the properties of a node to a temporary file */
 static svn_error_t *delta_load_properties(de_node_baton_t *node)
 {
-	char *filename;
-	apr_file_t *file = NULL;
-	apr_status_t status;
-	apr_pool_t *pool = svn_pool_create(node->pool);
+	int ret;
 
-	filename = rhash_get(prop_hash, node->path, APR_HASH_KEY_STRING);
-	if (filename == NULL) {
-		/* No properties is ok, too */
-		svn_pool_destroy(pool);
-		return SVN_NO_ERROR;
+	apr_hash_clear(node->properties);
+	ret = property_load(node->path, node->properties, node->pool);
+	if (ret != 0) {
+		return svn_error_createf(1, NULL, "Error loading properties (%d)\n", ret);
 	}
 
-	status = apr_file_open(&file, filename, APR_READ, 0600, pool);
-	if (status) {
-		DEBUG_MSG("delta_load_properties(%s): Error opening file %s\n", node->path, filename);
-		return svn_error_wrap_apr(status, "Unable to read from %s", filename);
-	}
-
-	if (property_hash_load(node->properties, file, node->pool)) {
-		DEBUG_MSG("delta_load_properties(%s): Error reading from %s\n", node->path, filename);
-		if (apr_file_close(file) != APR_SUCCESS) {
-			DEBUG_MSG("delta_load_properties(%s): AND error closing this file\n", node->path);
-		}
-		return svn_error_createf(1, NULL, "Error reading from %s", filename);
-	}
-	status = apr_file_close(file);
-	if (status) {
-		DEBUG_MSG("delta_load_properties(%s): Error closing file %s\n", node->path, filename);
-		return svn_error_wrap_apr(status, "Unable to finish reading from %s", filename);
-	}
-
-	/* Delete the old file if it exists */
-	if (apr_file_remove(filename, pool) != APR_SUCCESS) {
-		DEBUG_MSG("delta_load_properties(%s): Cannot remove file %s\n", node->path, filename);
-	}
-	rhash_set(prop_hash, node->path, APR_HASH_KEY_STRING, NULL, 0);
-
-	svn_pool_destroy(pool);
 	return SVN_NO_ERROR;
 }
 

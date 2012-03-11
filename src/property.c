@@ -18,8 +18,17 @@
  *
  *      file: property.c
  *      desc: Convenience functions for dumping properties
+ *
+ *      Apart from the convenience functions mentioned above, a persistent
+ *      storage for properties is provided. 
+ *
+ *      TODO: Use property IDs (checksum, number?) and write the to files
+ *      from time to time.
+ *      IDEA: Use a property number (should be a 64bit integer) that is
+ *      increased everytime an unkown property is encountered. If too
+ *      many properties are stored in memory, they can be written to
+ *      (compressed ?) files in batches.
  */
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,12 +36,152 @@
 
 #include <svn_pools.h>
 #include <svn_string.h>
+#include <svn_md5.h>
 
+#include <apr_dbm.h>
 #include <apr_file_io.h>
 #include <apr_hash.h>
+#include <apr_md5.h>
 #include <apr_strings.h>
 
+#include "main.h"
+
 #include "property.h"
+
+
+/*---------------------------------------------------------------------------*/
+/* Local data structures                                                     */
+/*---------------------------------------------------------------------------*/
+
+
+/* Property reference */
+typedef struct {
+	unsigned char id[APR_MD5_DIGESTSIZE];
+	int count;  /* Reference counter */
+} prop_ref_t;
+
+/* Referenced property reference */
+typedef struct {
+	char *path;
+	prop_ref_t *ref;
+} prop_entry_t;
+
+
+/*---------------------------------------------------------------------------*/
+/* Static variables                                                          */
+/*---------------------------------------------------------------------------*/
+
+
+/* Global pool */
+static apr_pool_t *prop_pool = NULL;
+
+/* Property IDs to reference */
+static apr_hash_t *prop_refs = NULL;
+
+/* Path to property ID pointer */
+static apr_hash_t *prop_entries = NULL;
+
+/* DBM: ID to property data */
+static apr_dbm_t *prop_db = NULL;
+
+
+/*---------------------------------------------------------------------------*/
+/* Local functions                                                           */
+/*---------------------------------------------------------------------------*/
+
+
+/* Cleanup handler for the global pool */
+static apr_status_t prop_cleanup(void *param)
+{
+	apr_hash_index_t *hi;
+	const void *key;
+	apr_ssize_t klen;
+	void *value;
+
+	(void)param; /* Prevent compiler warnings */
+
+
+	/* Manually delete hash data */
+	for (hi = apr_hash_first(prop_pool, prop_refs); hi; hi = apr_hash_next(hi)) {
+		apr_hash_this(hi, &key, &klen, &value);
+		free(value);
+	}
+	for (hi = apr_hash_first(prop_pool, prop_entries); hi; hi = apr_hash_next(hi)) {
+		apr_hash_this(hi, &key, &klen, &value);
+		free(((prop_entry_t *)value)->path);
+		free(value);
+	}
+
+	apr_dbm_close(prop_db);
+	prop_pool = NULL;
+	return APR_SUCCESS;
+}
+
+
+/* Serializes a hash to a simple string format */
+static int prop_hash_serialize(char **data, size_t *len, apr_hash_t *props, apr_pool_t *pool)
+{
+	apr_hash_index_t *hi;
+	char *bptr;
+
+	/* Determine length of data first */
+	*len = 0;
+	for (hi = apr_hash_first(pool, props); hi; hi = apr_hash_next(hi)) {
+		const char *key;
+		svn_string_t *value;
+		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
+
+		*len += sizeof(int) * 2;
+		*len += strlen(key) + value->len;
+	}
+	*len += 1; /* Final zero byte */
+
+	if ((*data = apr_palloc(pool, *len)) == NULL) {
+		return -1;
+	}
+
+	/* Encode */
+	bptr = *data;
+	for (hi = apr_hash_first(pool, props); hi; hi = apr_hash_next(hi)) {
+		const char *key;
+		svn_string_t *value;
+		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
+
+		*(int *)bptr = strlen(key);
+		strcpy(bptr + sizeof(int), key);
+		bptr += sizeof(int) + *(int *)bptr;
+
+		*(int *)bptr = value->len;
+		memcpy(bptr + sizeof(int), value->data, value->len);
+		bptr += sizeof(int) + *(int *)bptr;
+	}
+
+	*bptr = '\0';
+	return 0;
+}
+
+
+/* Reconstructs a property hash from its serialized form */
+static int prop_hash_reconstruct(apr_hash_t *props, const char *data, apr_pool_t *pool)
+{
+	const char *bptr = data;
+	while (*bptr) {
+		int len;
+		char *key;
+		svn_string_t *value;
+
+		len = *(int *)bptr;
+		key = apr_pstrndup(pool, bptr + sizeof(int), len);
+		bptr += sizeof(int) + len;
+
+		len = *(int *)bptr;
+		value = svn_string_ncreate(bptr + sizeof(int), len, pool);
+		bptr += sizeof(int) + len;
+
+		apr_hash_set(props, key, APR_HASH_KEY_STRING, value);
+	}
+	return 0;
+}
 
 
 /*---------------------------------------------------------------------------*/
@@ -101,82 +250,138 @@ void property_del_dump(const char *key)
 }
 
 
-/* Writes a hash of properties to a given file */
-void property_hash_write(struct apr_hash_t *hash, struct apr_file_t *file, struct apr_pool_t *pool)
+/* Initializes the property storage, binding it to the given pool */
+int property_store_init(const char *tmpdir, struct apr_pool_t *pool)
 {
-	apr_hash_index_t *hi;
-	for (hi = apr_hash_first(pool, hash); hi; hi = apr_hash_next(hi)) {
-		const char *key;
-		svn_string_t *value;
-		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
+	char *db_path;
 
-		/* NOTE: This is the same as property_dump() */
-		if (key == NULL) {
-			return;
-		}
-		apr_file_printf(file, "K %lu\n", (unsigned long)strlen(key));
-		apr_file_printf(file, "%s\n", key);
-		if (value != NULL) {
-			apr_file_printf(file, "V %lu\n", (unsigned long)strlen(value->data));
-			apr_file_printf(file, "%s\n", value->data);
-		} else {
-			apr_file_printf(file, "V 0\n\n");
-		}
+	if (prop_pool != NULL) {
+		/* Already initialized */
+		return 0;
 	}
+	if ((prop_pool = svn_pool_create(pool)) == NULL) {
+		fprintf(stderr, "Error creating property storage: out of memory\n");
+		return -1;
+	}
+
+	prop_refs = apr_hash_make(prop_pool);
+	prop_entries = apr_hash_make(prop_pool);
+
+	/* Open Berkeley DB */
+	db_path = apr_psprintf(prop_pool, "%s/props.db", tmpdir);
+	if (apr_dbm_open(&prop_db, db_path, APR_DBM_RWTRUNC, 0x0600, prop_pool) != APR_SUCCESS) {
+		fprintf(stderr, "Error creating property storage\n");
+		return -1;
+	}
+
+	apr_pool_cleanup_register(prop_pool, NULL, prop_cleanup, NULL);
+	return 0;
 }
 
 
-/* Loads a hash of properties from a given file, storing the properties using the given pool */
-char property_hash_load(struct apr_hash_t *hash, struct apr_file_t *file, struct apr_pool_t *pool)
+/* Saves the properties of the given path */
+int property_store(const char *path, struct apr_hash_t *props, struct apr_pool_t *pool)
 {
-	apr_pool_t *subpool = svn_pool_create(pool);
-	apr_off_t skip = 1;
-	const int maxlen = 512;
-	char *buffer = apr_palloc(subpool, maxlen+1);
+	size_t len;
+	char *data;
+	unsigned char id[APR_MD5_DIGESTSIZE];
+	prop_ref_t *ref;
+	prop_entry_t *entry;
 
-	while (!APR_STATUS_IS_EOF(apr_file_eof(file))) {
-		unsigned long dlen;
-		char end; /* Used for EOL detection */
-		char *keybuffer, *valbuffer;
+	entry = apr_hash_get(prop_entries, path, APR_HASH_KEY_STRING);
 
-		/* Read key */
-		if (apr_file_gets(buffer, maxlen, file) != APR_SUCCESS) {
-			break;
+	/* No work for empty property hashes */
+	if (apr_hash_count(props) == 0) {
+		apr_hash_set(prop_entries, path, APR_HASH_KEY_STRING, NULL);
+		if (entry) {
+			free(entry);
 		}
-		if ((sscanf(buffer, "K %lu%c", &dlen, &end) != 2) || (end != '\n')) {
-			break;
-		}
-		keybuffer = apr_pcalloc(subpool, dlen+1);
-		if (apr_file_read(file, keybuffer, (apr_size_t *)&dlen) != APR_SUCCESS) {
-			break;
-		}
-
-		/* Skip newline */
-		apr_file_seek(file, APR_CUR, &skip);
-		skip = 1;
-
-		/* Read value */
-		if (apr_file_gets(buffer, maxlen, file) != APR_SUCCESS) {
-			break;
-		}
-		if ((sscanf(buffer, "V %lu%c", &dlen, &end) != 2) || (end != '\n')) {
-			break;
-		}
-		if (dlen == 0) {
-			apr_hash_set(hash, apr_pstrdup(pool, keybuffer), APR_HASH_KEY_STRING, svn_string_ncreate("", 0, pool));
-		} else {
-			valbuffer = apr_pcalloc(subpool, dlen+1);
-			if (apr_file_read(file, valbuffer, (apr_size_t *)&dlen) != APR_SUCCESS) {
-				break;
-			}
-			apr_hash_set(hash, apr_pstrdup(pool, keybuffer), APR_HASH_KEY_STRING, svn_string_create(valbuffer, pool));
-		}
-
-		/* Skip newline */
-		apr_file_seek(file, APR_CUR, &skip);
-		skip = 1;
+		return 0;
 	}
 
-	svn_pool_destroy(subpool);
-	return !APR_STATUS_IS_EOF(apr_file_eof(file));
+	/* Serialize and generate id */
+	if (prop_hash_serialize(&data, &len, props, pool) != 0) {
+		return -1;
+	}
+	if (apr_md5(id, data, len) != APR_SUCCESS){
+		return -1;
+	}
+
+	/* Check if this ID is already present */
+	if ((ref = apr_hash_get(prop_refs, id, sizeof(id))) == NULL) {
+		apr_datum_t key, value;
+
+		ref = malloc(sizeof(prop_ref_t));
+		if (ref == NULL) {
+			return -1;
+		}
+		memcpy(ref->id, id, sizeof(id));
+		ref->count = 0;
+		apr_hash_set(prop_refs, ref->id, sizeof(id), ref);
+
+		/* Add new ID -> data mapping to database */
+		key.dptr = (char *)id;
+		key.dsize = sizeof(id);
+		value.dptr = data;
+		value.dsize = len+1;
+		if (apr_dbm_store(prop_db, key, value) != APR_SUCCESS) {
+			return -1;
+		}
+	}
+
+	/* Add entry */
+	if (entry == NULL) {
+		entry = malloc(sizeof(prop_entry_t));
+		if (entry == NULL) {
+			return -1;
+		}
+		if ((entry->path = strdup(path)) == NULL) {
+			return -1;
+		}
+	}
+	entry->ref = ref;
+	ref->count++;
+	apr_hash_set(prop_entries, entry->path, APR_HASH_KEY_STRING, entry);
+	return 0;
+}
+
+/* Loads the properties of the given path (and removes the corresponding entry) */
+int property_load(const char *path, struct apr_hash_t *props, struct apr_pool_t *pool)
+{
+	apr_datum_t key, value;
+	prop_entry_t *entry;
+	
+	/* Check if path has properties attached */
+	if ((entry = apr_hash_get(prop_entries, path, APR_HASH_KEY_STRING)) == NULL) {
+		return 0;
+	}
+
+	/* Retrieve item from database */
+	key.dptr = (char *)entry->ref->id;
+	key.dsize = APR_MD5_DIGESTSIZE;
+	if (apr_dbm_fetch(prop_db, key, &value) != APR_SUCCESS) {
+		return -1;
+	}
+
+	/* Reconstruct hash */
+	if (prop_hash_reconstruct(props, value.dptr, pool) != 0) {
+		return -1;
+	}
+
+	/* TODO: Don't remove entry */
+	/* Remove entry */
+	apr_hash_set(prop_entries, path, APR_HASH_KEY_STRING, NULL);
+	entry->ref->count--;
+
+	/* Remove item from database if reference count is zero */
+	if (entry->ref->count <= 0) {
+		apr_hash_set(prop_refs, entry->ref->id, APR_MD5_DIGESTSIZE, NULL);
+		if (apr_dbm_delete(prop_db, key) != APR_SUCCESS) {
+			return -1;
+		}
+		free(entry->ref);
+	}
+	free(entry->path);
+	free(entry);
+	return 0;
 }

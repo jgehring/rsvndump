@@ -346,6 +346,9 @@ char dump(session_t *session, dump_options_t *opts)
 	}
 
 	path_hash_initialize(session->prefix, opts->temp_dir, session->pool);
+	if (property_store_init(opts->temp_dir, session->pool) != 0) {
+		return 1;
+	}
 
 	/*
 	 * Decide whether the whole repository log should be fetched

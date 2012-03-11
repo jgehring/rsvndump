@@ -37,11 +37,14 @@ extern void property_dump(const char *key, const char *value);
 /* Dumps a property deletion to stdout */
 extern void property_del_dump(const char *key);
 
-/* Writes a hash of properties to a given file */
-extern void property_hash_write(struct apr_hash_t *hash, struct apr_file_t *file, struct apr_pool_t *pool);
+/* Initializes the property storage, binding it to the given pool */
+extern int property_store_init(const char *tmpdir, struct apr_pool_t *pool);
 
-/* Loads a hash of properties from a given file, storing the properties using the givn pool */
-extern char property_hash_load(struct apr_hash_t *hash, struct apr_file_t *file, struct apr_pool_t *pool);
+/* Saves the properties of the given path */
+extern int property_store(const char *path, struct apr_hash_t *props, struct apr_pool_t *pool);
+
+/* Loads the properties of the given path and removes the from the storage */
+extern int property_load(const char *path, struct apr_hash_t *props, struct apr_pool_t *pool);
 
 
 #endif
