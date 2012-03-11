@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.4.4\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2011-11-21 00:23+0100\n"
+"POT-Creation-Date: 2012-03-11 21:55+0100\n"
 "PO-Revision-Date: 2009-02-22 03:00+0100\n"
 "Last-Translator:  <jonas.gehring@boolsoft.org>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -17,26 +17,26 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/delta.c:205
+#: src/delta.c:206
 msgid "COPIED ... done.\n"
 msgstr "KOPIERT ... erledigt.\n"
 
 # c-format
-#: src/delta.c:207
+#: src/delta.c:208
 msgid "done.\n"
 msgstr "erledigt.\n"
 
-#: src/delta.c:606
+#: src/delta.c:656
 #, c-format
 msgid "     * editing path : %s ... "
 msgstr "     * Bearbeite Pfad: %s ... "
 
-#: src/delta.c:613
+#: src/delta.c:663
 #, c-format
 msgid "     * adding path : %s ... "
 msgstr "     * Füge Pfad hinzu: %s ... "
 
-#: src/delta.c:620
+#: src/delta.c:670
 #, c-format
 msgid "     * deleting path : %s ... "
 msgstr "     * Lösche Pfad: %s ... "
@@ -55,7 +55,7 @@ msgstr "FEHLER: URL '%s' wurde in Revision %ld nicht gefunden\n"
 msgid "Preparing path hash... "
 msgstr "Bereite den Pfad-Hash vor... "
 
-#: src/dump.c:370 src/dump.c:441 src/dump.c:533 src/log.c:193 src/log.c:254
+#: src/dump.c:370 src/dump.c:441 src/dump.c:539 src/log.c:193 src/log.c:254
 msgid "done\n"
 msgstr "fertig\n"
 
@@ -91,17 +91,17 @@ msgstr ">>> Dumpe neue Revision basierend auf Originalrevision %ld\n"
 msgid "Fetching base revision... "
 msgstr "Hole Basisrevision... "
 
-#: src/dump.c:525
+#: src/dump.c:531
 #, c-format
 msgid "* Dumped revision %ld (local %ld).\n"
 msgstr "* Revision %ld gedumpt (lokal: %ld).\n"
 
-#: src/dump.c:527
+#: src/dump.c:533
 #, c-format
 msgid "* Dumped revision %ld.\n"
 msgstr " * Revision %ld gedumpt.\n"
 
-#: src/dump.c:531
+#: src/dump.c:537
 #, c-format
 msgid ""
 "\n"

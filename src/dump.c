@@ -336,7 +336,7 @@ char dump(session_t *session, dump_options_t *opts)
 	 * so insert a empty revision '0' if a subdirectory is being dumped
 	 */
 	if (strlen(session->prefix) > 0) {
-		log_revision_t dummy;//= apr_pcalloc(session->pool, sizeof(log_revision_t));
+		log_revision_t dummy;
 		dummy.revision = 0;
 		dummy.author = NULL;
 		dummy.date = NULL;

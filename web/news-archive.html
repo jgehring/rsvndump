@@ -15,6 +15,28 @@
        For recent news and content, please see the <a href="index.html">main page</a>.</i></p>
       <hr />
       <ul>
+        <li><h4>December 15th, 2009</h4>
+        <p>rsvndump 0.5.3 is now <a href="#content">available</a>. This
+        release fixes a couple of serious bugs reported via the
+        <a href="http://sourceforge.net/tracker/?atid=1143180&group_id=268687">bug tracker</a>
+        at SourceForge, including a bug that could prevent directory
+        properties from being dumped
+        (<a href="http://sourceforge.net/tracker/?func=detail&aid=2898815&group_id=268687&atid=1143180">#2898815</a>).
+        Additionally, detection for paths affected by directory copy
+        operations has been added. This fixes the generation of unloadable 
+        dumps observed in specific cases (as reported in
+        <a href="http://sourceforge.net/tracker/?func=detail&aid=2898487&group_id=268687&atid=1143180">#2898487</a>
+        by lordnightwalker). Dumping root node modifications has been fixed,
+        too.
+        The full list of the changes can be found in the
+        <a href="ChangeLog">ChangeLog</a>. The source package is
+        is available as a tarball compressed using either gzip or bzip2 as
+        well as in zip format.<br />
+        Please note that the Debian packages haven't been updated (and are
+        unlikely to be updated again). Please refer to the
+        source tarball instead.
+        </p></li>
+
         <li><h4>July 17th, 2009</h4>
         <p>rsvndump 0.5.2 is now <a href="#content">available</a>,
         fixing wrong Node-copyfrom-rev revision numbers when dumping subdirectories,

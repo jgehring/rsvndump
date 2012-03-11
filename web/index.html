@@ -19,9 +19,7 @@
           </a></td>
           </td>
           <td><a href="http://sourceforge.net/projects/rsvndump">
-            <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=268687&amp;type=16"
-            alt="Get rsvndump at SourceForge.net. Fast, secure and Free Open Source software downloads"
-            border=1  />
+            <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=268687&amp;type=16" alt="Get rsvndump at SourceForge.net. Fast, secure and Free Open Source software downloads" border=1  />
           </a></td>
         </tr></table>
       </div>
@@ -61,7 +59,21 @@
         <hr />
         <a name="news"><h3>News</h3></a>
         <ul>
-          <li><h4>Novermber 21st, 2011</h4>
+          <li><h4>March 11th, 2012</h4>
+          <p>rsvndump 0.5.8 is now <a href="#content">available</a>,
+          fixing two serious bugs reported by Valentin Haenel
+          (<a href="https://sourceforge.net/tracker/?func=detail&aid=3483858&group_id=268687&atid=1143180">#3483858</a> and
+          <a
+              href="https://sourceforge.net/tracker/?func=detail&aid=3489637&group_id=268687&atid=1143180">#3489637</a>).
+          Both issues could result in invalid dump output
+          under certain circumstances.  Please consult the
+          <a href="ChangeLog">ChangeLog</a> and the respective bug reports
+          for further details about those issues.<br/>
+          As usual, the source package is is available as a tarball
+          compressed using either gzip or bzip2 as well as in zip
+          format.</p>
+
+          <li><h4>November 21st, 2011</h4>
           <p>rsvndump 0.5.7 is now <a href="#content">available</a>,
           fixing possibly invalid dump output when run with
           <tt>--keep-revnums</tt>.  Furthermore, the command-line flags
@@ -117,28 +129,6 @@
           is available as a tarball compressed using either gzip or bzip2 as
           well as in zip format.
           </p></li>
-
-          <li><h4>December 15th, 2009</h4>
-          <p>rsvndump 0.5.3 is now <a href="#content">available</a>. This
-          release fixes a couple of serious bugs reported via the
-          <a href="http://sourceforge.net/tracker/?atid=1143180&group_id=268687">bug tracker</a>
-          at SourceForge, including a bug that could prevent directory
-          properties from being dumped
-          (<a href="http://sourceforge.net/tracker/?func=detail&aid=2898815&group_id=268687&atid=1143180">#2898815</a>).
-          Additionally, detection for paths affected by directory copy
-          operations has been added. This fixes the generation of unloadable 
-          dumps observed in specific cases (as reported in
-          <a href="http://sourceforge.net/tracker/?func=detail&aid=2898487&group_id=268687&atid=1143180">#2898487</a>
-          by lordnightwalker). Dumping root node modifications has been fixed,
-          too.
-          The full list of the changes can be found in the
-          <a href="ChangeLog">ChangeLog</a>. The source package is
-          is available as a tarball compressed using either gzip or bzip2 as
-          well as in zip format.<br />
-          Please note that the Debian packages haven't been updated (and are
-          unlikely to be updated again). Please refer to the
-          source tarball instead.
-          </p></li>
         </ul>
         <p>Older news items can be found in the <a href="news-archive.html">news archive</a>.</p>
 
@@ -147,9 +137,9 @@
         <ul>
           <li><h4>Downloads:</h4>
             <ul>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.7.tar.gz">rsvndump-0.5.7.tar.gz</a></b> - Source code distribution</li>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.7.tar.bz2">rsvndump-0.5.7.tar.bz2</a></b> - Source code distribution</li>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.7.zip">rsvndump-0.5.7.zip</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.8.tar.gz">rsvndump-0.5.8.tar.gz</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.8.tar.bz2">rsvndump-0.5.8.tar.bz2</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.5.8.zip">rsvndump-0.5.8.zip</a></b> - Source code distribution</li>
               </ul>
             <p>Previous releases can be found on rsvndump's <a href="http://sourceforge.net/projects/rsvndump/files/">file list at SourceForge</a>.</p>
           </li>
@@ -179,11 +169,14 @@
 
           <li><h4>Hosted:</h4>
             <ul>
-              <li>The <a href="http://github.com/jgehring/rsvndump">Git repository</a> at github.com</li>
-              <li>The <a href="http://sourceforge.net/projects/rsvndump">project page</a> at SourceForge, including forums and a bug tracker</li>
+              <li>The <a href="http://github.com/jgehring/rsvndump">Git repository</a> at GitHub</li>
+              <li>The <a href="http://sourceforge.net/projects/rsvndump">project page</a> at SourceForge,
+                including <a href="https://sourceforge.net/projects/rsvndump/forums">forums</a>
+                and a <a href="https://sourceforge.net/tracker/?group_id=268687">bug tracker</a></li>
               <li>The <a href="http://freshmeat.net/projects/rsvndump">project page</a> at Freshmeat</li>
               <li>The <a href="http://ohloh.net/p/rsvndump">project page</a> at Ohloh</li>
-              <li>The <a href="http://flattr.com/thing/344002/rsvndump">thing page</a> at Flattr</li>
+              <li>The <a href="http://flattr.com/thing/344002/rsvndump">thing page</a> at Flattr for
+                donations via <a href="http://en.wikipedia.org/wiki/Micro-payment">micro-payment</a></li>
             </ul>
           </li>
         </ul>
