@@ -32,7 +32,7 @@
 #define RHASH_VAL_STRING APR_HASH_KEY_STRING
 
 
-typedef struct rhash_t rhash_t;
+typedef struct apr_hash_t rhash_t;
 
 
 /* Creates a new rhash */

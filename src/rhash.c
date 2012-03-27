@@ -25,17 +25,16 @@
  *      values.
  *      However, this raises the need for manually clearing the hash contents
  *      (or calling rhash_clear()).
- *
- *      The implementation uses an extra hash to store the pointers
- *      for the allocated key data.
  */
 
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include <svn_error.h>
 
 #include <apr_strings.h>
+#include <apr_tables.h>
 
 #include "main.h"
 #include "logger.h"
@@ -47,11 +46,24 @@
 /*---------------------------------------------------------------------------*/
 
 
-struct rhash_t {
-	apr_hash_t    *apr_hash;
-	apr_pool_t    *pool;
-	apr_hash_t    *key_pointers;
-};
+typedef struct {
+	void *key;
+	void *val;
+} entry_t;
+
+
+/*---------------------------------------------------------------------------*/
+/* Local functions                                                           */
+/*---------------------------------------------------------------------------*/
+
+
+/* Frees the memory of an entry */
+static void entry_free(entry_t *e)
+{
+	free(e->key);
+	free(e->val);
+	free(e);
+}
 
 
 /*---------------------------------------------------------------------------*/
@@ -62,12 +74,7 @@ struct rhash_t {
 /* Creates a new rhash */
 rhash_t *rhash_make(apr_pool_t *pool)
 {
-	rhash_t *hash = apr_palloc(pool, sizeof(rhash_t));
-	hash->apr_hash = apr_hash_make(pool);
-	hash->pool = pool;
-	hash->key_pointers = apr_hash_make(pool);
-
-	return hash;
+	return apr_hash_make(pool);
 }
 
 
@@ -75,24 +82,22 @@ rhash_t *rhash_make(apr_pool_t *pool)
 void rhash_clear(rhash_t *ht)
 {
 	apr_hash_index_t *hi;
-	apr_hash_t *temp = apr_hash_make(ht->pool);
+	apr_pool_t *pool = apr_hash_pool_get(ht);
+	apr_array_header_t *arr = apr_array_make(pool, apr_hash_count(ht), sizeof(void *));
+	entry_t **eptr;
 
-	/* Save all entries into a temporary hash */
-	for (hi = apr_hash_first(ht->pool, ht->apr_hash); hi; hi = apr_hash_next(hi)) {
+	/* Insert all values into an array, and free it afterwards */
+	for (hi = apr_hash_first(pool, ht); hi; hi = apr_hash_next(hi)) {
 		const void *key;
 		apr_ssize_t klen;
-		void *value;
-		apr_hash_this(hi, &key, &klen, &value);
-		apr_hash_set(temp, key, klen, value);
+		void *val;
+		apr_hash_this(hi, &key, &klen, &val);
+		*(void **)apr_array_push(arr) = val;
 	}
+	apr_hash_clear(ht);
 
-	/* Remove all entris */
-	for (hi = apr_hash_first(ht->pool, temp); hi; hi = apr_hash_next(hi)) {
-		const void *key;
-		apr_ssize_t klen;
-		void *value;
-		apr_hash_this(hi, &key, &klen, &value);
-		rhash_set(ht, key, klen, NULL, 0);
+	while ((eptr = apr_array_pop(arr)) != NULL) {
+		entry_free(*eptr);
 	}
 }
 
@@ -100,66 +105,52 @@ void rhash_clear(rhash_t *ht)
 /* Wrapper for apr_hash_set */
 void rhash_set(rhash_t *ht, const void *key, apr_ssize_t klen, const void *val, apr_ssize_t vlen)
 {
-	if (val == NULL) {
-		/* The mapping should be removed, so free both key and value memory */
-		void *key_ptr = apr_hash_get(ht->key_pointers, key, klen);
-		void *val_ptr = apr_hash_get(ht->apr_hash, key, klen);
+	entry_t *entry = apr_hash_get(ht, key, klen);
 
-		if (val_ptr) {
-			apr_hash_set(ht->apr_hash, key, klen, NULL);
-			free(val_ptr);
-		}
-		if (key_ptr) {
-			apr_hash_set(ht->key_pointers, key, klen, NULL);
-			free(key_ptr);
+	if (val == NULL) {
+		/* Deletion */
+		if (entry) {
+			apr_hash_set(ht, key, klen, NULL);
+			entry_free(entry);
 		}
 		return;
 	}
 
-	if (apr_hash_get(ht->apr_hash, key, klen) != NULL) {
+	if (entry) {
 		/* Replacement: Free the old value */
-		void *val_ptr = apr_hash_get(ht->apr_hash, key, klen);
-		void *val_dup;
-
-		if (vlen == -1) {
-			DEBUG_MSG("rhash_set(): replacing %s: %s -> %s (0x%X -> 0x%X)\n", (const char *)key, (const char *)val_ptr, (const char *)val, val_ptr, val);
-		}
-
 		if (vlen == RHASH_VAL_STRING) {
-			val_dup = strdup(val);
-		} else {
-			val_dup = malloc(vlen);
-			memcpy(val_dup, val, vlen);
+			DEBUG_MSG("rhash_set(): replacing %s: %s -> %s (0x%X -> 0x%X)\n", (const char *)key, (const char *)entry->val, (const char *)val, entry->val, val);
 		}
 
-		apr_hash_set(ht->apr_hash, key, klen, val_dup);
-		if (val_ptr && val != val_ptr) {
-			DEBUG_MSG("freeing %X\n", (void *)val_ptr);
-			free(val_ptr);
+		assert(val != entry->val);
+		free(entry->val);
+		if (vlen == RHASH_VAL_STRING) {
+			entry->val = strdup(val);
+		} else {
+			entry->val = malloc(vlen);
+			memcpy(entry->val, val, vlen);
 		}
 	} else {
 		/* Normal insert: Duplicate both key and value */
-		void *key_dup, *val_dup;
+		entry = malloc(sizeof(entry_t));
 
 		if (klen == APR_HASH_KEY_STRING) {
-			key_dup = strdup(key);
+			entry->key = strdup(key);
 		} else {
-			key_dup = malloc(klen);
-			memcpy(key_dup, key, klen);
+			entry->key = malloc(klen);
+			memcpy(entry->key, key, klen);
 		}
 		if (vlen == RHASH_VAL_STRING) {
-			val_dup = strdup(val);
+			entry->val = strdup(val);
 		} else {
-			val_dup = malloc(vlen);
-			memcpy(val_dup, val, vlen);
+			entry->val = malloc(vlen);
+			memcpy(entry->val, val, vlen);
 		}
 
-		if (vlen == -1) {
-			DEBUG_MSG("rhash_set(): setting %s: %s (0x%X)\n", (const char *)key, (const char *)val_dup, val_dup);
+		if (vlen == RHASH_VAL_STRING) {
+			DEBUG_MSG("rhash_set(): setting %s: %s (0x%X)\n", (const char *)key, (const char *)entry->val, entry->val);
 		}
-		
-		apr_hash_set(ht->key_pointers, key_dup, klen, key_dup);
-		apr_hash_set(ht->apr_hash, key_dup, klen, val_dup);
+		apr_hash_set(ht, entry->key, klen, entry);
 	}
 }
 
@@ -167,14 +158,18 @@ void rhash_set(rhash_t *ht, const void *key, apr_ssize_t klen, const void *val, 
 /* Wrapper for apr_hash_get */
 void *rhash_get(rhash_t *ht, const void *key, apr_ssize_t klen)
 {
-	return apr_hash_get(ht->apr_hash, key, klen);
+	entry_t *e = apr_hash_get(ht, key, klen);
+	if (e) {
+		return e->val;
+	}
+	return NULL;
 }
 
 
 /* Wrapper for apr_hash_first */
 apr_hash_index_t *rhash_first(apr_pool_t *p, rhash_t *ht)
 {
-	return apr_hash_first(p, ht->apr_hash);
+	return apr_hash_first(p, ht);
 }
 
 
@@ -188,12 +183,14 @@ apr_hash_index_t *rhash_next(apr_hash_index_t *hi)
 /* Wrapper for apr_hash_this */
 void rhash_this(apr_hash_index_t *hi, const void **key, apr_ssize_t *klen, void **val)
 {
-	apr_hash_this(hi, key, klen, val);
+	entry_t *e;
+	apr_hash_this(hi, key, klen, (void **)&e);
+	val = &e->val;
 }
 
 
 /* Wrapper for apr_hash_count */
 unsigned int rhash_count(rhash_t *ht)
 {
-	return apr_hash_count(ht->apr_hash);
+	return apr_hash_count(ht);
 }
