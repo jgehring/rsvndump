@@ -74,6 +74,17 @@
 #define REV_ADD "+ "
 #define REV_DELETE "- "
 
+/* Convenient zlib support */
+#ifdef HAVE_LIBZ
+	#define PH_FILE gzFile
+	#define PH_PRINTF gzprintf  /* Missing variadic macros... MSVC, I'm looking at you! */
+	#define PH_CLOSE(f) gzclose(f)
+#else
+	#define PH_FILE apr_file_t*
+	#define PH_PRINTF apr_file_printf
+	#define PH_CLOSE(f) apr_file_close(f)
+#endif
+
 
 /*---------------------------------------------------------------------------*/
 /* Local data structures                                                     */
@@ -632,11 +643,7 @@ static char path_hash_copy(apr_hash_t *tree, const char *path, const char *from,
 
 
 /* Writes a series of tree deltas to the given file */
-#ifdef HAVE_LIBZ
-static char path_hash_write(apr_hash_t *tree, gzFile file, apr_pool_t *pool)
-#else
-static char path_hash_write(apr_hash_t *tree, apr_file_t *file, apr_pool_t *pool)
-#endif
+static char path_hash_write(apr_hash_t *tree, PH_FILE file, apr_pool_t *pool)
 {
 	apr_hash_index_t *hi;
 	apr_array_header_t *recon_stack = apr_array_make(pool, 0, sizeof(apr_hash_t *));
@@ -652,11 +659,9 @@ static char path_hash_write(apr_hash_t *tree, apr_file_t *file, apr_pool_t *pool
 		if (apr_hash_count(top_hash) == 0) {
 			if (strcmp(top_path, "/")) {
 				DEBUG_MSG("path_hash_write: +++ %s\n", top_path);
-#ifdef HAVE_LIBZ
-				gzprintf(file, "%s%s\n", REV_ADD, top_path);
-#else
-				apr_file_printf(file, "%s%s\n", REV_ADD, top_path);
-#endif
+				if (PH_PRINTF(file, "%s%s\n", REV_ADD, top_path) <= 0) {
+					return 1;
+				}
 			}
 			continue;
 		}
@@ -685,11 +690,7 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 	apr_status_t status;
 	apr_hash_t *tree;
 	apr_file_t *aprfile = NULL;
-#ifdef HAVE_LIBZ
-	gzFile file;
-#else
-	apr_file_t *file;
-#endif
+	PH_FILE file;
 	apr_pool_t *delta_pool = svn_pool_create(pool);
 
 	filename = apr_psprintf(pool, "%s/ph/XXXXXX", ph_temp_dir);
@@ -713,12 +714,7 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 	}
 	DEBUG_MSG("path_hash_write: snapshot at index %d -> revision %d\n", index, index * SNAPSHOT_DIST);
 	if (path_hash_write(tree, file, delta_pool)) {
-#ifdef HAVE_LIBZ
-		gzclose(file);
-#else
-		apr_file_close(file);
-#endif
-		return NULL;
+		goto io_error;
 	}
 
 	svn_pool_destroy(apr_hash_pool_get(tree));
@@ -733,11 +729,9 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 		int j;
 
 		DEBUG_MSG("path_hash_write: %s %d\n", REV_SEPARATOR, index);
-#ifdef HAVE_LIBZ
-		gzprintf(file, "%s %d\n", REV_SEPARATOR, index);
-#else
-		apr_file_printf(file, "%s %d\n", REV_SEPARATOR, index);
-#endif
+		if (PH_PRINTF(file, "%s %d\n", REV_SEPARATOR, index) <= 0) {
+			goto io_error;
+		}
 
 		/* Skip padding revisions */
 		if (delta == NULL) {
@@ -748,22 +742,15 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 		/* Additions */
 		svn_pool_clear(delta_pool);
 		if (path_hash_write(delta->added, file, delta_pool)) {
-#ifdef HAVE_LIBZ
-			gzclose(file);
-#else
-			apr_file_close(file);
-#endif
-			return NULL;
+			goto io_error;
 		}
 
 		/* Deletions */
 		for (j = 0; j < delta->deleted->nelts; j++) {
 			DEBUG_MSG("path_hash_write: --- %s\n", APR_ARRAY_IDX(delta->deleted, j, const char *));
-#ifdef HAVE_LIBZ
-			gzprintf(file, "%s%s\n", REV_DELETE, APR_ARRAY_IDX(delta->deleted, j, const char *));
-#else
-			apr_file_printf(file, "%s%s\n", REV_DELETE, APR_ARRAY_IDX(delta->deleted, j, const char *));
-#endif
+			if (PH_PRINTF(file, "%s%s\n", REV_DELETE, APR_ARRAY_IDX(delta->deleted, j, const char *)) <= 0) {
+				goto io_error;
+			}
 		}
 
 		DEBUG_MSG("path_hash_write: --------------------------------------------------------------\n");
@@ -773,20 +760,21 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 		++index;
 	}
 
-#ifdef HAVE_LIBZ
-	gzprintf(file, "%s\n", REV_SEPARATOR);
-#else
-	apr_file_printf(file, "%s\n", REV_SEPARATOR);
-#endif
+	if (PH_PRINTF(file, "%s\n", REV_SEPARATOR) <= 0) {
+		goto io_error;
+	}
 	DEBUG_MSG("path_hash_write: ==============================================================\n");
 
-#ifdef HAVE_LIBZ
-	gzclose(file);
-#else
-	apr_file_close(file);
-#endif
+	if (PH_CLOSE(file) < 0) {
+		goto io_error;
+	}
+
 	svn_pool_destroy(delta_pool);
 	return filename;
+
+io_error:
+	fprintf(stderr, _("ERROR: Unable to write to temporary file %s\n"), filename);
+	return NULL;
 }
 
 
