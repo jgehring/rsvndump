@@ -509,6 +509,16 @@ static apr_hash_t *path_hash_reconstruct_file(svn_revnum_t rev, apr_pool_t *pool
 }
 
 
+/* Quick check if path hash for given revision is available */
+static char path_hash_available(svn_revnum_t rev)
+{
+	if (rev < 0 || ph_revisions->nelts < rev) {
+		return 0;
+	}
+	return 1;
+}
+
+
 /* Reconstructs the complete tree at the given revision, allocated in pool */
 static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 {
@@ -520,8 +530,8 @@ static apr_hash_t *path_hash_reconstruct(svn_revnum_t rev, apr_pool_t *pool)
 
 	DEBUG_MSG("path_hash_reconstruct(%ld): started\n", rev);
 
-	if (rev < 0 || ph_revisions->nelts < rev) {
-		DEBUG_MSG("path_hash_reconstruct(%ld): revision not available (max = %d)\n", rev, ph_revisions->nelts);
+	if (!path_hash_available(rev)) {
+		DEBUG_MSG("path_hash_reconstruct(%ld): revision not available\n", rev);
 		return NULL;
 	}
 
@@ -614,12 +624,17 @@ static char path_hash_copy(apr_hash_t *tree, const char *path, const char *from,
 	apr_hash_t *recon, *subtree, *newtree;
 	apr_pool_t *recon_pool = svn_pool_create(pool);
 
+	/* Check if the revision is available */
+	if (!path_hash_available(revnum)) {
+		return 1;
+	}
+
 	/* First, reconstruct tree at the given revision */
 	recon = path_hash_reconstruct(revnum, recon_pool);
 	if (recon == NULL) {
 		DEBUG_MSG("path_hash: !!! reconstruction failed for %ld!\n", revnum);
 		svn_pool_destroy(recon_pool);
-		return 1;
+		return -1;
 	}
 
 	/* Determine location of the path */
@@ -822,7 +837,10 @@ static char path_hash_commit_add(session_t *session, dump_options_t *opts, log_r
 			/* Use local copyfrom revision, just like in delta.c */
 			svn_revnum_t copyfrom_rev = delta_get_local_copyfrom_rev(info->copyfrom_rev, opts, logs, revnum);
 			DEBUG_MSG("path_hash: +++ %s@%d -> %s@%d -> %s\n", info->copyfrom_path, info->copyfrom_rev, copyfrom_path, copyfrom_rev, path, ph_session_prefix);
-			if (path_hash_copy(ph_head->added, path, copyfrom_path, copyfrom_rev, pool)) {
+			signed char check = path_hash_copy(ph_head->added, path, copyfrom_path, copyfrom_rev, pool);
+			if (check < 0) {
+				return -1;
+			} else if (check) {
 				/*
 				 * The copy source could not be determined. However, it is
 				 * important to have a consistent history, so add the whole tree
@@ -1017,12 +1035,18 @@ char path_hash_commit_padding()
 
 
 /* Checks the parent relation of two paths at a given revision */
-char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t revnum, apr_pool_t *pool)
+signed char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t revnum, apr_pool_t *pool)
 {
 	int i;
 	apr_hash_t *recon = NULL, *subtree;
 
 	DEBUG_MSG("path_hash: check_parent(%s, %s, %ld): %ld revisions\n", parent, child, revnum, ph_revisions->nelts);
+
+	/* Check if revision is available */
+	if (!path_hash_available(revnum)) {
+		DEBUG_MSG("path_hash_check_parent: revision not available\n");
+		return 0;
+	}
 
 	/* Check the cache first */
 	for (i = 0; i < CACHE_SIZE; i++) {
@@ -1038,7 +1062,8 @@ char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t 
 		recon = path_hash_reconstruct(revnum, pool);
 		if (recon == NULL) {
 			DEBUG_MSG("path_hash: unable to reconstruct hash for revision %ld\n", revnum);
-			return 0;
+			fprintf(stderr, _("ERROR: Unable to reconstruct path information for revision %ld\n"), revnum);
+			return -1;
 		} else {
 			/* Insert the tree into the cache */
 			cached_tree_t *entry = &APR_ARRAY_IDX(ph_cache, ph_cache_pos, cached_tree_t);

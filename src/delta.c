@@ -375,7 +375,7 @@ static char delta_check_copy(de_node_baton_t *node)
 
 
 /* Propagates copy information from a parent to a child node */
-static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child)
+static svn_error_t *delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child)
 {
 	apr_pool_t *check_pool;
 	de_node_baton_t *copied_parent;
@@ -389,7 +389,7 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 	if (parent->cp_info != CPI_COPY) {
 		DEBUG_MSG("delta_propagate_copy(%s, %s): early out %d\n", parent->path, child->path, parent->cp_info);
 		child->cp_info = parent->cp_info;
-		return;
+		return SVN_NO_ERROR;
 	}
 
 	/*
@@ -400,7 +400,7 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 	/* Build relative path for the child */
 	if (strncmp(parent->path, child->path, strlen(parent->path))) {
 		DEBUG_MSG("delta_propagate_copy(%s, %s): paths do not match!\n", parent->path, child->path);
-		return;
+		return SVN_NO_ERROR;
 	}
 	child_relpath = child->path + strlen(parent->path);
 	while (*child_relpath == '/') {
@@ -414,14 +414,14 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 	}
 	if (copied_parent == NULL) {
 		child->cp_info = parent->cp_info;
-		return;
+		return SVN_NO_ERROR;
 	}
 
 	path = delta_get_local_copyfrom_path(parent->de_baton->session->prefix, copied_parent->copyfrom_path);
 	if (path == NULL) {
 		DEBUG_MSG("delta_propagate_copy(%s, %s): copyfrom_path (%s) is out of scope\n", copied_parent->copyfrom_path);
 		child->cp_info = CPI_NONE;
-		return;
+		return SVN_NO_ERROR;
 	}
 
 	revision = delta_get_local_copyfrom_rev(copied_parent->copyfrom_revision, parent->de_baton->opts, parent->de_baton->logs, parent->de_baton->local_revnum);
@@ -438,6 +438,7 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 	check_pool = svn_pool_create(child->pool);
 	while (1) {
 		char *tmp;
+		signed char check;
 
 		/* Extract directory and basename for current level */
 		if ((base = strchr(base, '/')) == NULL) {
@@ -449,7 +450,10 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 		}
 		*tmp = '\0';
 
-		if (path_hash_check_parent(check_path, base, revision, check_pool)) {
+		check = path_hash_check_parent(check_path, base, revision, check_pool);
+		if (check < 0) {
+			return svn_error_createf(1, NULL, "Error propagating copy information");
+		} else if (check) {
 			*(base-1) = '/';
 			if (tmp < end) {
 				*tmp = '/';
@@ -461,12 +465,13 @@ static void delta_propagate_copy(de_node_baton_t *parent, de_node_baton_t *child
 		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld FAIL\n", path, child_relpath, revision);
 		child->cp_info = CPI_NONE;
 		svn_pool_destroy(check_pool);
-		return;
+		return SVN_NO_ERROR;
 	}
 
 	DEBUG_MSG("path_hash: parent relation %s -> %s in %ld OK\n", path, child_relpath, revision);
 	child->cp_info = CPI_COPY;
 	svn_pool_destroy(check_pool);
+	return SVN_NO_ERROR;
 }
 
 
@@ -893,7 +898,9 @@ static svn_error_t *delta_dump_node_recursive(de_node_baton_t *node)
 		de_node_baton_t *child = APR_ARRAY_IDX(node->children, i, de_node_baton_t *);
 
 		/* Propagate copy information obtained while dumping the parent node */
-		delta_propagate_copy(node, child);
+		if ((err = delta_propagate_copy(node, child))) {
+			return err;
+		}
 
 		if ((err = delta_dump_node_recursive(child))) {
 			return err;

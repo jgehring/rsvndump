@@ -47,7 +47,7 @@ extern char path_hash_commit(session_t *session, dump_options_t *opts, log_revis
 extern char path_hash_commit_padding(void);
 
 /* Checks the parent relation of two paths at a given revision */
-extern char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t revision, apr_pool_t *pool);
+extern signed char path_hash_check_parent(const char *parent, const char *child, svn_revnum_t revision, apr_pool_t *pool);
 
 #ifdef DEBUG_PHASH
  extern char path_hash_verify(session_t *session, svn_revnum_t local_revision, svn_revnum_t global_revision);
