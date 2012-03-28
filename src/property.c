@@ -134,7 +134,7 @@ static int prop_hash_serialize(char **data, size_t *len, apr_hash_t *props, apr_
 		*len += sizeof(int) * 2;
 		*len += strlen(key) + value->len;
 	}
-	*len += 1; /* Final zero byte */
+	*len += sizeof(int); /* Final zero integer */
 
 	if ((*data = apr_palloc(pool, *len)) == NULL) {
 		return -1;
@@ -156,7 +156,7 @@ static int prop_hash_serialize(char **data, size_t *len, apr_hash_t *props, apr_
 		bptr += sizeof(int) + *(int *)bptr;
 	}
 
-	*bptr = '\0';
+	*(int *)bptr = 0; /* End of data */
 	return 0;
 }
 
@@ -165,7 +165,7 @@ static int prop_hash_serialize(char **data, size_t *len, apr_hash_t *props, apr_
 static int prop_hash_reconstruct(apr_hash_t *props, const char *data, apr_pool_t *pool)
 {
 	const char *bptr = data;
-	while (*bptr) {
+	while (*(int *)bptr) {
 		int len;
 		char *key;
 		svn_string_t *value;
