@@ -835,9 +835,10 @@ static char path_hash_commit_add(session_t *session, dump_options_t *opts, log_r
 			}
 		} else {
 			/* Use local copyfrom revision, just like in delta.c */
+			signed char check;
 			svn_revnum_t copyfrom_rev = delta_get_local_copyfrom_rev(info->copyfrom_rev, opts, logs, revnum);
 			DEBUG_MSG("path_hash: +++ %s@%d -> %s@%d -> %s\n", info->copyfrom_path, info->copyfrom_rev, copyfrom_path, copyfrom_rev, path, ph_session_prefix);
-			signed char check = path_hash_copy(ph_head->added, path, copyfrom_path, copyfrom_rev, pool);
+			check = path_hash_copy(ph_head->added, path, copyfrom_path, copyfrom_rev, pool);
 			if (check < 0) {
 				return -1;
 			} else if (check) {
