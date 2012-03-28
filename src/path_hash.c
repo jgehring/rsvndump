@@ -736,7 +736,7 @@ static char *path_hash_write_deltas(apr_pool_t *pool)
 #ifdef HAVE_LIBZ
 		gzprintf(file, "%s %d\n", REV_SEPARATOR, index);
 #else
-		apr_file_printf(file, "%s $d\n", REV_SEPARATOR, index);
+		apr_file_printf(file, "%s %d\n", REV_SEPARATOR, index);
 #endif
 
 		/* Skip padding revisions */
