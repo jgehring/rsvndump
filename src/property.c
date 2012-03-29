@@ -267,7 +267,7 @@ int property_store_init(const char *tmpdir, struct apr_pool_t *pool)
 	prop_refs = apr_hash_make(prop_pool);
 	prop_entries = apr_hash_make(prop_pool);
 
-	/* Open Berkeley DB */
+	/* Open database */
 	db_path = apr_psprintf(prop_pool, "%s/props.db", tmpdir);
 	if (apr_dbm_open(&prop_db, db_path, APR_DBM_RWTRUNC, 0x0600, prop_pool) != APR_SUCCESS) {
 		fprintf(stderr, "Error creating property storage\n");
