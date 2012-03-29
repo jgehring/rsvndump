@@ -121,11 +121,11 @@ static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 		}
 		return 0;
 	}
-	if (sscanf(str, "%ld%c", start, &eos) == 1) {
-		if (*start < 0) {
+	if (sscanf(str, "%ld%c", end, &eos) == 1) {
+		if (*end < 1) {
 			return 1;
 		}
-		*end = *start;
+		*start = *end - 1;
 		return 0;
 	}
 	if (sscanf(str, "%4s%c", tmp1, &eos) == 1 && !strcmp(tmp1, head)) {
