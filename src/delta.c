@@ -212,37 +212,6 @@ static void delta_mark_node(de_node_baton_t *node)
 }
 
 
-/* Writes the properties of a node to a temporary file */
-static svn_error_t *delta_write_properties(de_node_baton_t *node)
-{
-	apr_pool_t *pool = svn_pool_create(node->pool);
-	int ret;
-
-	ret = property_store(node->path, node->properties, pool);
-	if (ret != 0) {
-		return svn_error_createf(1, NULL, "Error loading properties (%d)\n", ret);
-	}
-
-	svn_pool_destroy(pool);
-	return SVN_NO_ERROR;
-}
-
-
-/* Loads the properties of a node to a temporary file */
-static svn_error_t *delta_load_properties(de_node_baton_t *node)
-{
-	int ret;
-
-	apr_hash_clear(node->properties);
-	ret = property_load(node->path, node->properties, node->pool);
-	if (ret != 0) {
-		return svn_error_createf(1, NULL, "Error loading properties (%d)\n", ret);
-	}
-
-	return SVN_NO_ERROR;
-}
-
-
 /* Checks if a node can be dumped as a copy */
 static char delta_check_copy(de_node_baton_t *node)
 {
@@ -1009,6 +978,7 @@ static svn_error_t *de_open_directory(const char *path, void *parent_baton, svn_
 {
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
 	de_node_baton_t *node;
+	int ret;
 
 	path = session_obfuscate(parent->de_baton->session, dir_pool, path);
 	node = delta_create_node(path, parent);
@@ -1017,8 +987,12 @@ static svn_error_t *de_open_directory(const char *path, void *parent_baton, svn_
 
 	*child_baton = node;
 
-	/* Load previous properties if possible */
-	return delta_load_properties(node);
+	/* Load properties (if any) */
+	ret = property_load(node->path, node->properties, node->pool);
+	if (ret != 0) {
+		return svn_error_createf(1, NULL, "Error loading properties (%d)\n", ret);
+	}
+	return SVN_NO_ERROR;
 }
 
 
@@ -1050,11 +1024,16 @@ static svn_error_t *de_change_dir_prop(void *dir_baton, const char *name, const 
 static svn_error_t *de_close_directory(void *dir_baton, apr_pool_t *pool)
 {
 	de_node_baton_t *node = (de_node_baton_t *)dir_baton;
+	int ret;
 
 	DEBUG_MSG("de_close_directory(%s): dump_needed = %d\n", node->path, (int)node->dump_needed);
 
-	/* Save the property hash */
-	return delta_write_properties(node);
+	/* Save properties for next time */
+	ret = property_store(node->path, node->properties, pool);
+	if (ret != 0) {
+		return svn_error_createf(1, NULL, "Error storing properties (%d)\n", ret);
+	}
+	return SVN_NO_ERROR;
 }
 
 
@@ -1133,18 +1112,22 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 {
 	de_node_baton_t *parent = (de_node_baton_t *)parent_baton;
 	de_node_baton_t *node;
+	int ret;
 
 	path = session_obfuscate(parent->de_baton->session, file_pool, path);
 	DEBUG_MSG("de_open_file(%s)\n", path);
-
 	node = delta_create_node(path, parent);
 	node->kind = svn_node_file;
 	node->action = 'M';
 
 	*file_baton = node;
 
-	/* Load previous properties if possible */
-	return delta_load_properties(node);
+	/* Load properties (if any) */
+	ret = property_load(node->path, node->properties, node->pool);
+	if (ret != 0) {
+		return svn_error_createf(1, NULL, "Error loading properties (%d)\n", ret);
+	}
+	return SVN_NO_ERROR;
 }
 
 
@@ -1230,9 +1213,14 @@ static svn_error_t *de_change_file_prop(void *file_baton, const char *name, cons
 static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, apr_pool_t *pool)
 {
 	de_node_baton_t *node = (de_node_baton_t *)file_baton;
+	int ret;
 
-	/* Save the property hash */
-	return delta_write_properties(node);
+	/* Save properties for next time */
+	ret = property_store(node->path, node->properties, pool);
+	if (ret != 0) {
+		return svn_error_createf(1, NULL, "Error storing properties (%d)\n", ret);
+	}
+	return SVN_NO_ERROR;
 }
 
 
