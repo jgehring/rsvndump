@@ -269,7 +269,7 @@ int property_store_init(const char *tmpdir, struct apr_pool_t *pool)
 
 	/* Open database */
 	db_path = apr_psprintf(prop_pool, "%s/props.db", tmpdir);
-	if (apr_dbm_open(&prop_db, db_path, APR_DBM_RWTRUNC, 0x0600, prop_pool) != APR_SUCCESS) {
+	if (apr_dbm_open_ex(&prop_db, "gdbm", db_path, APR_DBM_RWTRUNC, 0x0600, prop_pool) != APR_SUCCESS) {
 		fprintf(stderr, "Error creating property storage\n");
 		return -1;
 	}
