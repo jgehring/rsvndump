@@ -1311,8 +1311,7 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 static svn_error_t *de_abort_edit(void *edit_baton, apr_pool_t *pool)
 {
 #ifdef DEBUG
-	DEBUG_MSG("abort_edit\n");
-	exit(1);
+	DEBUG_MSG("abort_edit()\n");
 #endif
 	return SVN_NO_ERROR;
 }
