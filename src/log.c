@@ -214,7 +214,7 @@ char log_fetch_single(session_t *session, svn_revnum_t rev, svn_revnum_t end, lo
 	baton.session = session;
 	baton.pool = pool;
 
-	if ((err = svn_ra_get_log(session->ra, paths, rev, end, 1, TRUE, FALSE, log_receiver, &baton, subpool))) {
+	if ((err = svn_ra_get_log(session->ra, paths, rev, end, 1, TRUE, TRUE, log_receiver, &baton, subpool))) {
 		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
 		svn_pool_destroy(subpool);
@@ -244,7 +244,7 @@ char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, apr
 	baton.pool = session->pool;
 
 	L1(_("Fetching logs... "));
-	if ((err = svn_ra_get_log(session->ra, paths, start, end, 0, TRUE, FALSE, log_receiver_list, &baton, pool))) {
+	if ((err = svn_ra_get_log(session->ra, paths, start, end, 0, TRUE, TRUE, log_receiver_list, &baton, pool))) {
 		L1(_("failed\n"));
 		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
