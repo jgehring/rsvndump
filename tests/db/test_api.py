@@ -176,7 +176,7 @@ def dump_rsvndump_incremental_sub(id, path, stepsize, args, repos = None):
 			run("../../src/rsvndump", uri("file://"+repos+"/"+path), "--incremental", "--no-incremental-header", "--revision", str(start)+":"+str(end), extra_args = tuple(args), output = dump, error = test.log(id))
 		else:
 			run("../../bin/rsvndump", uri("file://"+repos+"/"+path), "--incremental", "--no-incremental-header", "--revision", str(start)+":"+str(end), extra_args = tuple(args), output = dump, error = test.log(id))
-		start = int(match.group())
+		start = end+1
 
 	return dump
 

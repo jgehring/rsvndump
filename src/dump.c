@@ -376,7 +376,7 @@ char dump(session_t *session, dump_options_t *opts)
 		   This is because we need to get the data of the previous
 		   revision first in order to properly apply the received deltas. */
 		opts->flags |= DF_INITIAL_DRY_RUN;
-		if (strlen(session->prefix) == 0) {
+		if (local_rev > 1 || strlen(session->prefix) == 0) {
 			--local_rev;
 		}
 		opts->start = APR_ARRAY_IDX(logs, local_rev, log_revision_t).revision;
