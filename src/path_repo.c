@@ -35,11 +35,14 @@
 #include "utils.h"
 
 #include "critbit/critbit.h"
+#include "snappy-c/snappy.h"
 
 #include "path_repo.h"
 
 
-#define SNAPSHOT_INTERVAL (1<<12)  /* Interval for full-tree snapshots */
+#define USE_SNAPPY
+
+#define SNAPSHOT_INTERVAL (1<<11)  /* Interval for full-tree snapshots */
 #define CACHE_SIZE 4               /* Number of cached full trees */
 
 
@@ -72,6 +75,10 @@ struct path_repo_t {
 
 	apr_array_header_t *cache;   /* FIFO cache */
 	int cache_index;
+
+#ifdef USE_SNAPPY
+	struct snappy_env snappy_env;
+#endif
 
 #ifdef DEBUG
 	int delta_bytes;
@@ -188,6 +195,8 @@ static int pr_reconstruct(path_repo_t *repo, critbit0_tree *tree, svn_revnum_t r
 	apr_datum_t key, val;
 	apr_status_t status;
 	svn_revnum_t r;
+	char *dptr;
+	size_t dsize;
 #ifdef DEBUG
 	apr_time_t start = apr_time_now();
 #endif
@@ -204,10 +213,27 @@ static int pr_reconstruct(path_repo_t *repo, critbit0_tree *tree, svn_revnum_t r
 				fprintf(stderr, "Error fetching delta for revision %ld (%s)\n", r, apr_strerror(status, buf, sizeof(buf)));
 				return -1;
 			}
-			if (pr_delta_apply(tree, val.dptr, val.dsize, pool) != 0) {
+#ifdef USE_SNAPPY
+			if (!snappy_uncompressed_length(val.dptr, val.dsize, &dsize)) {
+				return -1;
+			}
+			dptr = malloc(dsize);
+			if (!snappy_uncompress(val.dptr, val.dsize, dptr)) {
+				free(dptr);
+				return -1;
+			}
+#else
+			dptr = val.dptr;
+			dsize = val.dsize;
+#endif
+			if (pr_delta_apply(tree, dptr, dsize, pool) != 0) {
 				fprintf(stderr, "Error applying tree delta for revision %ld\n", r);
 				return -1;
 			}
+
+#ifdef USE_SNAPPY
+			free(dptr);
+#endif
 		}
 		++r;
 	}
@@ -340,6 +366,13 @@ path_repo_t *path_repo_create(const char *tmpdir, apr_pool_t *pool)
 		return NULL;
 	}
 
+#ifdef USE_SNAPPY
+	if (snappy_init_env(&repo->snappy_env) != 0) {
+		fprintf(stderr, "Error initializing snappy compressor\n");
+		return NULL;
+	}
+#endif
+
 	apr_pool_cleanup_register(repo->pool, repo, pr_cleanup, NULL);
 	return repo;
 }
@@ -384,6 +417,9 @@ int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 	apr_datum_t key, val;
 	int i;
 	char *dptr = NULL;
+#ifdef USE_SNAPPY
+	size_t dsize = 0;
+#endif
 	int snapshot = (revision > 0 && (revision % SNAPSHOT_INTERVAL == 0));
 
 	/* Skip empty revisions if there's no snapshot pending */
@@ -409,6 +445,17 @@ int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 	} else {
 		pr_encode(&repo->tree, &val.dptr, &val.dsize, pool);
 	}
+
+#ifdef USE_SNAPPY
+	dptr = apr_palloc(pool, snappy_max_compressed_length(val.dsize));
+	if (snappy_compress(&repo->snappy_env, val.dptr, val.dsize, dptr, &dsize) != 0) {
+		fprintf(stderr, "Error compressing data\n");
+		return -1;
+	}
+	val.dptr = dptr;
+	val.dsize = dsize;
+#endif
+
 #ifdef DEBUG
 	repo->delta_bytes += val.dsize;
 #endif
@@ -523,6 +570,9 @@ signed char path_repo_check_parent(path_repo_t *repo, const char *parent, const 
 {
 	char *path;
 	critbit0_tree *tree = pr_tree(repo, revision, pool);
+	if (tree == NULL) {
+		return -1;
+	}
 	path = apr_psprintf(pool, "%s/%s", parent, child);
 	if (critbit0_contains(tree, path)) {
 		return 1;
