@@ -289,6 +289,7 @@ char dump(session_t *session, dump_options_t *opts)
 	svn_revnum_t global_rev, local_rev = -1;
 	int list_idx;
 	path_repo_t *path_repo;
+	delta_editor_info_t delta_info;
 
 	/* Dumping with deltas requires dump format version 3 */
 	if (opts->flags & DF_USE_DELTAS) {
@@ -430,6 +431,12 @@ char dump(session_t *session, dump_options_t *opts)
 		show_local_rev = 0;
 	}
 
+	/* Setup delta editor information */
+	delta_info.session = session;
+	delta_info.options = opts;
+	delta_info.path_repo = path_repo;
+	delta_info.logs = logs;
+
 	/* Start dumping */
 	do {
 		svn_delta_editor_t *editor;
@@ -512,7 +519,7 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 
 		/* Setup the delta editor and run a diff */
-		delta_setup_editor(session, opts, path_repo, logs, &APR_ARRAY_IDX(logs, list_idx, log_revision_t), local_rev, &editor, &editor_baton, revpool);
+		delta_setup_editor(&delta_info, &APR_ARRAY_IDX(logs, list_idx, log_revision_t), local_rev, &editor, &editor_baton, revpool);
 		if (dump_do_diff(session, opts, diff_rev, APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision, (global_rev == opts->start), editor, editor_baton, revpool)) {
 			ret = 1;
 			break;

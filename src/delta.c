@@ -1375,7 +1375,7 @@ svn_revnum_t delta_get_local_copyfrom_rev(svn_revnum_t original, dump_options_t 
 
 
 /* Sets up a delta editor for dumping a revision */
-void delta_setup_editor(session_t *session, dump_options_t *options, path_repo_t *path_repo, apr_array_header_t *logs, log_revision_t *log_revision, svn_revnum_t local_revnum, svn_delta_editor_t **editor, void **editor_baton, apr_pool_t *pool)
+void delta_setup_editor(delta_editor_info_t *info, log_revision_t *log_revision, svn_revnum_t local_revnum, svn_delta_editor_t **editor, void **editor_baton, apr_pool_t *pool)
 {
 	de_baton_t *baton;
 
@@ -1398,19 +1398,19 @@ void delta_setup_editor(session_t *session, dump_options_t *options, path_repo_t
 	(*editor)->abort_edit = de_abort_edit;
 
 	baton = apr_palloc(pool, sizeof(de_baton_t));
-	baton->session = session;
-	baton->opts = options;
-	baton->logs = logs;
+	baton->session = info->session;
+	baton->opts = info->options;
+	baton->logs = info->logs;
 	baton->log_revision = log_revision;
 	baton->local_revnum = local_revnum;
 	baton->revision_pool = svn_pool_create(pool);
 	baton->dumped_entries = apr_hash_make(baton->revision_pool);
-	baton->path_repo = path_repo;
+	baton->path_repo = info->path_repo;
 	*editor_baton = baton;
 
 	/* Create global hashes if needed */
 	if (!hashes_created) {
-		apr_pool_t *hash_pool = svn_pool_create(session->pool);
+		apr_pool_t *hash_pool = svn_pool_create(info->session->pool);
 
 		md5_hash = rhash_make(hash_pool);
 		delta_hash = rhash_make(hash_pool);

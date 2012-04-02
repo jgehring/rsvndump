@@ -35,6 +35,15 @@
 #include "session.h"
 
 
+/* Bundles information passed to delta_setup_editor() */
+typedef struct {
+	session_t *session;
+	dump_options_t *options;
+	path_repo_t *path_repo;
+	apr_array_header_t *logs;
+} delta_editor_info_t;
+
+
 /* Determines the local copyfrom_path (returns NULL if it can't be reached) */
 const char *delta_get_local_copyfrom_path(const char *prefix, const char *path);
 
@@ -42,7 +51,7 @@ const char *delta_get_local_copyfrom_path(const char *prefix, const char *path);
 svn_revnum_t delta_get_local_copyfrom_rev(svn_revnum_t original, dump_options_t *opts, apr_array_header_t *logs, svn_revnum_t local_revnum);
 
 /* Sets up a delta editor for dumping a revision */
-extern void delta_setup_editor(session_t *session, dump_options_t *options, path_repo_t *path_repo, apr_array_header_t *logs, log_revision_t *log_revision, svn_revnum_t local_revnum, svn_delta_editor_t **editor, void **editor_baton, apr_pool_t *pool);
+extern void delta_setup_editor(delta_editor_info_t *info, log_revision_t *log_revision, svn_revnum_t local_revnum, svn_delta_editor_t **editor, void **editor_baton, apr_pool_t *pool);
 
 /* Cleans up global resources */
 extern void delta_cleanup();
