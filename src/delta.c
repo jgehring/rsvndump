@@ -362,7 +362,7 @@ static svn_error_t *delta_propagate_copy(de_node_baton_t *parent, de_node_baton_
 		/* Failure */
 		DEBUG_MSG("path_repo: parent relation %s -> %s in %ld FAIL\n", path, child_relpath, revision);
 		child->cp_info = CPI_NONE;
-		svn_pool_destroy(check_pool);
+		svn_pool_clear(check_pool);
 		return SVN_NO_ERROR;
 	}
 
