@@ -36,12 +36,12 @@
 #include "utils.h"
 
 #include "critbit/critbit.h"
-#include "snappy-c/snappy.h"
+#ifdef USE_SNAPPY
+	#include "snappy-c/snappy.h"
+#endif
 
 #include "path_repo.h"
 
-
-#define USE_SNAPPY
 
 #define SNAPSHOT_INTERVAL (1<<11)  /* Interval for full-tree snapshots */
 #define CACHE_SIZE 4               /* Number of cached full trees */
