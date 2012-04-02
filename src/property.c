@@ -38,6 +38,12 @@
 
 #include "main.h"
 
+#include "logger.h"
+
+#ifdef USE_SNAPPY
+	#include "snappy-c/snappy.h"
+#endif
+
 #include "property.h"
 
 
@@ -66,6 +72,15 @@ struct property_storage_t {
 	apr_hash_t *refs;      /* Property IDs to reference */
 	apr_hash_t *entries;   /* Path to property ID pointer */
 	GDBM_FILE db;          /* DBM: ID to property data */
+
+#ifdef USE_SNAPPY
+	struct snappy_env snappy_env;
+#endif
+
+#ifdef DEBUG
+	size_t bytes;
+	size_t bytes_raw;
+#endif
 };
 
 
@@ -82,6 +97,11 @@ static apr_status_t prop_cleanup(void *param)
 	const void *key;
 	apr_ssize_t klen;
 	void *value;
+
+#ifdef DEBUG
+	L1("prop_store: stored data:        %d kB\n", store->bytes / 1024);
+	L1("prop_store: stored data (raw):  %d kB\n", store->bytes_raw / 1024);
+#endif
 
 	/* Manually delete hash data */
 	for (hi = apr_hash_first(store->pool, store->refs); hi; hi = apr_hash_next(hi)) {
@@ -143,7 +163,7 @@ static int prop_hash_serialize(char **data, size_t *len, apr_hash_t *props, apr_
 
 
 /* Reconstructs a property hash from its serialized form */
-static int prop_hash_reconstruct(apr_hash_t *props, const char *data, apr_pool_t *pool)
+static int prop_hash_reconstruct(apr_hash_t *props, const char *data, size_t len, apr_pool_t *pool)
 {
 	const char *bptr = data;
 	while (*(int *)bptr) {
@@ -253,6 +273,13 @@ property_storage_t *property_storage_create(const char *tmpdir, apr_pool_t *pool
 		return NULL;
 	}
 
+#ifdef USE_SNAPPY
+	if (snappy_init_env(&store->snappy_env) != 0) {
+		fprintf(stderr, "Error initializing snappy compressor\n");
+		return NULL;
+	}
+#endif
+
 	apr_pool_cleanup_register(store->pool, store, prop_cleanup, NULL);
 	return store;
 }
@@ -298,11 +325,29 @@ int property_store(property_storage_t *store, const char *path, apr_hash_t *prop
 		ref->count = 0;
 		apr_hash_set(store->refs, ref->id, sizeof(id), ref);
 
+#ifdef USE_SNAPPY
+		{
+			size_t dsize;
+			value.dptr = apr_palloc(pool, snappy_max_compressed_length(len));
+			if (snappy_compress(&store->snappy_env, data, len, value.dptr, &dsize) != 0) {
+				fprintf(stderr, "Error compressing data\n");
+				return -1;
+			}
+			value.dsize = dsize;
+		}
+#else
+		value.dptr = data;
+		value.dsize = len;
+#endif
+
+#ifdef DEBUG
+		store->bytes_raw += len;
+		store->bytes += value.dsize;
+#endif
+
 		/* Add new ID -> data mapping to database */
 		key.dptr = (char *)id;
 		key.dsize = sizeof(id);
-		value.dptr = data;
-		value.dsize = len+1;
 		if (gdbm_store(store->db, key, value, GDBM_INSERT) != 0) {
 			return -1;
 		}
@@ -330,6 +375,8 @@ int property_load(property_storage_t *store, const char *path, apr_hash_t *props
 {
 	datum key, value;
 	prop_entry_t *entry;
+	char *dptr;
+	size_t dsize;
 	
 	/* Check if path has properties attached */
 	if ((entry = apr_hash_get(store->entries, path, APR_HASH_KEY_STRING)) == NULL) {
@@ -344,8 +391,21 @@ int property_load(property_storage_t *store, const char *path, apr_hash_t *props
 		return -1;
 	}
 
+#ifdef USE_SNAPPY
+	if (!snappy_uncompressed_length(value.dptr, value.dsize, &dsize)) {
+		return -1;
+	}
+	dptr = apr_palloc(pool, dsize);
+	if (snappy_uncompress(value.dptr, value.dsize, dptr) != 0) {
+		return -1;
+	}
+#else
+	dptr = value.dptr;
+	dsize = value.dsize;
+#endif
+
 	/* Reconstruct hash */
-	if (prop_hash_reconstruct(props, value.dptr, pool) != 0) {
+	if (prop_hash_reconstruct(props, dptr, dsize, pool) != 0) {
 		return -1;
 	}
 
