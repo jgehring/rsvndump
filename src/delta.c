@@ -801,7 +801,6 @@ static svn_error_t *delta_dump_node_recursive(de_node_baton_t *node)
 		if ((err = delta_dump_node_recursive(child))) {
 			return err;
 		}
-		svn_pool_destroy(child->pool);
 	}
 
 	if (node->action == 'D') {
