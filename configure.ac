@@ -9,7 +9,6 @@ test $prefix = NONE && prefix=/usr/local
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_LIBOBJ_DIR([lib])
 
-sinclude(m4/ax_check_zlib.m4)
 sinclude(m4/find_apr.m4)
 sinclude(m4/find_apu.m4)
 sinclude(m4/find_svn.m4)
