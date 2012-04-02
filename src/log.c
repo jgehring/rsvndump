@@ -85,7 +85,7 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 	for (hi = apr_hash_first(pool, changed_paths); hi; hi = apr_hash_next(hi)) {
 		const char *key;
 		svn_log_changed_path_t *svalue, *dvalue;
-		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&svalue);
+		apr_hash_this(hi, (const void **)&key, NULL, (void **)&svalue);
 		key = session_obfuscate(data->session, pool, key);
 
 		/* Skip this entry? */
@@ -110,8 +110,9 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 
 		/* Strip the prefix (or the leading slash) from the path */
 		if (*data->session->prefix != '\0') {
-			key += strlen(data->session->prefix) + 2;
-		} else {
+			key += strlen(data->session->prefix) + 1;
+		}
+		if (*key == '/') {
 			key += 1;
 		}
 		apr_hash_set(data->log->changed_paths, apr_pstrdup(data->pool, key), APR_HASH_KEY_STRING, dvalue);
