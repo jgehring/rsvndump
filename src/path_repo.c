@@ -599,7 +599,13 @@ int path_repo_commit_log(path_repo_t *repo, session_t *session, dump_options_t *
 signed char path_repo_check_parent(path_repo_t *repo, const char *parent, const char *child, svn_revnum_t revision, apr_pool_t *pool)
 {
 	char *path;
-	critbit0_tree *tree = pr_tree(repo, revision, pool);
+	critbit0_tree *tree;
+
+	if (revision < 0) {
+		return 0;
+	}
+
+	tree = pr_tree(repo, revision, pool);
 	if (tree == NULL) {
 		return -1;
 	}
