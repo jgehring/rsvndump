@@ -19,5 +19,6 @@ AM_CFLAGS = -DLOCALEDIR=\"$(localedir)\" \
 	$(APU_INCLUDES) \
 	$(SVN_CFLAGS) \
 	$(GDBM_INCLUDES) \
-	-Wall -Wno-deprecated-declarations \
+	-Wall -Wno-deprecated-declarations -Wsign-compare \
+	-pedantic -ansi \
 	-I$(top_srcdir)/lib
