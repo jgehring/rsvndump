@@ -60,9 +60,10 @@
 
 /* Copy info enumeration */
 typedef enum {
-	CPI_NONE,
-	CPI_COPY,
-	CPI_FAILED
+	CPI_NONE = 0x01,
+	CPI_COPY = 0x02,
+	CPI_FAILED = 0x04,
+	CPI_FAILED_OUTSIDE = 0x14 /* Outside of session prefix */
 } cp_info_t;
 
 
@@ -221,7 +222,7 @@ static char delta_check_copy(de_node_baton_t *node)
 	}
 
 	/* If the parent could not be copied, this node won't be copied, too */
-	if (node->cp_info == CPI_FAILED) {
+	if (node->cp_info & CPI_FAILED) {
 		return 0;
 	}
 
@@ -252,7 +253,6 @@ static char delta_check_copy(de_node_baton_t *node)
 			node->cp_info = CPI_COPY;
 			DEBUG_MSG("delta_check_copy: using local %ld\n", rev);
 		} else {
-			node->action = 'A';
 			node->cp_info = CPI_FAILED;
 			DEBUG_MSG("delta_check_copy: no matching revision found\n");
 		}
@@ -261,12 +261,72 @@ static char delta_check_copy(de_node_baton_t *node)
 		   simulate it by simple dumping the node as being added.
 		   This will work fine for single files, but directories
 		   must be dumped recursively. */
-		node->action = 'A';
-		node->cp_info = CPI_FAILED;
+		node->cp_info = CPI_FAILED_OUTSIDE;
 		DEBUG_MSG("delta_check_copy: resolving failed\n");
 	}
 
 	return 0;
+}
+
+
+/* Checks if a 'replace' action should be replaced by an 'add' action */
+static svn_error_t *delta_check_replace(de_node_baton_t *node)
+{
+	char check;
+	const char *copyfrom_path, *relpath;
+	de_node_baton_t *parent;
+	de_baton_t *de_baton = node->de_baton;
+	session_t *session = de_baton->session;
+
+	if (node->action != 'R') {
+		return SVN_NO_ERROR;
+	}
+
+	/* First, check the node's parents */
+	parent = node->parent;
+	while (parent) {
+		if (parent->cp_info == CPI_FAILED_OUTSIDE) {
+			/* This node is part of a manual copy replacement, so it
+			   should be added only.  */
+			node->action = 'A';
+			break;
+		} else if (parent->cp_info != CPI_COPY || parent->copyfrom_path == NULL) {
+			parent = parent->parent;
+			continue;
+		}
+
+		/* Found a successfully copied parent. If this node is *not* part of
+		   the copy, it should be added only. */
+		copyfrom_path = delta_get_local_copyfrom_path(session->prefix, parent->copyfrom_path);
+		relpath = node->path + strlen(parent->path) + 1;
+		check = path_repo_check_parent(de_baton->path_repo, copyfrom_path, relpath, parent->copyfrom_rev_local, node->pool);
+		DEBUG_MSG("delta_dump_node(%s): Replacement check %s -> %s for %s (%s) at %ld [is %d]\n", node->path, copyfrom_path, parent->path, node->path, node->path + strlen(parent->path) + 1, parent->copyfrom_rev_local, check);
+		if (check < 0) {
+			return svn_error_createf(1, NULL, "Error checking parent relationship at previous revision %ld", parent->copyfrom_rev_local);
+		} else if (!check) {
+			node->action = 'A';
+		}
+		break;
+	}
+
+	if (node->action != 'R') {
+		return SVN_NO_ERROR;
+	}
+
+	/* Final check: If the node is part of a failed copy operation
+	   and wasn't present in the previous revision, change operation to 'add'. */
+	if ((node->cp_info & CPI_FAILED) && node->action == 'R') {
+		char *ppath = svn_path_dirname(node->path, node->pool);
+		const char *relpath = node->path + strlen(ppath) + 1;
+		check = path_repo_check_parent(de_baton->path_repo, ppath, relpath, de_baton->local_revnum - 1, node->pool);
+		if (check < 0) {
+			return svn_error_createf(1, NULL, "Error checking parent relationship at previous revision %ld", de_baton->local_revnum - 1);
+		} else if (!check) {
+			node->action = 'A';
+		}
+	}
+
+	return SVN_NO_ERROR;
 }
 
 
@@ -497,6 +557,7 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	unsigned long prop_len, content_len;
 	char dump_content = 0, dump_props = 0;
 	apr_hash_index_t *hi;
+	svn_error_t *err;
 
 	/* Check if the node needs to be dumped at all */
 	if (!node->dump_needed) {
@@ -531,6 +592,14 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 
 	/* Check for potential copy. This is neede here because it might change the action. */
 	delta_check_copy(node);
+
+	/* Check whether the replace action is valid */
+	if (node->action == 'R') {
+		if ((err = delta_check_replace(node))) {
+			return err;
+		}
+	}
+
 	if (node->action == 'R') {
 		/* Special handling for replacements */
 		DEBUG_MSG("delta_dump_node(%s): running delta_dump_replace()\n", node->path);
@@ -631,7 +700,6 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 
 	/* Deltify? */
 	if (dump_content && (opts->flags & DF_USE_DELTAS)) {
-		svn_error_t *err;
 		if ((err = delta_deltify_node(node))) {
 			return err;
 		}
@@ -944,7 +1012,7 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 		 * If the node is preset in the log, we must not use the copy
 		 * information of the parent node
 		 */
-		if (node->cp_info != CPI_FAILED) {
+		if (!(node->cp_info & CPI_FAILED_OUTSIDE)) {
 			node->cp_info = CPI_NONE;
 		}
 	}
@@ -1071,7 +1139,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		 * If the node is preset in the log, we must not use the copy
 		 * information of the parent node
 		 */
-		if (node->cp_info != CPI_FAILED) {
+		if (!(node->cp_info & CPI_FAILED)) {
 			node->cp_info = CPI_NONE;
 		}
 	}
@@ -1080,7 +1148,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 	 * If the node is part of a tree that is dumped instead of being copied,
 	 * this must be an add action
 	 */
-	if (node->cp_info == CPI_FAILED) {
+	if (node->cp_info & CPI_FAILED) {
 		node->action = 'A';
 	}
 
@@ -1273,7 +1341,7 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 					skip = 1;
 					break;
 				}
-				if (pnode && pnode->cp_info == CPI_FAILED) {
+				if (pnode && (pnode->cp_info & CPI_FAILED)) {
 					DEBUG_MSG("de_close_edit(): Parent %s of %s is part of a failed copy, ignoring\n", parent, path);
 					skip = 1;
 					break;
