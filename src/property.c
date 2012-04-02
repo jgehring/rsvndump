@@ -372,7 +372,6 @@ int property_load(property_storage_t *store, const char *path, apr_hash_t *props
 /* Removes the properties of the given path from the storage */
 int property_delete(property_storage_t *store, const char *path, apr_pool_t *pool)
 {
-	datum key;
 	prop_entry_t *entry;
 
 	/* Check if path has properties attached */
@@ -386,6 +385,10 @@ int property_delete(property_storage_t *store, const char *path, apr_pool_t *poo
 
 	/* Remove item from database if reference count is zero */
 	if (entry->ref->count <= 0) {
+		datum key;
+		key.dptr = (char *)entry->ref->id;
+		key.dsize = APR_MD5_DIGESTSIZE;
+
 		apr_hash_set(store->refs, entry->ref->id, APR_MD5_DIGESTSIZE, NULL);
 		if (gdbm_delete(store->db, key) != 0) {
 			return -1;
