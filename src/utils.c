@@ -34,10 +34,6 @@
 #include <svn_pools.h>
 #include <svn_utf.h>
 
-#ifdef WIN32
-	#include <io.h>
-#endif
-
 #include "utils.h"
 
 #ifdef USE_TIMING
@@ -190,21 +186,6 @@ int utils_mkstemp(apr_file_t **file, char *name, apr_pool_t *pool)
 	}
 
 	return apr_file_mktemp(file, name, APR_CREATE | APR_READ | APR_WRITE | APR_EXCL | APR_BINARY, pool);
-}
-
-
-/* Returns the file descriptor of an APR file */
-int utils_apr_file_fd(struct apr_file_t *file)
-{
-	apr_os_file_t fd;
-	apr_os_file_get(&fd, file);
-
-#ifndef WIN32
-	return (int)fd;
-#else
-	/* TODO: This is not tested! */
-	return _open_osfhandle(fd, _O_RDWR);
-#endif
 }
 
 
