@@ -60,7 +60,7 @@ char *session_make_obfuscated(apr_pool_t *pool, apr_hash_t *taken)
 		obf = apr_pcalloc(pool, len+1);
 		for (i = 0; i < len; i++) {
 			int n = rand() % 1000;
-			for (j = 0; j < sizeof(rchars)-1; j++) {
+			for (j = 0; j < (int)sizeof(rchars)-1; j++) {
 				if (probs[j] >= n) break;
 			}
 			obf[i] = rchars[j];

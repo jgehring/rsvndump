@@ -180,7 +180,7 @@ static void pr_encode(critbit0_tree *tree, char **data, int *len, apr_pool_t *po
 
 
 /* Applies a serialized tree delta to a tree */
-static int pr_delta_apply(critbit0_tree *tree, const char *data, apr_size_t len, apr_pool_t *pool)
+static int pr_delta_apply(critbit0_tree *tree, const char *data, int len, apr_pool_t *pool)
 {
 	const char *dptr = data;
 	while (dptr - data < len) {
@@ -559,7 +559,7 @@ int path_repo_commit_log(path_repo_t *repo, session_t *session, dump_options_t *
 					/* Single file copied */
 					path_repo_add(repo, path, pool);
 				} else {
-					int copyfrom_path_len = strlen(copyfrom_path);
+					unsigned int copyfrom_path_len = strlen(copyfrom_path);
 					for (j = 0; j < cpaths->nelts; j++) {
 						char *relpath = APR_ARRAY_IDX(cpaths, j, char *);
 						if (strlen(relpath) > copyfrom_path_len) {
