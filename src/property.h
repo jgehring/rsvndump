@@ -43,8 +43,11 @@ extern int property_store_init(const char *tmpdir, struct apr_pool_t *pool);
 /* Saves the properties of the given path */
 extern int property_store(const char *path, struct apr_hash_t *props, struct apr_pool_t *pool);
 
-/* Loads the properties of the given path and removes the from the storage */
+/* Loads the properties of the given path and removes them from the storage */
 extern int property_load(const char *path, struct apr_hash_t *props, struct apr_pool_t *pool);
+
+/* Removes the properties of the given path from the storage */
+extern int property_delete(const char *path, struct apr_pool_t *pool);
 
 
 #endif

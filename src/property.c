@@ -389,3 +389,32 @@ int property_load(const char *path, struct apr_hash_t *props, struct apr_pool_t 
 	free(value.dptr);
 	return 0;
 }
+
+
+/* Removes the properties of the given path from the storage */
+int property_delete(const char *path, struct apr_pool_t *pool)
+{
+	datum key;
+	prop_entry_t *entry;
+
+	/* Check if path has properties attached */
+	if ((entry = apr_hash_get(prop_entries, path, APR_HASH_KEY_STRING)) == NULL) {
+		return 0;
+	}
+
+	/* Remove entry */
+	apr_hash_set(prop_entries, path, APR_HASH_KEY_STRING, NULL);
+	entry->ref->count--;
+
+	/* Remove item from database if reference count is zero */
+	if (entry->ref->count <= 0) {
+		apr_hash_set(prop_refs, entry->ref->id, APR_MD5_DIGESTSIZE, NULL);
+		if (gdbm_delete(prop_db, key) != 0) {
+			return -1;
+		}
+		free(entry->ref);
+	}
+	free(entry->path);
+	free(entry);
+	return 0;
+}

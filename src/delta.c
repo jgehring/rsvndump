@@ -113,14 +113,11 @@ typedef struct {
 /*
  * If the dump output is not using deltas, we need to keep a local copy of
  * every file in the repository. The delta_hash hash defines a mapping of
- * repository paths to temporary files for this purpose. The prop_hash
- * defines a mapping from repository files to temporary files filled
- * with file/directory properties. The md5_hash is used to store the md5-sums
- * of the file contents.
+ * repository paths to temporary files for this purpose. The md5_hash is
+ * used to store the md5-sums of the file contents.
  */
 static char hashes_created = 0;
 static rhash_t *delta_hash = NULL;
-static rhash_t *prop_hash = NULL;
 static rhash_t *md5_hash = NULL;
 #ifdef USE_TIMING
  static float tm_de_apply_textdelta = 0.0f;
@@ -880,26 +877,16 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 				DEBUG_MSG("de_delete_entry(%s): Cannot remove file %s\n", node->path, filename);
 			}
 #endif
-			DEBUG_MSG("deleting %s from delta_hash\n", npath);
+
+			/* Delete property data */
+			DEBUG_MSG("de_delete_entry(%s): removeing properties for %s\n", node->path, npath);
+			property_delete(npath, pool);
+
+			DEBUG_MSG("de_delete_entry(%s): deleting %s from delta_hash\n", npath);
 			rhash_set(delta_hash, npath, APR_HASH_KEY_STRING, NULL, 0);
 		}
 	}
-	for (hi = rhash_first(pool, prop_hash); hi; hi = rhash_next(hi)) {
-		const char *npath;
-		char *filename;
-		rhash_this(hi, (const void **)(void *)&npath, NULL, (void **)(void *)&filename);
-		/* TODO: This is a small hack to make sure the node is a directory */
-		if (!strncmp(node->path, npath, pathlen) && (npath[pathlen] == '/')) {
-#ifndef DUMP_DEBUG
-			DEBUG_MSG("de_delete_entry(%s): Removing file %s\n", node->path, filename);
-			if (apr_file_remove(filename, node->pool) != APR_SUCCESS) {
-				DEBUG_MSG("de_delete_entry(%s): Cannot remove file %s\n", node->path, filename);
-			}
-#endif
-			DEBUG_MSG("deleting %s from prop_hash\n", npath);
-			rhash_set(prop_hash, npath, APR_HASH_KEY_STRING, NULL, 0);
-		}
-	}
+
 	for (hi = rhash_first(pool, md5_hash); hi; hi = rhash_next(hi)) {
 		const char *npath;
 		char *md5sum;
@@ -911,6 +898,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 	}
 
 	path_repo_delete(parent->de_baton->path_repo, path, pool);
+	property_delete(node->path, pool);
 	return SVN_NO_ERROR;
 }
 
@@ -1414,7 +1402,6 @@ void delta_setup_editor(delta_editor_info_t *info, log_revision_t *log_revision,
 
 		md5_hash = rhash_make(hash_pool);
 		delta_hash = rhash_make(hash_pool);
-		prop_hash = rhash_make(hash_pool);
 		
 		hashes_created = 1;
 	}
@@ -1427,7 +1414,6 @@ void delta_cleanup()
 	if (hashes_created) {
 		rhash_clear(md5_hash);
 		rhash_clear(delta_hash);
-		rhash_clear(prop_hash);
 
 		hashes_created = 0;
 	}
