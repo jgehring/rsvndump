@@ -192,9 +192,7 @@ static de_node_baton_t *delta_create_node_no_parent(const char *path, de_baton_t
 static void delta_mark_node(de_node_baton_t *node)
 {
 	de_baton_t *de_baton = node->de_baton;
-	char *action = apr_pcalloc(de_baton->revision_pool, 1);
-	*action = node->action;
-	apr_hash_set(de_baton->dumped_entries, apr_pstrdup(de_baton->revision_pool, node->path), APR_HASH_KEY_STRING, action);
+	apr_hash_set(de_baton->dumped_entries, node->path, APR_HASH_KEY_STRING, node);
 	if (node->kind == svn_node_file) {
 		rhash_set(md5_hash, node->path, APR_HASH_KEY_STRING, node->md5sum, APR_MD5_DIGESTSIZE);
 		DEBUG_MSG("md5_hash += %s : %s\n", node->path, svn_md5_digest_to_cstring(node->md5sum, node->pool));
@@ -1235,7 +1233,9 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 	/*
 	 * There are probably some deleted nodes that haven't been dumped yet.
 	 * This will happen if nodes whose parent is a copy destination have been
-	 * deleted.
+	 * deleted. In this case, the delta editor won't touch them.
+	 * However, if the parent has been copied from outside the session prefix,
+	 * it should have been added manually. We must not dump the deleted nodes then.
 	 */
 	for (hi = apr_hash_first(pool, de_baton->log_revision->changed_paths); hi; hi = apr_hash_next(hi)) {
 		const char *path;
@@ -1243,7 +1243,7 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 		apr_hash_this(hi, (const void **)(void *)&path, NULL, (void **)(void *)&log);
 		DEBUG_MSG("Checking %s (%c)\n", path, log->action);
 		if (log->action == 'D') {
-			char *filename, *parent, parent_deleted = 0;
+			char *filename, *parent, skip = 0;
 
 			/* We can unlink a possible temporary file now */
 			filename = rhash_get(delta_hash, path, APR_HASH_KEY_STRING);
@@ -1257,24 +1257,34 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 				rhash_set(delta_hash, path, APR_HASH_KEY_STRING, NULL, 0);
 			}
 
+			/* Already dumped? */
+			if (apr_hash_get(de_baton->dumped_entries, path, APR_HASH_KEY_STRING) != NULL) {
+				continue;
+			}
+
 			/*
 			 * If this file is part of a deleted tree (that has been dumped as being
-			 * deleted), we can safely ignore it.
+			 * deleted) or part of a manually copied tree, we can safely ignore it.
 			 */
 			parent = svn_path_dirname(path, pool);
 			while (parent && *parent) {
-				char *action = apr_hash_get(de_baton->dumped_entries, parent, APR_HASH_KEY_STRING);
-				if (action && *action == 'D') {
-					DEBUG_MSG("de_close_edit(): Parent %s already deleted, ignoring\n");
-					parent_deleted = 1;
+				de_node_baton_t *pnode = apr_hash_get(de_baton->dumped_entries, parent, APR_HASH_KEY_STRING);
+				if (pnode && pnode->action == 'D') {
+					DEBUG_MSG("de_close_edit(): Parent %s of %s already deleted, ignoring\n", parent, path);
+					skip = 1;
+					break;
+				}
+				if (pnode && pnode->cp_info == CPI_FAILED) {
+					DEBUG_MSG("de_close_edit(): Parent %s of %s is part of a failed copy, ignoring\n", parent, path);
+					skip = 1;
 					break;
 				}
 
 				parent = svn_path_dirname(parent, pool);
 			}
 
-			if (!parent_deleted && apr_hash_get(de_baton->dumped_entries, path, APR_HASH_KEY_STRING) == NULL) {
-				de_node_baton_t *node = delta_create_node_no_parent(path, de_baton, pool);
+			if (!skip) {
+				de_node_baton_t *node = delta_create_node_no_parent(path, de_baton, de_baton->revision_pool);
 				node->action = log->action;
 				node->dump_needed = 1;
 
