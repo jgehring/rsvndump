@@ -84,6 +84,7 @@ struct path_repo_t {
 #ifdef DEBUG
 	int delta_bytes;
 	apr_time_t recon_time;
+	apr_time_t store_time;
 #endif
 };
 
@@ -100,9 +101,11 @@ static apr_status_t pr_cleanup(void *data)
 	int i;
 
 #ifdef DEBUG
-	fprintf(stderr, "path_repo: snapshot interval:  %d\n", SNAPSHOT_INTERVAL);
-	fprintf(stderr, "path_repo: stored deltas:      %d kB\n", repo->delta_bytes / 1024);
-	fprintf(stderr, "path_repo: total recon time:   %ld ms\n", apr_time_msec(repo->recon_time));
+	L1("path_repo: snapshot interval:  %d\n", SNAPSHOT_INTERVAL);
+	L1("path_repo: cache size:         %d\n", CACHE_SIZE);
+	L1("path_repo: stored deltas:      %d kB\n", repo->delta_bytes / 1024);
+	L1("path_repo: total recon time:   %ld ms\n", apr_time_msec(repo->recon_time));
+	L1("path_repo: total store time:   %ld ms\n", apr_time_msec(repo->store_time));
 #endif
 
 	critbit0_clear(&repo->tree);
@@ -423,6 +426,9 @@ int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 #ifdef USE_SNAPPY
 	size_t dsize = 0;
 #endif
+#ifdef DEBUG
+	apr_time_t start = apr_time_now();
+#endif
 	int snapshot = (revision > 0 && (revision % SNAPSHOT_INTERVAL == 0));
 
 	/* Skip empty revisions if there's no snapshot pending */
@@ -474,6 +480,10 @@ int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 	repo->delta_len = 0;
 	apr_array_clear(repo->delta);
 	svn_pool_clear(repo->delta_pool);
+
+#ifdef DEBUG
+	repo->store_time += (apr_time_now() - start);
+#endif
 	return 0;
 }
 
