@@ -223,7 +223,7 @@ static int pr_reconstruct(path_repo_t *repo, critbit0_tree *tree, svn_revnum_t r
 				return -1;
 			}
 			dptr = malloc(dsize);
-			if (!snappy_uncompress(val.dptr, val.dsize, dptr)) {
+			if (snappy_uncompress(val.dptr, val.dsize, dptr) != 0) {
 				free(dptr);
 				return -1;
 			}
