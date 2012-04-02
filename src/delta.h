@@ -31,7 +31,6 @@
 
 #include "dump.h"
 #include "log.h"
-#include "path_repo.h"
 #include "session.h"
 
 
@@ -39,7 +38,8 @@
 typedef struct {
 	session_t *session;
 	dump_options_t *options;
-	path_repo_t *path_repo;
+	struct path_repo_t *path_repo;
+	struct property_storage_t *property_storage;
 	apr_array_header_t *logs;
 } delta_editor_info_t;
 

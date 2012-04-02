@@ -77,6 +77,7 @@ typedef struct {
 	svn_revnum_t      local_revnum;
 	void              *root_node;
 	path_repo_t       *path_repo;
+	property_storage_t *prop_store;
 } de_baton_t;
 
 
@@ -880,7 +881,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 
 			/* Delete property data */
 			DEBUG_MSG("de_delete_entry(%s): removeing properties for %s\n", node->path, npath);
-			property_delete(npath, pool);
+			property_delete(node->de_baton->prop_store, npath, pool);
 
 			DEBUG_MSG("de_delete_entry(%s): deleting %s from delta_hash\n", npath);
 			rhash_set(delta_hash, npath, APR_HASH_KEY_STRING, NULL, 0);
@@ -897,8 +898,10 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 		}
 	}
 
-	path_repo_delete(parent->de_baton->path_repo, path, pool);
-	property_delete(node->path, pool);
+	property_delete(node->de_baton->prop_store, node->path, pool);
+
+	/* This will delete all children, too */
+	path_repo_delete(node->de_baton->path_repo, path, pool);
 	return SVN_NO_ERROR;
 }
 
@@ -970,7 +973,7 @@ static svn_error_t *de_open_directory(const char *path, void *parent_baton, svn_
 	*child_baton = node;
 
 	/* Load properties (if any) */
-	ret = property_load(node->path, node->properties, node->pool);
+	ret = property_load(parent->de_baton->prop_store, node->path, node->properties, node->pool);
 	if (ret != 0) {
 		return svn_error_createf(1, NULL, "Error loading properties (%d)\n", ret);
 	}
@@ -1011,7 +1014,7 @@ static svn_error_t *de_close_directory(void *dir_baton, apr_pool_t *pool)
 	DEBUG_MSG("de_close_directory(%s): dump_needed = %d\n", node->path, (int)node->dump_needed);
 
 	/* Save properties for next time */
-	ret = property_store(node->path, node->properties, pool);
+	ret = property_store(node->de_baton->prop_store, node->path, node->properties, pool);
 	if (ret != 0) {
 		return svn_error_createf(1, NULL, "Error storing properties (%d)\n", ret);
 	}
@@ -1106,7 +1109,7 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 	*file_baton = node;
 
 	/* Load properties (if any) */
-	ret = property_load(node->path, node->properties, node->pool);
+	ret = property_load(parent->de_baton->prop_store, node->path, node->properties, node->pool);
 	if (ret != 0) {
 		return svn_error_createf(1, NULL, "Error loading properties (%d)\n", ret);
 	}
@@ -1199,7 +1202,7 @@ static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, a
 	int ret;
 
 	/* Save properties for next time */
-	ret = property_store(node->path, node->properties, pool);
+	ret = property_store(node->de_baton->prop_store, node->path, node->properties, pool);
 	if (ret != 0) {
 		return svn_error_createf(1, NULL, "Error storing properties (%d)\n", ret);
 	}
@@ -1394,6 +1397,7 @@ void delta_setup_editor(delta_editor_info_t *info, log_revision_t *log_revision,
 	baton->revision_pool = svn_pool_create(pool);
 	baton->dumped_entries = apr_hash_make(baton->revision_pool);
 	baton->path_repo = info->path_repo;
+	baton->prop_store = info->property_storage;
 	*editor_baton = baton;
 
 	/* Create global hashes if needed */

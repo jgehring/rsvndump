@@ -17,7 +17,8 @@
  *
  * 	
  *      file: property.h
- *      desc: Convenience functions for dumping properties
+ *      desc: Convenience functions for dumping properties and a persistant
+ *            property storage.
  */
 
 
@@ -25,11 +26,15 @@
 #define PROPERTY_H_
 
 
+#include <apr_pools.h>
+#include <apr_hash.h>
+
+
 /* Returns the length of a property */
-extern size_t property_strlen(struct apr_pool_t *pool, const char *key, const char *value);
+extern size_t property_strlen(apr_pool_t *pool, const char *key, const char *value);
 
 /* Returns the length of a property deletion */
-extern size_t property_del_strlen(struct apr_pool_t *pool, const char *key);
+extern size_t property_del_strlen(apr_pool_t *pool, const char *key);
 
 /* Dumps a property to stdout */
 extern void property_dump(const char *key, const char *value);
@@ -37,17 +42,21 @@ extern void property_dump(const char *key, const char *value);
 /* Dumps a property deletion to stdout */
 extern void property_del_dump(const char *key);
 
+
+/* Persistent property storage */
+typedef struct property_storage_t property_storage_t;
+
 /* Initializes the property storage, binding it to the given pool */
-extern int property_store_init(const char *tmpdir, struct apr_pool_t *pool);
+extern property_storage_t *property_storage_create(const char *tmpdir, apr_pool_t *pool);
 
 /* Saves the properties of the given path */
-extern int property_store(const char *path, struct apr_hash_t *props, struct apr_pool_t *pool);
+extern int property_store(property_storage_t *store, const char *path, apr_hash_t *props, apr_pool_t *pool);
 
 /* Loads the properties of the given path and removes them from the storage */
-extern int property_load(const char *path, struct apr_hash_t *props, struct apr_pool_t *pool);
+extern int property_load(property_storage_t *store, const char *path, apr_hash_t *props, apr_pool_t *pool);
 
 /* Removes the properties of the given path from the storage */
-extern int property_delete(const char *path, struct apr_pool_t *pool);
+extern int property_delete(property_storage_t *store, const char *path, apr_pool_t *pool);
 
 
 #endif

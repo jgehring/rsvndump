@@ -289,6 +289,7 @@ char dump(session_t *session, dump_options_t *opts)
 	svn_revnum_t global_rev, local_rev = -1;
 	int list_idx;
 	path_repo_t *path_repo;
+	property_storage_t *property_storage;
 	delta_editor_info_t delta_info;
 
 	/* Dumping with deltas requires dump format version 3 */
@@ -347,7 +348,8 @@ char dump(session_t *session, dump_options_t *opts)
 		APR_ARRAY_PUSH(logs, log_revision_t) = dummy;
 	}
 
-	if (property_store_init(opts->temp_dir, session->pool) != 0) {
+	property_storage = property_storage_create(opts->temp_dir, session->pool);
+	if (property_storage == NULL) {
 		return 1;
 	}
 	path_repo = path_repo_create(opts->temp_dir, session->pool);
@@ -435,6 +437,7 @@ char dump(session_t *session, dump_options_t *opts)
 	delta_info.session = session;
 	delta_info.options = opts;
 	delta_info.path_repo = path_repo;
+	delta_info.property_storage = property_storage;
 	delta_info.logs = logs;
 
 	/* Start dumping */
