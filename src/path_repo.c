@@ -486,11 +486,23 @@ int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 	repo->delta_len = 0;
 	apr_array_clear(repo->delta);
 	svn_pool_clear(repo->delta_pool);
-
 #ifdef DEBUG
 	repo->store_time += (apr_time_now() - start);
 #endif
 	return 0;
+}
+
+
+/* Discards all scheduled actions */
+int path_repo_discard(path_repo_t *repo, apr_pool_t *pool)
+{
+	repo->delta_len = 0;
+	apr_array_clear(repo->delta);
+	svn_pool_clear(repo->delta_pool);
+
+	/* Revert to previous head */
+	critbit0_clear(&repo->tree);
+	return pr_reconstruct(repo, &repo->tree, repo->head, pool);
 }
 
 
@@ -518,7 +530,7 @@ int path_repo_commit_log(path_repo_t *repo, session_t *session, dump_options_t *
 
 	/* Fill current delta */
 	for (i = 0; i < paths->nelts; i++) {
-		const char *path = ((const char **)paths->elts)[i];
+		const char *path = APR_ARRAY_IDX(paths, i, const char *);
 		svn_log_changed_path_t *info = apr_hash_get(log->changed_paths, path, APR_HASH_KEY_STRING);
 
 		if (info->copyfrom_path == NULL) {

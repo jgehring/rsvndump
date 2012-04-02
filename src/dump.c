@@ -529,9 +529,16 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 
 		/* Commit actions scheduled by the delta editor to the path repository */
-		if (path_repo_commit(path_repo, local_rev, revpool) != 0) {
-			ret = 1;
-			break;
+		if (opts->flags & DF_INITIAL_DRY_RUN) {
+			if (path_repo_discard(path_repo, revpool) != 0) { /* Already commited via commit_log() */
+				ret = 1;
+				break;
+			}
+		} else {
+			if (path_repo_commit(path_repo, local_rev, revpool) != 0) {
+				ret = 1;
+				break;
+			}
 		}
 
 		if (loglevel == 0 && !(opts->flags & DF_INITIAL_DRY_RUN)) {

@@ -47,6 +47,9 @@ extern void path_repo_delete(path_repo_t *repo, const char *path, apr_pool_t *po
 /* Commits all scheduled actions, using the given revision number */
 extern int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool);
 
+/* Discards all scheduled actions */
+extern int path_repo_discard(path_repo_t *repo, apr_pool_t *pool);
+
 /* Commits a SVN log entry, using the given revision number */
 extern int path_repo_commit_log(path_repo_t *repo, session_t *session, dump_options_t *opts, log_revision_t *log, svn_revnum_t revision, apr_array_header_t *logs, apr_pool_t *pool);
 
