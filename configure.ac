@@ -55,18 +55,11 @@ AC_STRUCT_TM
 AC_FUNC_MALLOC
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([strchr], ,[AC_MSG_ERROR([Sorry, unable to compile this program without these functions])])
-USE_COMPAT="no"
-AC_CHECK_FUNCS([memset], ,[AC_LIBOBJ([memset]) USE_COMPAT="yes"])
-AC_CHECK_FUNCS([memcmp], ,[AC_LIBOBJ([memcmp]) USE_COMPAT="yes"])
-AC_CHECK_FUNCS([strdup], ,[AC_LIBOBJ([strdup]) USE_COMPAT="yes"])
+AC_CHECK_FUNCS([memset], ,[AC_LIBOBJ([memset])])
+AC_CHECK_FUNCS([memcmp], ,[AC_LIBOBJ([memcmp])])
+AC_CHECK_FUNCS([strdup], ,[AC_LIBOBJ([strdup])])
 AC_CHECK_FUNCS([setlocale], , USE_NLS="no")
 AC_CHECK_FUNCS([atexit strtol gettimeofday])
-if test "$USE_COMPAT" = "yes"; then
-	COMPAT_LIBS="../lib/libcompat.a"
-	COMPAT_SUBDIRS="lib"
-	AC_SUBST([COMPAT_LIBS])
-	AC_SUBST([COMPAT_SUBDIRS])
-fi
 
 # Checks for libraries
 RSVND_FIND_APR
@@ -94,9 +87,7 @@ AX_CHECK_ZLIB
 
 
 AC_CONFIG_FILES([Makefile])
-if test "$USE_COMPAT" = "yes"; then
-	AC_CONFIG_FILES([lib/Makefile])
-fi
+AC_CONFIG_FILES([lib/Makefile])
 AC_CONFIG_FILES([src/Makefile po/Makefile.in])
 if test "$USE_MAN" = "yes"; then
 	DOC_SUBDIRS="doc"

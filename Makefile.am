@@ -1,4 +1,4 @@
-SUBDIRS = po $(COMPAT_SUBDIRS) src $(DOC_SUBDIRS)
+SUBDIRS = po lib src $(DOC_SUBDIRS)
 
 EXTRA_DIST = \
              README.win32 \

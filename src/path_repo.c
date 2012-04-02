@@ -34,7 +34,7 @@
 #include "logger.h"
 #include "utils.h"
 
-#include "3rdparty/critbit/critbit.h"
+#include "critbit/critbit.h"
 
 #include "path_repo.h"
 

@@ -11,20 +11,12 @@ rsvndump_SOURCES = \
 	session.c session.h \
 	utils.c utils.h
 
-rsvndump_SOURCES += \
-	3rdparty/critbit/critbit.h \
-	3rdparty/critbit/critbit.c \
-	3rdparty/critbit/critbit.w
-
-
 localedir = $(datadir)/locale
-AM_LDFLAGS = $(APR_LIBS) $(APU_LIBS) $(SVN_LDFLAGS) $(COMPAT_LIBS) $(LIBINTL)
+AM_LDFLAGS = $(APR_LIBS) $(APU_LIBS) $(SVN_LDFLAGS) $(LIBINTL)
+LIBS += $(top_builddir)/lib/libcompat.a
 AM_CFLAGS = -DLOCALEDIR=\"$(localedir)\" \
 	$(APR_CFLAGS) $(APR_CPPFLAGS) $(APR_INCLUDES) \
 	$(APU_INCLUDES) \
 	$(SVN_CFLAGS) \
-	-Wall -Wno-deprecated-declarations
-
-
-EXTRA_DIST = \
-	3rdparty/critbit/README
+	-Wall -Wno-deprecated-declarations \
+	-I$(top_srcdir)/lib
