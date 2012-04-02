@@ -82,7 +82,8 @@ struct path_repo_t {
 #endif
 
 #ifdef DEBUG
-	int delta_bytes;
+	size_t delta_bytes;
+	size_t delta_bytes_raw;
 	apr_time_t recon_time;
 	apr_time_t store_time;
 #endif
@@ -101,11 +102,12 @@ static apr_status_t pr_cleanup(void *data)
 	int i;
 
 #ifdef DEBUG
-	L1("path_repo: snapshot interval:  %d\n", SNAPSHOT_INTERVAL);
-	L1("path_repo: cache size:         %d\n", CACHE_SIZE);
-	L1("path_repo: stored deltas:      %d kB\n", repo->delta_bytes / 1024);
-	L1("path_repo: total recon time:   %ld ms\n", apr_time_msec(repo->recon_time));
-	L1("path_repo: total store time:   %ld ms\n", apr_time_msec(repo->store_time));
+	L1("path_repo: snapshot interval:   %d\n", SNAPSHOT_INTERVAL);
+	L1("path_repo: cache size:          %d\n", CACHE_SIZE);
+	L1("path_repo: stored deltas:       %d kB\n", repo->delta_bytes / 1024);
+	L1("path_repo: stored deltas (raw): %d kB\n", repo->delta_bytes_raw / 1024);
+	L1("path_repo: total recon time:    %ld ms\n", apr_time_msec(repo->recon_time));
+	L1("path_repo: total store time:    %ld ms\n", apr_time_msec(repo->store_time));
 #endif
 
 	critbit0_clear(&repo->tree);
@@ -424,7 +426,7 @@ int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 	int i;
 	char *dptr = NULL;
 #ifdef USE_SNAPPY
-	size_t dsize = 0;
+	size_t dsize;
 #endif
 #ifdef DEBUG
 	apr_time_t start = apr_time_now();
@@ -454,6 +456,10 @@ int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 	} else {
 		pr_encode(&repo->tree, &val.dptr, &val.dsize, pool);
 	}
+
+#ifdef DEBUG
+	repo->delta_bytes_raw += val.dsize;
+#endif
 
 #ifdef USE_SNAPPY
 	dptr = apr_palloc(pool, snappy_max_compressed_length(val.dsize));
