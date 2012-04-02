@@ -15,7 +15,7 @@ REQUIREMENTS
 rsvndump depends on Subversion (>= 1.4), which depends on the Apache Portable
 Runtime. Therefore, to build rsvndump from source, the development and
 runtime files (headers and libraries) of both libraries must be present on the
-system.
+system. Furthermore, the GNU dbm library (GDBM) is required.
 
 
 USAGE
