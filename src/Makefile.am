@@ -12,11 +12,12 @@ rsvndump_SOURCES = \
 	utils.c utils.h
 
 localedir = $(datadir)/locale
-AM_LDFLAGS = $(APR_LIBS) $(APU_LIBS) $(SVN_LDFLAGS) $(LIBINTL)
+AM_LDFLAGS = $(APR_LIBS) $(APU_LIBS) $(SVN_LDFLAGS) $(GDBM_LDFLAGS) $(LIBINTL)
 LIBS += $(top_builddir)/lib/libcompat.a
 AM_CFLAGS = -DLOCALEDIR=\"$(localedir)\" \
 	$(APR_CFLAGS) $(APR_CPPFLAGS) $(APR_INCLUDES) \
 	$(APU_INCLUDES) \
 	$(SVN_CFLAGS) \
+	$(GDBM_INCLUDES) \
 	-Wall -Wno-deprecated-declarations \
 	-I$(top_srcdir)/lib

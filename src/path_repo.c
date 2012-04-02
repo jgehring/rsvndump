@@ -21,12 +21,13 @@
  */
 
 
-#include <apr_dbm.h>
+#include <assert.h>
+
 #include <apr_tables.h>
 
 #include <svn_ra.h>
 
-#include <assert.h>
+#include <gdbm.h>
 
 #include "main.h"
 
@@ -65,7 +66,7 @@ typedef struct {
 
 struct path_repo_t {
 	apr_pool_t *pool;
-	apr_dbm_t *db;
+	GDBM_FILE db;
 
 	apr_pool_t *delta_pool;
 	apr_array_header_t *delta;
@@ -110,6 +111,8 @@ static apr_status_t pr_cleanup(void *data)
 			critbit0_clear(&APR_ARRAY_IDX(repo->cache, i, pr_cache_entry_t).tree);
 		}
 	}
+
+	gdbm_close(repo->db);
 	return APR_SUCCESS;
 }
 
@@ -149,7 +152,7 @@ static apr_array_header_t *pr_tree_to_array(critbit0_tree *tree, const char *pre
 
 
 /* Encodes a whole tree to a series of add operations */
-static void pr_encode(critbit0_tree *tree, char **data, apr_size_t *len, apr_pool_t *pool)
+static void pr_encode(critbit0_tree *tree, char **data, int *len, apr_pool_t *pool)
 {
 	int i;
 	char *dptr;
@@ -192,8 +195,7 @@ static int pr_delta_apply(critbit0_tree *tree, const char *data, apr_size_t len,
 /* Reconstructs a tree for the given revision */
 static int pr_reconstruct(path_repo_t *repo, critbit0_tree *tree, svn_revnum_t revision, apr_pool_t *pool)
 {
-	apr_datum_t key, val;
-	apr_status_t status;
+	datum key, val;
 	svn_revnum_t r;
 	char *dptr;
 	size_t dsize;
@@ -207,10 +209,10 @@ static int pr_reconstruct(path_repo_t *repo, critbit0_tree *tree, svn_revnum_t r
 		key.dptr = apr_itoa(pool, r);
 		key.dsize = strlen(key.dptr);
 
-		if (apr_dbm_exists(repo->db, key)) {
-			if ((status = apr_dbm_fetch(repo->db, key, &val)) != APR_SUCCESS) {
-				char buf[512];
-				fprintf(stderr, "Error fetching delta for revision %ld (%s)\n", r, apr_strerror(status, buf, sizeof(buf)));
+		if (gdbm_exists(repo->db, key)) {
+			val = gdbm_fetch(repo->db, key);
+			if (val.dptr == NULL) {
+				fprintf(stderr, "Error fetching delta for revision %ld\n", r);
 				return -1;
 			}
 #ifdef USE_SNAPPY
@@ -234,6 +236,7 @@ static int pr_reconstruct(path_repo_t *repo, critbit0_tree *tree, svn_revnum_t r
 #ifdef USE_SNAPPY
 			free(dptr);
 #endif
+			free(val.dptr);
 		}
 		++r;
 	}
@@ -360,9 +363,10 @@ path_repo_t *path_repo_create(const char *tmpdir, apr_pool_t *pool)
 	pr_cache_init(repo, CACHE_SIZE);
 
 	/* Open database */
-	db_path = apr_psprintf(pool, "%s/paths", tmpdir);
-	if (apr_dbm_open_ex(&(repo->db), "gdbm", db_path, APR_DBM_RWTRUNC, 0x0600, repo->pool) != APR_SUCCESS) {
-		fprintf(stderr, "Error creating path database\n");
+	db_path = apr_psprintf(pool, "%s/paths.db", tmpdir);
+	repo->db = gdbm_open(db_path, 0, GDBM_NEWDB, 0600, NULL);
+	if (repo->db == NULL) {
+		fprintf(stderr, "Error creating path database (%s)\n", gdbm_strerror(gdbm_errno));
 		return NULL;
 	}
 
@@ -413,8 +417,7 @@ void path_repo_delete(path_repo_t *repo, const char *path, apr_pool_t *pool)
 /* Commits all scheduled actions, using the given revision number */
 int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 {
-	apr_status_t status;
-	apr_datum_t key, val;
+	datum key, val;
 	int i;
 	char *dptr = NULL;
 #ifdef USE_SNAPPY
@@ -462,9 +465,8 @@ int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 
 	key.dptr = apr_itoa(pool, revision);
 	key.dsize = strlen(key.dptr);
-	if ((status = apr_dbm_store(repo->db, key, val)) != APR_SUCCESS) {
-		char buf[512];
-		fprintf(stderr, "Error storing paths for revision %ld (%s)\n", revision, apr_strerror(status, buf, sizeof(buf)));
+	if (gdbm_store(repo->db, key, val, GDBM_INSERT) != 0) {
+		fprintf(stderr, "Error storing paths for revision %ld\n", revision);
 		return -1;
 	}
 
@@ -593,13 +595,13 @@ void path_repo_test_all(path_repo_t *repo, session_t *session, apr_pool_t *pool)
 	while (++rev < repo->head) {
 		apr_array_header_t *paths_recon;
 		apr_array_header_t *paths_orig;
-		apr_datum_t key;
+		datum key;
 		int i;
 
 		/* Skip all revisions that haven't been committed */
 		key.dptr = apr_itoa(pool, rev);
 		key.dsize = strlen(key.dptr);
-		if (!apr_dbm_exists(repo->db, key)) {
+		if (!gdbm_exists(repo->db, key)) {
 			continue;
 		}
 

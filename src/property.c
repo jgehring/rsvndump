@@ -38,11 +38,12 @@
 #include <svn_string.h>
 #include <svn_md5.h>
 
-#include <apr_dbm.h>
 #include <apr_file_io.h>
 #include <apr_hash.h>
 #include <apr_md5.h>
 #include <apr_strings.h>
+
+#include <gdbm.h>
 
 #include "main.h"
 
@@ -82,7 +83,7 @@ static apr_hash_t *prop_refs = NULL;
 static apr_hash_t *prop_entries = NULL;
 
 /* DBM: ID to property data */
-static apr_dbm_t *prop_db = NULL;
+static GDBM_FILE prop_db = NULL;
 
 
 /*---------------------------------------------------------------------------*/
@@ -112,7 +113,7 @@ static apr_status_t prop_cleanup(void *param)
 		free(value);
 	}
 
-	apr_dbm_close(prop_db);
+	gdbm_close(prop_db);
 	prop_pool = NULL;
 	return APR_SUCCESS;
 }
@@ -269,8 +270,9 @@ int property_store_init(const char *tmpdir, struct apr_pool_t *pool)
 
 	/* Open database */
 	db_path = apr_psprintf(prop_pool, "%s/props.db", tmpdir);
-	if (apr_dbm_open_ex(&prop_db, "gdbm", db_path, APR_DBM_RWTRUNC, 0x0600, prop_pool) != APR_SUCCESS) {
-		fprintf(stderr, "Error creating property storage\n");
+	prop_db = gdbm_open(db_path, 0, GDBM_NEWDB, 0600, NULL);
+	if (prop_db == NULL) {
+		fprintf(stderr, "Error creating path database (%s)\n", gdbm_strerror(gdbm_errno));
 		return -1;
 	}
 
@@ -309,7 +311,7 @@ int property_store(const char *path, struct apr_hash_t *props, struct apr_pool_t
 
 	/* Check if this ID is already present */
 	if ((ref = apr_hash_get(prop_refs, id, sizeof(id))) == NULL) {
-		apr_datum_t key, value;
+		datum key, value;
 
 		ref = malloc(sizeof(prop_ref_t));
 		if (ref == NULL) {
@@ -324,7 +326,7 @@ int property_store(const char *path, struct apr_hash_t *props, struct apr_pool_t
 		key.dsize = sizeof(id);
 		value.dptr = data;
 		value.dsize = len+1;
-		if (apr_dbm_store(prop_db, key, value) != APR_SUCCESS) {
+		if (gdbm_store(prop_db, key, value, GDBM_INSERT) != 0) {
 			return -1;
 		}
 	}
@@ -348,7 +350,7 @@ int property_store(const char *path, struct apr_hash_t *props, struct apr_pool_t
 /* Loads the properties of the given path (and removes the corresponding entry) */
 int property_load(const char *path, struct apr_hash_t *props, struct apr_pool_t *pool)
 {
-	apr_datum_t key, value;
+	datum key, value;
 	prop_entry_t *entry;
 	
 	/* Check if path has properties attached */
@@ -359,7 +361,8 @@ int property_load(const char *path, struct apr_hash_t *props, struct apr_pool_t 
 	/* Retrieve item from database */
 	key.dptr = (char *)entry->ref->id;
 	key.dsize = APR_MD5_DIGESTSIZE;
-	if (apr_dbm_fetch(prop_db, key, &value) != APR_SUCCESS) {
+	value = gdbm_fetch(prop_db, key);
+	if (value.dptr == NULL) {
 		return -1;
 	}
 
@@ -376,12 +379,13 @@ int property_load(const char *path, struct apr_hash_t *props, struct apr_pool_t 
 	/* Remove item from database if reference count is zero */
 	if (entry->ref->count <= 0) {
 		apr_hash_set(prop_refs, entry->ref->id, APR_MD5_DIGESTSIZE, NULL);
-		if (apr_dbm_delete(prop_db, key) != APR_SUCCESS) {
+		if (gdbm_delete(prop_db, key) != 0) {
 			return -1;
 		}
 		free(entry->ref);
 	}
 	free(entry->path);
 	free(entry);
+	free(value.dptr);
 	return 0;
 }
