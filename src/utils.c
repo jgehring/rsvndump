@@ -270,3 +270,19 @@ const char *utils_path_join(struct apr_pool_t *pool, const char *dir, const char
 	}
 	return apr_psprintf(pool, "%s/%s", dir, base);
 }
+
+
+static int compstrp(const void *a, const void *b) { return strcmp(*(char *const *)a, *(char * const *)b); }
+
+/* qsort() wrapper for an array of strings */
+void utils_sort(apr_array_header_t *a)
+{
+	qsort(a->elts, a->nelts, a->elt_size, compstrp);
+}
+
+
+/* bsearch() wrapper for an array of strings */
+char *utils_search(const char *s, apr_array_header_t *a)
+{
+	return bsearch(&s, a->elts, a->nelts, a->elt_size, compstrp);
+}

@@ -5,11 +5,16 @@ rsvndump_SOURCES = \
 	log.c log.h \
 	logger.c logger.h \
 	main.c main.h \
-	path_hash.c path_hash.h \
+	path_repo.c path_repo.h \
 	property.c property.h \
 	rhash.c rhash.h \
 	session.c session.h \
 	utils.c utils.h
+
+rsvndump_SOURCES += \
+	3rdparty/critbit/critbit.h \
+	3rdparty/critbit/critbit.c \
+	3rdparty/critbit/critbit.w
 
 
 localedir = $(datadir)/locale
@@ -19,3 +24,7 @@ AM_CFLAGS = -DLOCALEDIR=\"$(localedir)\" \
 	$(APU_INCLUDES) \
 	$(SVN_CFLAGS) \
 	-Wall -Wno-deprecated-declarations
+
+
+EXTRA_DIST = \
+	3rdparty/critbit/README

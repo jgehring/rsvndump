@@ -34,7 +34,7 @@
 #include "delta.h"
 #include "log.h"
 #include "logger.h"
-#include "path_hash.h"
+#include "path_repo.h"
 #include "property.h"
 
 #include "dump.h"
@@ -288,6 +288,7 @@ char dump(session_t *session, dump_options_t *opts)
 	char start_mid = 0, show_local_rev = 1;
 	svn_revnum_t global_rev, local_rev = -1;
 	int list_idx;
+	path_repo_t *path_repo;
 
 	/* Dumping with deltas requires dump format version 3 */
 	if (opts->flags & DF_USE_DELTAS) {
@@ -345,8 +346,11 @@ char dump(session_t *session, dump_options_t *opts)
 		APR_ARRAY_PUSH(logs, log_revision_t) = dummy;
 	}
 
-	path_hash_initialize(session->prefix, opts->temp_dir, session->pool);
 	if (property_store_init(opts->temp_dir, session->pool) != 0) {
+		return 1;
+	}
+	path_repo = path_repo_create(opts->temp_dir, session->pool);
+	if (path_repo == NULL) {
 		return 1;
 	}
 
@@ -355,17 +359,19 @@ char dump(session_t *session, dump_options_t *opts)
 	 * prior to dumping.
 	 */
 	if (start_mid) {
+		apr_pool_t *log_pool = svn_pool_create(session->pool);
+
 		if (log_fetch_all(session, 0, opts->end, logs)) {
 			return 1;
 		}
 		logs_fetched = 1;
 
 		/* Jump to local revision and fill the path hash for previous revisions */
-		L2(_("Preparing path hash... "));
+		L2(_("Preparing tree history... "));
 		local_rev = 0;
 		while ((local_rev < (long int)logs->nelts) && (APR_ARRAY_IDX(logs, local_rev, log_revision_t).revision < opts->start)) {
 			svn_revnum_t phrev = ((opts->flags & DF_KEEP_REVNUMS) ? APR_ARRAY_IDX(logs, local_rev, log_revision_t).revision : local_rev);
-			if (path_hash_commit(session, opts, &APR_ARRAY_IDX(logs, local_rev, log_revision_t), phrev, logs)) {
+			if (path_repo_commit_log(path_repo, session, opts, &APR_ARRAY_IDX(logs, local_rev, log_revision_t), phrev, logs, log_pool) != 0) {
 				return 1;
 			}
 			++local_rev;
@@ -380,6 +386,8 @@ char dump(session_t *session, dump_options_t *opts)
 			--local_rev;
 		}
 		opts->start = APR_ARRAY_IDX(logs, local_rev, log_revision_t).revision;
+
+		svn_pool_destroy(log_pool);
 	} else {
 		/* There aren't any subdirectories at revision 0 */
 		if ((strlen(session->prefix) > 0) && opts->start == 0) {
@@ -459,11 +467,6 @@ char dump(session_t *session, dump_options_t *opts)
 				if (local_rev == 1) {
 					dump_create_user_prefix(opts, session->pool);
 				}
-
-				if (path_hash_commit_padding()) {
-					ret = 1;
-					break;
-				}
 				++local_rev;
 			}
 
@@ -509,24 +512,16 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 
 		/* Setup the delta editor and run a diff */
-		delta_setup_editor(session, opts, logs, &APR_ARRAY_IDX(logs, list_idx, log_revision_t), local_rev, &editor, &editor_baton, revpool);
+		delta_setup_editor(session, opts, path_repo, logs, &APR_ARRAY_IDX(logs, list_idx, log_revision_t), local_rev, &editor, &editor_baton, revpool);
 		if (dump_do_diff(session, opts, diff_rev, APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision, (global_rev == opts->start), editor, editor_baton, revpool)) {
 			ret = 1;
 			break;
 		}
 
-		/* Insert revision into path_hash */
-		if (!(opts->flags & DF_INITIAL_DRY_RUN) || strlen(session->prefix) != 0) {
-			if (path_hash_commit(session, opts, &APR_ARRAY_IDX(logs, list_idx, log_revision_t), local_rev, logs)) {
-				ret = 1;
-				break;
-			}
-#ifdef DEBUG_PHASH
-			if (path_hash_verify(session, local_rev, APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision) != 0) {
-				ret = 1;
-				break;
-			}
-#endif
+		/* Commit actions scheduled by the delta editor to the path repository */
+		if (path_repo_commit(path_repo, local_rev, revpool) != 0) {
+			ret = 1;
+			break;
 		}
 
 		if (loglevel == 0 && !(opts->flags & DF_INITIAL_DRY_RUN)) {
@@ -552,6 +547,12 @@ char dump(session_t *session, dump_options_t *opts)
 
 		apr_pool_destroy(revpool);
 	} while (global_rev <= opts->end);
+
+#ifdef DEBUG
+	if (!strlen(session->prefix) || (opts->flags & DF_KEEP_REVNUMS)) {
+		path_repo_test_all(path_repo, session, session->pool);
+	}
+#endif
 
 	delta_cleanup();
 	return ret;

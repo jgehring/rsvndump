@@ -37,7 +37,7 @@
 #include "dump.h"
 #include "log.h"
 #include "logger.h"
-#include "path_hash.h"
+#include "path_repo.h"
 #include "property.h"
 #include "rhash.h"
 #include "session.h"
@@ -76,6 +76,7 @@ typedef struct {
 	apr_hash_t        *dumped_entries;
 	svn_revnum_t      local_revnum;
 	void              *root_node;
+	path_repo_t       *path_repo;
 } de_baton_t;
 
 
@@ -225,10 +226,6 @@ static char delta_check_copy(de_node_baton_t *node)
 
 	/* If the parent could not be copied, this node won't be copied, too */
 	if (node->cp_info == CPI_FAILED) {
-		if (!(opts->flags & DF_INITIAL_DRY_RUN)) {
-			/* Inform the path_hash */
-			path_hash_add_path(node->path);
-		}
 		return 0;
 	}
 
@@ -271,11 +268,6 @@ static char delta_check_copy(de_node_baton_t *node)
 		node->action = 'A';
 		node->cp_info = CPI_FAILED;
 		DEBUG_MSG("delta_check_copy: resolving failed\n");
-	}
-
-	/* If a copy must be resolved "manually", we need to inform the path_hash */
-	if (node->cp_info == CPI_FAILED && !(opts->flags & DF_INITIAL_DRY_RUN)) {
-		path_hash_add_path(node->path);
 	}
 
 	return 0;
@@ -358,7 +350,7 @@ static svn_error_t *delta_propagate_copy(de_node_baton_t *parent, de_node_baton_
 		}
 		*tmp = '\0';
 
-		check = path_hash_check_parent(check_path, base, revision, check_pool);
+		check = path_repo_check_parent(parent->de_baton->path_repo, check_path, base, revision, check_pool);
 		if (check < 0) {
 			return svn_error_createf(1, NULL, "Error propagating copy information");
 		} else if (check) {
@@ -370,13 +362,13 @@ static svn_error_t *delta_propagate_copy(de_node_baton_t *parent, de_node_baton_
 		}
 
 		/* Failure */
-		DEBUG_MSG("path_hash: parent relation %s -> %s in %ld FAIL\n", path, child_relpath, revision);
+		DEBUG_MSG("path_repo: parent relation %s -> %s in %ld FAIL\n", path, child_relpath, revision);
 		child->cp_info = CPI_NONE;
 		svn_pool_destroy(check_pool);
 		return SVN_NO_ERROR;
 	}
 
-	DEBUG_MSG("path_hash: parent relation %s -> %s in %ld OK\n", path, child_relpath, revision);
+	DEBUG_MSG("path_repo: parent relation %s -> %s in %ld OK\n", path, child_relpath, revision);
 	child->cp_info = CPI_COPY;
 	svn_pool_destroy(check_pool);
 	return SVN_NO_ERROR;
@@ -918,6 +910,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 		}
 	}
 
+	path_repo_delete(parent->de_baton->path_repo, path, pool);
 	return SVN_NO_ERROR;
 }
 
@@ -968,6 +961,7 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 		}
 	}
 
+	path_repo_add(parent->de_baton->path_repo, path, dir_pool);
 	*child_baton = node;
 	return SVN_NO_ERROR;
 }
@@ -1102,6 +1096,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		node->action = 'A';
 	}
 
+	path_repo_add(parent->de_baton->path_repo, path, file_pool);
 	*file_baton = node;
 	return SVN_NO_ERROR;
 }
@@ -1380,7 +1375,7 @@ svn_revnum_t delta_get_local_copyfrom_rev(svn_revnum_t original, dump_options_t 
 
 
 /* Sets up a delta editor for dumping a revision */
-void delta_setup_editor(session_t *session, dump_options_t *options, apr_array_header_t *logs, log_revision_t *log_revision, svn_revnum_t local_revnum, svn_delta_editor_t **editor, void **editor_baton, apr_pool_t *pool)
+void delta_setup_editor(session_t *session, dump_options_t *options, path_repo_t *path_repo, apr_array_header_t *logs, log_revision_t *log_revision, svn_revnum_t local_revnum, svn_delta_editor_t **editor, void **editor_baton, apr_pool_t *pool)
 {
 	de_baton_t *baton;
 
@@ -1410,6 +1405,7 @@ void delta_setup_editor(session_t *session, dump_options_t *options, apr_array_h
 	baton->local_revnum = local_revnum;
 	baton->revision_pool = svn_pool_create(pool);
 	baton->dumped_entries = apr_hash_make(baton->revision_pool);
+	baton->path_repo = path_repo;
 	*editor_baton = baton;
 
 	/* Create global hashes if needed */

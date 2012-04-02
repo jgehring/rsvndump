@@ -67,6 +67,8 @@
 
 #define PACKAGE_AUTHOR "Jonas Gehring <"PACKAGE_BUGREPORT">"
 
+#include <svn_types.h>
+
 
 /* Helper definitions */
 #define PROPS_END "PROPS-END\n"

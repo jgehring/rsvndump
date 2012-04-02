@@ -64,6 +64,11 @@ extern void utils_rrmdir(apr_pool_t *pool, const char *path, char rmdir);
 extern void utils_path_split(apr_pool_t *pool, const char *path, const char **dir, const char **base);
 extern const char *utils_path_join(apr_pool_t *pool, const char *dir, const char *base);
 
+/* qsort() wrapper for an array of strings */
+extern void utils_sort(apr_array_header_t *a);
+
+/* bsearch() wrapper for an array of strings */
+extern char *utils_search(const char *s, apr_array_header_t *a);
 
 
 #endif
