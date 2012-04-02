@@ -558,7 +558,7 @@ char dump(session_t *session, dump_options_t *opts)
 		apr_pool_destroy(revpool);
 	} while (global_rev <= opts->end);
 
-#ifdef DEBUG
+#ifdef DEBUG_PATH_REPO
 	if (!strlen(session->prefix) || (opts->flags & DF_KEEP_REVNUMS)) {
 		path_repo_test_all(path_repo, session, session->pool);
 	}
