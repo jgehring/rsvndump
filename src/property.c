@@ -130,7 +130,7 @@ static int prop_hash_serialize(char **data, size_t *len, apr_hash_t *props, apr_
 	for (hi = apr_hash_first(pool, props); hi; hi = apr_hash_next(hi)) {
 		const char *key;
 		svn_string_t *value;
-		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
+		apr_hash_this(hi, (const void **)&key, NULL, (void **)&value);
 
 		*len += sizeof(int) * 2;
 		*len += strlen(key) + value->len;
@@ -146,7 +146,7 @@ static int prop_hash_serialize(char **data, size_t *len, apr_hash_t *props, apr_
 	for (hi = apr_hash_first(pool, props); hi; hi = apr_hash_next(hi)) {
 		const char *key;
 		svn_string_t *value;
-		apr_hash_this(hi, (const void **)(void *)&key, NULL, (void **)(void *)&value);
+		apr_hash_this(hi, (const void **)&key, NULL, (void **)&value);
 
 		*(int *)bptr = strlen(key);
 		strcpy(bptr + sizeof(int), key);

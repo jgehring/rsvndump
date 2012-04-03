@@ -304,7 +304,7 @@ static int pr_fetch_paths_rec(apr_array_header_t *paths, const char *path, svn_r
 		const char *entry;
 		char *subpath;
 		svn_dirent_t *dirent;
-		apr_hash_this(hi, (const void **)(void *)&entry, NULL, (void **)(void *)&dirent);
+		apr_hash_this(hi, (const void **)&entry, NULL, (void **)&dirent);
 
 		/* Add the full path of the entry */
 		if (strlen(path) > 0) {
@@ -523,7 +523,7 @@ int path_repo_commit_log(path_repo_t *repo, session_t *session, dump_options_t *
 	paths = apr_array_make(pool, apr_hash_count(log->changed_paths), sizeof(const char *));
 	for (hi = apr_hash_first(pool, log->changed_paths); hi; hi = apr_hash_next(hi)) {
 		const char *path;
-		apr_hash_this(hi, (const void **)(void *)&path, NULL, NULL);
+		apr_hash_this(hi, (const void **)&path, NULL, NULL);
 		APR_ARRAY_PUSH(paths, const char *) = path;
 	}
 	utils_sort(paths);
