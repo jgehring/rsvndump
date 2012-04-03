@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
-#include <stdbool.h>
 #include <limits.h>
 #include <sys/uio.h>
 
@@ -12,6 +11,10 @@ typedef unsigned u32;
 typedef unsigned long long u64;
 
 #define BUG_ON(x) assert(!(x))
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define __LITTLE_ENDIAN__ 1
+#endif
 
 #define get_unaligned(x) (*(x))
 #define put_unaligned(v,x) (*(x) = (v))
@@ -43,8 +46,5 @@ typedef unsigned long long u64;
 #define min_t(t,x,y) ((x) < (y) ? (x) : (y))
 #define max_t(t,x,y) ((x) > (y) ? (x) : (y))
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-#define __LITTLE_ENDIAN__ 1
-#endif
 
 #define BITS_PER_LONG (__SIZEOF_LONG__ * 8)
