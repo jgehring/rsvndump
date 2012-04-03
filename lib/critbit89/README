@@ -1,0 +1,12 @@
+critbit89 - A cribit tree implementation for strings in C89
+===========================================================
+
+This implementation closely follows the original CWEB source by Dan
+Bernstein [http://cr.yp.to/critbit.html], provided as generated C
+code at [https://github.com/agl/critbit]. It was converted to
+human-readable C89 code, and should be more portable than the
+original version. Additionally, support for custom memory allocators
+has been added.
+
+Hereby placed under public domain, just like the Dan Bernstein's
+original implementation.

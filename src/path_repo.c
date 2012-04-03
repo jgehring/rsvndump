@@ -35,7 +35,7 @@
 #include "logger.h"
 #include "utils.h"
 
-#include "critbit/critbit.h"
+#include "critbit89/critbit.h"
 #ifdef USE_SNAPPY
 	#include "snappy-c/snappy.h"
 #endif
@@ -54,7 +54,7 @@
 
 typedef struct {
 	svn_revnum_t revision;
-	critbit0_tree tree;
+	cb_tree_t tree;
 } pr_cache_entry_t;
 
 
@@ -71,7 +71,7 @@ struct path_repo_t {
 	apr_pool_t *delta_pool;
 	apr_array_header_t *delta;
 	int delta_len;
-	critbit0_tree tree;
+	cb_tree_t tree;
 	svn_revnum_t head;
 
 	apr_array_header_t *cache;   /* FIFO cache */
@@ -110,10 +110,10 @@ static apr_status_t pr_cleanup(void *data)
 	L1("path_repo: total store time:    %ld ms\n", apr_time_msec(repo->store_time));
 #endif
 
-	critbit0_clear(&repo->tree);
+	cb_tree_clear(&repo->tree);
 	for (i = 0; i < repo->cache->nelts; i++) {
 		if (APR_ARRAY_IDX(repo->cache, i, pr_cache_entry_t).tree.root) {
-			critbit0_clear(&APR_ARRAY_IDX(repo->cache, i, pr_cache_entry_t).tree);
+			cb_tree_clear(&APR_ARRAY_IDX(repo->cache, i, pr_cache_entry_t).tree);
 		}
 	}
 
@@ -129,6 +129,7 @@ static void pr_cache_init(path_repo_t *repo, int size)
 	repo->cache = apr_array_make(repo->pool, size, sizeof(pr_cache_entry_t));
 	for (i = 0; i < size; i++) {
 		APR_ARRAY_PUSH(repo->cache, pr_cache_entry_t).revision = -1;
+		APR_ARRAY_IDX(repo->cache, i, pr_cache_entry_t).tree = cb_tree_make();
 	}
 	repo->cache_index = 0;
 }
@@ -146,18 +147,18 @@ static int pr_tree_to_array_cb(const char *elem, void *arg) {
 }
 
 /* Returns all paths in the given tree inside an array */
-static apr_array_header_t *pr_tree_to_array(critbit0_tree *tree, const char *prefix, apr_pool_t *pool)
+static apr_array_header_t *pr_tree_to_array(cb_tree_t *tree, const char *prefix, apr_pool_t *pool)
 {
 	struct pr_ttoa_data data;
 	data.arr = apr_array_make(pool, 0, sizeof(char *));
 	data.pool = pool;
-	critbit0_allprefixed(tree, prefix, pr_tree_to_array_cb, &data);
+	cb_tree_walk_prefixed(tree, prefix, pr_tree_to_array_cb, &data);
 	return data.arr;
 }
 
 
 /* Encodes a whole tree to a series of add operations */
-static void pr_encode(critbit0_tree *tree, char **data, int *len, apr_pool_t *pool)
+static void pr_encode(cb_tree_t *tree, char **data, int *len, apr_pool_t *pool)
 {
 	int i;
 	char *dptr;
@@ -182,14 +183,14 @@ static void pr_encode(critbit0_tree *tree, char **data, int *len, apr_pool_t *po
 
 
 /* Applies a serialized tree delta to a tree */
-static int pr_delta_apply(critbit0_tree *tree, const char *data, int len, apr_pool_t *pool)
+static int pr_delta_apply(cb_tree_t *tree, const char *data, int len, apr_pool_t *pool)
 {
 	const char *dptr = data;
 	while (dptr - data < len) {
 		if (*dptr == '+') {
-			critbit0_insert(tree, dptr+1);
+			cb_tree_insert(tree, dptr+1);
 		} else {
-			critbit0_delete(tree, dptr+1);
+			cb_tree_delete(tree, dptr+1);
 		}
 		dptr += 2 + strlen(dptr+1);
 	}
@@ -198,7 +199,7 @@ static int pr_delta_apply(critbit0_tree *tree, const char *data, int len, apr_po
 
 
 /* Reconstructs a tree for the given revision */
-static int pr_reconstruct(path_repo_t *repo, critbit0_tree *tree, svn_revnum_t revision, apr_pool_t *pool)
+static int pr_reconstruct(path_repo_t *repo, cb_tree_t *tree, svn_revnum_t revision, apr_pool_t *pool)
 {
 	datum key, val;
 	svn_revnum_t r;
@@ -254,9 +255,9 @@ static int pr_reconstruct(path_repo_t *repo, critbit0_tree *tree, svn_revnum_t r
 
 
 /* Returns a tree for the given revision */
-static critbit0_tree *pr_tree(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
+static cb_tree_t *pr_tree(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 {
-	critbit0_tree *tree;
+	cb_tree_t *tree;
 	int i;
 
 	/* Check if tree is cached */
@@ -271,7 +272,7 @@ static critbit0_tree *pr_tree(path_repo_t *repo, svn_revnum_t revision, apr_pool
 	if (i >= repo->cache->nelts) {
 		tree = &APR_ARRAY_IDX(repo->cache, repo->cache_index, pr_cache_entry_t).tree;
 		if (tree->root != NULL) {
-			critbit0_clear(tree);
+			cb_tree_clear(tree);
 		}
 		if (pr_reconstruct(repo, tree, revision, pool) != 0) {
 			return NULL;
@@ -364,6 +365,7 @@ path_repo_t *path_repo_create(const char *tmpdir, apr_pool_t *pool)
 	repo->pool = subpool;
 	repo->delta_pool = svn_pool_create(repo->pool);
 
+	repo->tree = cb_tree_make();
 	repo->delta = apr_array_make(repo->pool, 1, sizeof(pr_delta_entry_t));
 	pr_cache_init(repo, CACHE_SIZE);
 
@@ -395,7 +397,7 @@ void path_repo_add(path_repo_t *repo, const char *path, apr_pool_t *pool)
 	e->path = apr_pstrdup(repo->delta_pool, path);
 	repo->delta_len += (2 + strlen(path));
 
-	critbit0_insert(&repo->tree, e->path);
+	cb_tree_insert(&repo->tree, e->path);
 
 	(void)pool; /* Prevent compiler warnings */
 }
@@ -414,7 +416,7 @@ void path_repo_delete(path_repo_t *repo, const char *path, apr_pool_t *pool)
 		e->path = apr_pstrdup(repo->delta_pool, p);
 		repo->delta_len += (2 + strlen(p));
 
-		critbit0_delete(&repo->tree, e->path);
+		cb_tree_delete(&repo->tree, e->path);
 	}
 }
 
@@ -501,7 +503,7 @@ int path_repo_discard(path_repo_t *repo, apr_pool_t *pool)
 	svn_pool_clear(repo->delta_pool);
 
 	/* Revert to previous head */
-	critbit0_clear(&repo->tree);
+	cb_tree_clear(&repo->tree);
 	return pr_reconstruct(repo, &repo->tree, repo->head, pool);
 }
 
@@ -565,7 +567,7 @@ int path_repo_commit_log(path_repo_t *repo, session_t *session, dump_options_t *
 				}
 			} else {
 				svn_revnum_t copyfrom_rev = delta_get_local_copyfrom_rev(info->copyfrom_rev, opts, logs, revision);
-				critbit0_tree *tree = pr_tree(repo, copyfrom_rev, pool);
+				cb_tree_t *tree = pr_tree(repo, copyfrom_rev, pool);
 				if (tree == NULL) {
 					return -1;
 				}
@@ -599,7 +601,7 @@ int path_repo_commit_log(path_repo_t *repo, session_t *session, dump_options_t *
 signed char path_repo_check_parent(path_repo_t *repo, const char *parent, const char *child, svn_revnum_t revision, apr_pool_t *pool)
 {
 	char *path;
-	critbit0_tree *tree;
+	cb_tree_t *tree;
 
 	if (revision < 0) {
 		return 0;
@@ -610,7 +612,7 @@ signed char path_repo_check_parent(path_repo_t *repo, const char *parent, const 
 		return -1;
 	}
 	path = apr_psprintf(pool, "%s/%s", parent, child);
-	if (critbit0_contains(tree, path)) {
+	if (cb_tree_contains(tree, path)) {
 		return 1;
 	}
 	return 0;
@@ -622,7 +624,7 @@ signed char path_repo_check_parent(path_repo_t *repo, const char *parent, const 
 void path_repo_test_all(path_repo_t *repo, session_t *session, apr_pool_t *pool)
 {
 	svn_revnum_t rev = 0;
-	critbit0_tree tree = { NULL };
+	cb_tree_t tree = cb_tree_make();
 	apr_pool_t *revpool = svn_pool_create(pool);
 
 	L0("Checking path_repo until revision %ld...\n", repo->head);
@@ -673,7 +675,7 @@ void path_repo_test_all(path_repo_t *repo, session_t *session, apr_pool_t *pool)
 			}
 		}
 
-		critbit0_clear(&tree);
+		cb_tree_clear(&tree);
 		svn_pool_clear(revpool);
 	}
 }

@@ -1,7 +1,7 @@
 noinst_LIBRARIES = libcompat.a
 
 libcompat_a_SOURCES = \
-	critbit/critbit.h critbit/critbit.c \
+	critbit89/critbit.h critbit89/critbit.c \
 	\
 	snappy-c/compat.h \
 	snappy-c/snappy-int.h \
@@ -11,7 +11,6 @@ libcompat_a_SOURCES = \
 libcompat_a_LIBADD = $(LIBOBJS) $(ALLOCA)
 
 EXTRA_DIST = \
-	critbit/README \
-	critbit/critbit.w \
+	critbit89/README \
 	snappy-c/README \
 	snappy-c/LICENSE
