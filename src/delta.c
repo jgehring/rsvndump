@@ -298,18 +298,15 @@ static svn_error_t *delta_check_replace(de_node_baton_t *node)
 		/* Found a successfully copied parent. If this node is *not* part of
 		   the copy, it should be added only. */
 		copyfrom_path = delta_get_local_copyfrom_path(session->prefix, parent->copyfrom_path);
-		relpath = node->path + strlen(parent->path) + 1;
+		relpath = node->path + strlen(parent->path);
+		while (*relpath == '/') ++relpath;
 		check = path_repo_check_parent(de_baton->path_repo, copyfrom_path, relpath, parent->copyfrom_rev_local, node->pool);
-		DEBUG_MSG("delta_dump_node(%s): Replacement check %s -> %s for %s (%s) at %ld [is %d]\n", node->path, copyfrom_path, parent->path, node->path, node->path + strlen(parent->path) + 1, parent->copyfrom_rev_local, check);
+		DEBUG_MSG("delta_check_replace(%s): parent copy check %s -> %s for %s at %ld [is %d]\n", node->path, copyfrom_path, parent->path, relpath, parent->copyfrom_rev_local, check);
 		if (check < 0) {
 			return svn_error_createf(1, NULL, "Error checking parent relationship at previous revision %ld", parent->copyfrom_rev_local);
 		} else if (!check) {
 			node->action = 'A';
 		}
-		break;
-	}
-
-	if (node->action != 'R') {
 		return SVN_NO_ERROR;
 	}
 
@@ -317,8 +314,10 @@ static svn_error_t *delta_check_replace(de_node_baton_t *node)
 	   and wasn't present in the previous revision, change operation to 'add'. */
 	if ((node->cp_info & CPI_FAILED) && node->action == 'R') {
 		char *ppath = svn_path_dirname(node->path, node->pool);
-		const char *relpath = node->path + strlen(ppath) + 1;
+		const char *relpath = node->path + strlen(ppath);
+		while (*relpath == '/') ++relpath;
 		check = path_repo_check_parent(de_baton->path_repo, ppath, relpath, de_baton->local_revnum - 1, node->pool);
+		DEBUG_MSG("delta_check_replace(%s): parent check: %s for %s at %ld [is %d]\n", node->path, ppath, relpath, de_baton->local_revnum - 1, check);
 		if (check < 0) {
 			return svn_error_createf(1, NULL, "Error checking parent relationship at previous revision %ld", de_baton->local_revnum - 1);
 		} else if (!check) {
