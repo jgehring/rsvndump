@@ -1,9 +1,3 @@
-#ifdef __FreeBSD__
-#  include <sys/endian.h>
-#else
-#  include <endian.h>
-#endif
-
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
@@ -20,9 +14,21 @@ typedef unsigned long long u64;
 #define BUG_ON(x) assert(!(x))
 
 #define get_unaligned(x) (*(x))
-#define get_unaligned_le32(x) (le32toh(*(u32 *)(x)))
 #define put_unaligned(v,x) (*(x) = (v))
-#define put_unaligned_le16(v,x) (*(u16 *)(x) = htole16(v))
+#ifdef __LITTLE_ENDIAN__
+/* Little endian */
+#	define get_unaligned_le32(x) ((*(u32 *)(x)))
+#	define put_unaligned_le16(v,x) (*(u16 *)(x) = (v))
+#else
+/* Big endian */
+#	define mybswap16(x) ((((x) & 0xFF00) >> 8) | (((x) & 0x00FF) << 8))
+#	define mybswap32(x) ((((x) & 0xFF000000) >> 24) | \
+                         (((x) & 0x00FF0000) >> 8)  | \
+                         (((x) & 0x0000FF00) << 8)  | \
+                         (((x) & 0x000000FF) << 24))
+#	define get_unaligned_le32(x) (mybswap32(*(u32 *)(x)))
+#	define put_unaligned_le16(v,x) (*(u16 *)(x) = mybswap16((u16)v))
+#endif
 
 #define vmalloc(x) malloc(x)
 #define vfree(x) free(x)
