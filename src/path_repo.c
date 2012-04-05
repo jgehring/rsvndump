@@ -152,17 +152,22 @@ static apr_array_header_t *pr_tree_to_array(cb_tree_t *tree, const char *prefix,
 	struct pr_ttoa_data data;
 	data.arr = apr_array_make(pool, 0, sizeof(char *));
 	data.pool = pool;
-	cb_tree_walk_prefixed(tree, prefix, pr_tree_to_array_cb, &data);
+	if (cb_tree_walk_prefixed(tree, prefix, pr_tree_to_array_cb, &data) != 0) {
+		return NULL;
+	}
 	return data.arr;
 }
 
 
 /* Encodes a whole tree to a series of add operations */
-static void pr_encode(cb_tree_t *tree, char **data, int *len, apr_pool_t *pool)
+static int pr_encode(cb_tree_t *tree, char **data, int *len, apr_pool_t *pool)
 {
 	int i;
 	char *dptr;
 	apr_array_header_t *arr = pr_tree_to_array(tree, "", pool);
+	if (arr == NULL) {
+		return -1;
+	}
 
 	/* Compute length */
 	*len = 0;
@@ -179,6 +184,7 @@ static void pr_encode(cb_tree_t *tree, char **data, int *len, apr_pool_t *pool)
 		dptr += strlen(APR_ARRAY_IDX(arr, i, char *));
 		*dptr++ = '\0';
 	}
+	return 0;
 }
 
 
@@ -460,7 +466,10 @@ int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 			*dptr++ = '\0';
 		}
 	} else {
-		pr_encode(&repo->tree, &val.dptr, &val.dsize, pool);
+		if (pr_encode(&repo->tree, &val.dptr, &val.dsize, pool) != 0) {
+			fprintf(stderr, "Error encoding tree data for snapshot\n");
+			return -1;
+		}
 	}
 
 #ifdef DEBUG
