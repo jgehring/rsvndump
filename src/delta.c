@@ -945,7 +945,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 			DEBUG_MSG("de_delete_entry(%s): removeing properties for %s\n", node->path, npath);
 			property_delete(node->de_baton->prop_store, npath, pool);
 
-			DEBUG_MSG("de_delete_entry(%s): deleting %s from delta_hash\n", npath);
+			DEBUG_MSG("de_delete_entry(%s): deleting %s from delta_hash\n", node->path, npath);
 			rhash_set(delta_hash, npath, APR_HASH_KEY_STRING, NULL, 0);
 		}
 	}
