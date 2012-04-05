@@ -39,10 +39,10 @@ typedef struct path_repo_t path_repo_t;
 extern path_repo_t *path_repo_create(const char *tmpdir, apr_pool_t *pool);
 
 /* Schedules the given path for addition */
-extern void path_repo_add(path_repo_t *repo, const char *path, apr_pool_t *pool);
+extern int path_repo_add(path_repo_t *repo, const char *path, apr_pool_t *pool);
 
 /* Schedules the given path for deletion */
-extern void path_repo_delete(path_repo_t *repo, const char *path, apr_pool_t *pool);
+extern int path_repo_delete(path_repo_t *repo, const char *path, apr_pool_t *pool);
 
 /* Commits all scheduled actions, using the given revision number */
 extern int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool);

@@ -390,21 +390,24 @@ path_repo_t *path_repo_create(const char *tmpdir, apr_pool_t *pool)
 
 
 /* Schedules the given path for addition */
-void path_repo_add(path_repo_t *repo, const char *path, apr_pool_t *pool)
+int path_repo_add(path_repo_t *repo, const char *path, apr_pool_t *pool)
 {
 	pr_delta_entry_t *e = &APR_ARRAY_PUSH(repo->delta, pr_delta_entry_t);
 	e->action = '+';
 	e->path = apr_pstrdup(repo->delta_pool, path);
 	repo->delta_len += (2 + strlen(path));
 
-	cb_tree_insert(&repo->tree, e->path);
+	if (cb_tree_insert(&repo->tree, e->path) != 0) {
+		return -1;
+	}
 
 	(void)pool; /* Prevent compiler warnings */
+	return 0;
 }
 
 
 /* Schedules the given path for deletion */
-void path_repo_delete(path_repo_t *repo, const char *path, apr_pool_t *pool)
+int path_repo_delete(path_repo_t *repo, const char *path, apr_pool_t *pool)
 {
 	apr_array_header_t *paths = pr_tree_to_array(&repo->tree, path, pool);
 	int i;
@@ -418,6 +421,7 @@ void path_repo_delete(path_repo_t *repo, const char *path, apr_pool_t *pool)
 
 		cb_tree_delete(&repo->tree, e->path);
 	}
+	return 0;
 }
 
 
