@@ -91,6 +91,14 @@ static void print_usage()
 }
 
 
+/* Prints an error message about a missing argument */
+static void print_missing_arg(const char *opt)
+{
+	fprintf(stderr, _("ERROR: Missing argument for option: %s\n"), opt);
+	fprintf(stderr, _("Please run with --help for usage information.\n"));
+}
+
+
 /* Parses a revision number (or range) */
 static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 {
@@ -210,26 +218,50 @@ int main(int argc, char **argv)
 			opts.flags |= DF_USE_DELTAS;
 		} else if (!strcmp(argv[i], "--incremental")) {
 			opts.flags |= DF_INCREMENTAL;
-		} else if (i+1 < argc && (!strcmp(argv[i], "-r") || !strcmp(argv[i], "--revision"))) {
+		} else if (!strcmp(argv[i], "-r") || !strcmp(argv[i], "--revision")) {
+			if (i+1 >= argc) {
+				print_missing_arg(argv[i]);
+				goto failure;
+			}
 			if (parse_revnum(argv[++i], &opts.start, &opts.end)) {
 				fprintf(stderr, _("ERROR: invalid revision range '%s'.\n"), argv[i]);
 				goto failure;
 			}
-		} else if (i+1 < argc && (!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username"))) {
+		} else if (!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username")) {
+			if (i+1 >= argc) {
+				print_missing_arg(argv[i]);
+				goto failure;
+			}
 			session.username = apr_pstrdup(session.pool, argv[++i]);
 			/* No one needs to know the username */
 			memset(argv[i], ' ', strlen(argv[i]));
-		} else if (i+1 < argc && (!strcmp(argv[i], "-p") || !strcmp(argv[i], "--password"))) {
+		} else if (!strcmp(argv[i], "-p") || !strcmp(argv[i], "--password")) {
+			if (i+1 >= argc) {
+				print_missing_arg(argv[i]);
+				goto failure;
+			}
 			session.password = apr_pstrdup(session.pool, argv[++i]);
 			/* No one needs to know the password */
 			memset(argv[i], ' ', strlen(argv[i]));
-		} else if (i+1 < argc && !strcmp(argv[i], "--config-dir")) {
+		} else if (!strcmp(argv[i], "--config-dir")) {
+			if (i+1 >= argc) {
+				print_missing_arg(argv[i]);
+				goto failure;
+			}
 			session.config_dir = apr_pstrdup(session.pool, argv[++i]);
-		} else if (i+1 < argc && !strcmp(argv[i], "--prefix")) {
+		} else if (!strcmp(argv[i], "--prefix")) {
+			if (i+1 >= argc) {
+				print_missing_arg(argv[i]);
+				goto failure;
+			}
 			opts.prefix = apr_pstrdup(session.pool, argv[++i]);
 
 		/* Deprecated options */
-		} else if (i+1 < argc && !strcmp(argv[i], "--stop")) {
+		} else if (!strcmp(argv[i], "--stop")) {
+			if (i+1 >= argc) {
+				print_missing_arg(argv[i]);
+				goto failure;
+			}
 			fprintf(stderr, _("WARNING: the '--stop' option is deprated. Please use '--revision'.\n" \
 			                  "         The resulting dump WILL DIFFER from the one obtained with\n" \
 			                  "         previous versions of the program if you are dumping a subdirectory.\n"));
@@ -240,12 +272,12 @@ int main(int argc, char **argv)
 			}
 		} else if (!strcmp(argv[i], "--online") || !strcmp(argv[i], "--dump-uuid")) {
 			fprintf(stderr, _("WARNING: the '%s' option is deprecated.\n"), argv[i]);
-		} else if (i+1 < argc && (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--download-dir"))) {
+		} else if (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--download-dir")) {
 			fprintf(stderr, _("WARNING: the '%s' option is deprecated.\n"), argv[i]);
 			++i;
 		} else if (!strcmp(argv[i], "--no-check-certificate")) {
 			fprintf(stderr, _("WARNING: the '%s' option is deprecated and will be IGNORED!.\n"), argv[i]);
-		} else if ((i+1 < argc && (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--outfile")))) {
+		} else if (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--outfile")) {
 			fprintf(stderr, _("WARNING: the '%s' option is deprecated and will be IGNORED!.\n"), argv[i]);
 			++i;
 
