@@ -143,7 +143,7 @@ struct pr_ttoa_data {
 static int pr_tree_to_array_cb(const char *elem, void *arg) {
 	struct pr_ttoa_data *data = arg;
 	APR_ARRAY_PUSH(data->arr, const char *) = apr_pstrdup(data->pool, elem);
-	return 1;
+	return 0;
 }
 
 /* Returns all paths in the given tree inside an array */
