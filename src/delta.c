@@ -963,8 +963,10 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 	property_delete(node->de_baton->prop_store, node->path, pool);
 
 	/* This will delete all children, too */
-	if (path_repo_delete(node->de_baton->path_repo, path, pool) != 0) {
-		return svn_error_createf(1, NULL, _("Unable to update local tree history"));
+	if (!(node->de_baton->opts->flags & DF_INITIAL_DRY_RUN)) {
+		if (path_repo_delete(node->de_baton->path_repo, path, pool) != 0) {
+			return svn_error_createf(1, NULL, _("Unable to update local tree history"));
+		}
 	}
 	return SVN_NO_ERROR;
 }
@@ -1016,8 +1018,10 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 		}
 	}
 
-	if (path_repo_add(parent->de_baton->path_repo, path, dir_pool) != 0) {
-		return svn_error_createf(1, NULL, _("Unable to update local tree history"));
+	if (!(node->de_baton->opts->flags & DF_INITIAL_DRY_RUN)) {
+		if (path_repo_add(node->de_baton->path_repo, path, dir_pool) != 0) {
+			return svn_error_createf(1, NULL, _("Unable to update local tree history"));
+		}
 	}
 	*child_baton = node;
 	return SVN_NO_ERROR;
@@ -1153,8 +1157,10 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		node->action = 'A';
 	}
 
-	if (path_repo_add(parent->de_baton->path_repo, path, file_pool) != 0) {
-		return svn_error_createf(1, NULL, _("Unable to update local tree history"));
+	if (!(node->de_baton->opts->flags & DF_INITIAL_DRY_RUN)) {
+		if (path_repo_add(node->de_baton->path_repo, path, file_pool) != 0) {
+			return svn_error_createf(1, NULL, _("Unable to update local tree history"));
+		}
 	}
 	*file_baton = node;
 	return SVN_NO_ERROR;
