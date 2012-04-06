@@ -224,7 +224,7 @@ static int pr_reconstruct(path_repo_t *repo, cb_tree_t *tree, svn_revnum_t revis
 		if (gdbm_exists(repo->db, key)) {
 			val = gdbm_fetch(repo->db, key);
 			if (val.dptr == NULL) {
-				fprintf(stderr, "Error fetching delta for revision %ld\n", r);
+				fprintf(stderr, _("Error fetching tree delta for revision %ld\n"), r);
 				return -1;
 			}
 #ifdef USE_SNAPPY
@@ -241,7 +241,7 @@ static int pr_reconstruct(path_repo_t *repo, cb_tree_t *tree, svn_revnum_t revis
 			dsize = val.dsize;
 #endif
 			if (pr_delta_apply(tree, dptr, dsize, pool) != 0) {
-				fprintf(stderr, "Error applying tree delta for revision %ld\n", r);
+				fprintf(stderr, _("Error applying tree delta for revision %ld\n"), r);
 				return -1;
 			}
 
@@ -379,13 +379,13 @@ path_repo_t *path_repo_create(const char *tmpdir, apr_pool_t *pool)
 	db_path = apr_psprintf(pool, "%s/paths.db", tmpdir);
 	repo->db = gdbm_open(db_path, 0, GDBM_NEWDB, 0600, NULL);
 	if (repo->db == NULL) {
-		fprintf(stderr, "Error creating path database (%s)\n", gdbm_strerror(gdbm_errno));
+		fprintf(stderr, _("Error creating path database (%s)\n"), gdbm_strerror(gdbm_errno));
 		return NULL;
 	}
 
 #ifdef USE_SNAPPY
 	if (snappy_init_env(&repo->snappy_env) != 0) {
-		fprintf(stderr, "Error initializing snappy compressor\n");
+		fprintf(stderr, _("Error initializing snappy compressor\n"));
 		return NULL;
 	}
 #endif
@@ -467,7 +467,7 @@ int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 		}
 	} else {
 		if (pr_encode(&repo->tree, &val.dptr, &val.dsize, pool) != 0) {
-			fprintf(stderr, "Error encoding tree data for snapshot\n");
+			fprintf(stderr, _("Error encoding tree data for snapshot\n"));
 			return -1;
 		}
 	}
@@ -479,7 +479,7 @@ int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 #ifdef USE_SNAPPY
 	dptr = apr_palloc(pool, snappy_max_compressed_length(val.dsize));
 	if (snappy_compress(&repo->snappy_env, val.dptr, val.dsize, dptr, &dsize) != 0) {
-		fprintf(stderr, "Error compressing data\n");
+		fprintf(stderr, _("Error compressing tree data for revision %ld\n"), revision);
 		return -1;
 	}
 	val.dptr = dptr;
@@ -493,7 +493,7 @@ int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 	key.dptr = apr_itoa(pool, revision);
 	key.dsize = strlen(key.dptr);
 	if (gdbm_store(repo->db, key, val, GDBM_INSERT) != 0) {
-		fprintf(stderr, "Error storing paths for revision %ld\n", revision);
+		fprintf(stderr, _("Error storing paths for revision %ld\n"), revision);
 		return -1;
 	}
 
@@ -571,7 +571,7 @@ int path_repo_commit_log(path_repo_t *repo, session_t *session, dump_options_t *
 			if (copyfrom_path == NULL) {
 				cpaths = apr_array_make(pool, 1, sizeof(char *));
 				if (pr_fetch_paths(cpaths, path, log->revision, session, pool) != 0) {
-					fprintf(stderr, "Error fetching tree for revision %ld\n", log->revision);
+					fprintf(stderr, _("Error fetching tree for revision %ld\n"), log->revision);
 					return -1;
 				}
 

@@ -303,7 +303,7 @@ static svn_error_t *delta_check_replace(de_node_baton_t *node)
 		check = path_repo_check_parent(de_baton->path_repo, copyfrom_path, relpath, parent->copyfrom_rev_local, node->pool);
 		DEBUG_MSG("delta_check_replace(%s): parent copy check %s -> %s for %s at %ld [is %d]\n", node->path, copyfrom_path, parent->path, relpath, parent->copyfrom_rev_local, check);
 		if (check < 0) {
-			return svn_error_createf(1, NULL, "Error checking parent relationship at previous revision %ld", parent->copyfrom_rev_local);
+			return svn_error_createf(1, NULL, _("Failed to check parent relationship at previous revision %ld"), parent->copyfrom_rev_local);
 		} else if (!check) {
 			node->action = 'A';
 		}
@@ -319,7 +319,7 @@ static svn_error_t *delta_check_replace(de_node_baton_t *node)
 		check = path_repo_check_parent(de_baton->path_repo, ppath, relpath, de_baton->local_revnum - 1, node->pool);
 		DEBUG_MSG("delta_check_replace(%s): parent check: %s for %s at %ld [is %d]\n", node->path, ppath, relpath, de_baton->local_revnum - 1, check);
 		if (check < 0) {
-			return svn_error_createf(1, NULL, "Error checking parent relationship at previous revision %ld", de_baton->local_revnum - 1);
+			return svn_error_createf(1, NULL, _("Failed to check parent relationship at previous revision %ld"), parent->copyfrom_rev_local);
 		} else if (!check) {
 			node->action = 'A';
 		}
@@ -407,7 +407,7 @@ static svn_error_t *delta_propagate_copy(de_node_baton_t *parent, de_node_baton_
 
 		check = path_repo_check_parent(parent->de_baton->path_repo, check_path, base, revision, check_pool);
 		if (check < 0) {
-			return svn_error_createf(1, NULL, "Error propagating copy information");
+			return svn_error_createf(1, NULL, _("Failed to propagate copy information"));
 		} else if (check) {
 			*(base-1) = '/';
 			if (tmp < end) {
@@ -964,7 +964,7 @@ static svn_error_t *de_delete_entry(const char *path, svn_revnum_t revision, voi
 
 	/* This will delete all children, too */
 	if (path_repo_delete(node->de_baton->path_repo, path, pool) != 0) {
-		return svn_error_createf(1, NULL, "Error updating local tree history");
+		return svn_error_createf(1, NULL, _("Unable to update local tree history"));
 	}
 	return SVN_NO_ERROR;
 }
@@ -1017,7 +1017,7 @@ static svn_error_t *de_add_directory(const char *path, void *parent_baton, const
 	}
 
 	if (path_repo_add(parent->de_baton->path_repo, path, dir_pool) != 0) {
-		return svn_error_createf(1, NULL, "Error updating local tree history");
+		return svn_error_createf(1, NULL, _("Unable to update local tree history"));
 	}
 	*child_baton = node;
 	return SVN_NO_ERROR;
@@ -1041,7 +1041,7 @@ static svn_error_t *de_open_directory(const char *path, void *parent_baton, svn_
 	/* Load properties (if any) */
 	ret = property_load(parent->de_baton->prop_store, node->path, node->properties, node->pool);
 	if (ret != 0) {
-		return svn_error_createf(1, NULL, "Error loading properties (%d)\n", ret);
+		return svn_error_createf(1, NULL, _("Unable to load properties for %s (%d)\n"), path, ret);
 	}
 	return SVN_NO_ERROR;
 }
@@ -1082,7 +1082,7 @@ static svn_error_t *de_close_directory(void *dir_baton, apr_pool_t *pool)
 	/* Save properties for next time */
 	ret = property_store(node->de_baton->prop_store, node->path, node->properties, pool);
 	if (ret != 0) {
-		return svn_error_createf(1, NULL, "Error storing properties (%d)\n", ret);
+		return svn_error_createf(1, NULL, _("Unable to store properties for %s (%d)\n"), node->path, ret);
 	}
 	return SVN_NO_ERROR;
 }
@@ -1154,7 +1154,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 	}
 
 	if (path_repo_add(parent->de_baton->path_repo, path, file_pool) != 0) {
-		return svn_error_createf(1, NULL, "Error updating local tree history");
+		return svn_error_createf(1, NULL, _("Unable to update local tree history"));
 	}
 	*file_baton = node;
 	return SVN_NO_ERROR;
@@ -1179,7 +1179,7 @@ static svn_error_t *de_open_file(const char *path, void *parent_baton, svn_revnu
 	/* Load properties (if any) */
 	ret = property_load(parent->de_baton->prop_store, node->path, node->properties, node->pool);
 	if (ret != 0) {
-		return svn_error_createf(1, NULL, "Error loading properties (%d)\n", ret);
+		return svn_error_createf(1, NULL, _("Unable to load properties for %s (%d)\n"), path, ret);
 	}
 	return SVN_NO_ERROR;
 }
@@ -1272,7 +1272,7 @@ static svn_error_t *de_close_file(void *file_baton, const char *text_checksum, a
 	/* Save properties for next time */
 	ret = property_store(node->de_baton->prop_store, node->path, node->properties, pool);
 	if (ret != 0) {
-		return svn_error_createf(1, NULL, "Error storing properties (%d)\n", ret);
+		return svn_error_createf(1, NULL, _("Unable to store properties for %s (%d)\n"), node->path, ret);
 	}
 	return SVN_NO_ERROR;
 }
