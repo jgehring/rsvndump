@@ -370,16 +370,24 @@ char dump(session_t *session, dump_options_t *opts)
 		logs_fetched = 1;
 
 		/* Jump to local revision and fill the path hash for previous revisions */
-		L2(_("Preparing tree history... "));
+		L1(_("Preparing tree history... "));
 		local_rev = 0;
 		while ((local_rev < (long int)logs->nelts) && (APR_ARRAY_IDX(logs, local_rev, log_revision_t).revision < opts->start)) {
 			svn_revnum_t phrev = ((opts->flags & DF_KEEP_REVNUMS) ? APR_ARRAY_IDX(logs, local_rev, log_revision_t).revision : local_rev);
 			if (path_repo_commit_log(path_repo, session, opts, &APR_ARRAY_IDX(logs, local_rev, log_revision_t), phrev, logs, log_pool) != 0) {
 				return 1;
 			}
+			L2(_("\r\033[0KPreparing tree history... %ld"), local_rev);
+			if (loglevel > 2) {
+				fflush(stderr);
+			}
 			++local_rev;
 		}
-		L2(_("done\n"));
+		if (loglevel == 2) {
+			L2(_("\r\033[0KPreparing tree history... done\n"));
+		} else {
+			L1(_("done\n"));
+		}
 
 		/* The first revision is a dry run.
 		   This is because we need to get the data of the previous
