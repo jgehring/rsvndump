@@ -409,7 +409,6 @@ int property_load(property_storage_t *store, const char *path, apr_hash_t *props
 		return -1;
 	}
 
-	/* TODO: Don't remove entry */
 	/* Remove entry */
 	apr_hash_set(store->entries, path, APR_HASH_KEY_STRING, NULL);
 	entry->ref->count--;
