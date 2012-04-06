@@ -138,21 +138,25 @@ static void pr_cache_init(path_repo_t *repo, int size)
 /* Callback for pr_tree_to_array() */
 struct pr_ttoa_data {
 	apr_array_header_t *arr;
+	size_t path_len;
 	apr_pool_t *pool;
 };
 static int pr_tree_to_array_cb(const char *elem, void *arg) {
 	struct pr_ttoa_data *data = arg;
-	APR_ARRAY_PUSH(data->arr, const char *) = apr_pstrdup(data->pool, elem);
+	if (data->path_len == 0 || elem[data->path_len] == 0 || elem[data->path_len] == '/') {
+		APR_ARRAY_PUSH(data->arr, const char *) = apr_pstrdup(data->pool, elem);
+	}
 	return 0;
 }
 
-/* Returns all paths in the given tree inside an array */
-static apr_array_header_t *pr_tree_to_array(cb_tree_t *tree, const char *prefix, apr_pool_t *pool)
+/* Returns all children of path in the given tree as an array */
+static apr_array_header_t *pr_tree_to_array(cb_tree_t *tree, const char *path, apr_pool_t *pool)
 {
 	struct pr_ttoa_data data;
 	data.arr = apr_array_make(pool, 0, sizeof(char *));
 	data.pool = pool;
-	if (cb_tree_walk_prefixed(tree, prefix, pr_tree_to_array_cb, &data) != 0) {
+	data.path_len = strlen(path);
+	if (cb_tree_walk_prefixed(tree, path, pr_tree_to_array_cb, &data) != 0) {
 		return NULL;
 	}
 	return data.arr;
@@ -594,10 +598,9 @@ int path_repo_commit_log(path_repo_t *repo, session_t *session, dump_options_t *
 				} else {
 					unsigned int copyfrom_path_len = strlen(copyfrom_path);
 					for (j = 0; j < cpaths->nelts; j++) {
-						char *relpath = APR_ARRAY_IDX(cpaths, j, char *);
-						if (strlen(relpath) > copyfrom_path_len) {
-							relpath = apr_psprintf(pool, "%s%s", path, relpath + copyfrom_path_len);
-						}
+						const char *relpath = APR_ARRAY_IDX(cpaths, j, char *);
+						assert(strlen(relpath) >= copyfrom_path_len);
+						relpath = apr_psprintf(pool, "%s%s", path, relpath + copyfrom_path_len);
 						path_repo_add(repo, relpath, pool);
 					}
 				}
