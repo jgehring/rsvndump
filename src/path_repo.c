@@ -553,9 +553,9 @@ int path_repo_commit_log(path_repo_t *repo, session_t *session, dump_options_t *
 		svn_log_changed_path_t *info = apr_hash_get(log->changed_paths, path, APR_HASH_KEY_STRING);
 
 		if (info->copyfrom_path == NULL) {
-			DEBUG_MSG("path_repo_commit(%ld): %c %s", revision, info->action, path);
+			DEBUG_MSG("path_repo_commit(%ld): %c %s\n", revision, info->action, path);
 		} else {
-			DEBUG_MSG("path_repo_commit(%ld): %c %s (from %s@%ld)", revision, info->action, path, info->copyfrom_path, info->copyfrom_rev);
+			DEBUG_MSG("path_repo_commit(%ld): %c %s (from %s@%ld)\n", revision, info->action, path, info->copyfrom_path, info->copyfrom_rev);
 		}
 
 		if (info->action == 'D' || info->action == 'R') {

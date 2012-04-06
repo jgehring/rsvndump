@@ -378,7 +378,7 @@ char dump(session_t *session, dump_options_t *opts)
 				return 1;
 			}
 			L2(_("\r\033[0KPreparing tree history... %ld"), local_rev);
-			if (loglevel > 2) {
+			if (loglevel >= 2) {
 				fflush(stderr);
 			}
 			++local_rev;

@@ -142,6 +142,11 @@ static svn_error_t *log_receiver_list(void *baton, apr_hash_t *changed_paths, sv
 	SVN_ERR(log_receiver(&receiver_baton, changed_paths, revision, author, date, message, pool));
 
 	APR_ARRAY_PUSH(data->list, log_revision_t) = log;
+
+	L2(_("\r\033[0KFetching logs... %ld"), revision);
+	if (loglevel >= 2) {
+		fflush(stderr);
+	}
 	return SVN_NO_ERROR;
 }
 
@@ -252,7 +257,11 @@ char log_fetch_all(session_t *session, svn_revnum_t start, svn_revnum_t end, apr
 		svn_pool_destroy(pool);
 		return 1;
 	}
-	L1(_("done\n"));
+	if (loglevel == 2) {
+		L2(_("\r\033[0KFetching logs... done\n"));
+	} else {
+		L1(_("done\n"));
+	}
 
 	svn_pool_destroy(pool);
 	return 0;
