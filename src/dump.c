@@ -547,6 +547,12 @@ char dump(session_t *session, dump_options_t *opts)
 				ret = 1;
 				break;
 			}
+#ifdef DEBUG_PATH_REPO
+			if (path_repo_test(path_repo, session, local_rev, revpool) != 0) {
+				ret = 1;
+				break;
+			}
+#endif
 		}
 
 		if (loglevel == 0 && !(opts->flags & DF_INITIAL_DRY_RUN)) {

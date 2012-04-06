@@ -636,19 +636,67 @@ signed char path_repo_check_parent(path_repo_t *repo, const char *parent, const 
 
 #ifdef DEBUG
 
-/* Verifies all revisions stored in the path hash */
-void path_repo_test_all(path_repo_t *repo, session_t *session, apr_pool_t *pool)
+/* Verifies a given revision */
+int path_repo_test(path_repo_t *repo, session_t *session, svn_revnum_t revision, apr_pool_t *pool)
+{
+	apr_array_header_t *paths_recon;
+	apr_array_header_t *paths_orig;
+	cb_tree_t tree = cb_tree_make();
+	int i, ret = 0;
+
+	/* Retrieve reconstructed tree */
+	if (pr_reconstruct(repo, &tree, revision, pool) != 0) {
+		fprintf(stderr, _("Error reconstructing tree for revision %ld\n"), revision);
+		return 1;
+	}
+	paths_recon = pr_tree_to_array(&tree, "", pool);
+
+	/* Retrieve actual tree -- assume the session is rooted at a directory */
+	paths_orig = apr_array_make(pool, 0, sizeof(char *));
+	pr_fetch_paths(paths_orig, "", revision, session, pool);
+	utils_sort(paths_orig);
+
+	/* Skip empty root element from original tree (HACK!) */
+	if (paths_orig->nelts > 0 && strlen(APR_ARRAY_IDX(paths_orig, 0, char *)) == 0) {
+		paths_orig->elts += sizeof(char *);
+		paths_orig->nelts--;
+	}
+
+	/* Compare trees */
+	if (paths_recon->nelts != paths_orig->nelts) {
+		fprintf(stderr, "r%ld: #recon = %d != %d = #orig\n", revision, paths_recon->nelts, paths_orig->nelts);
+		ret = 1;
+	}
+	for (i = 0; i < paths_recon->nelts; i++) {
+		char *p = APR_ARRAY_IDX(paths_recon, i, char *);
+		if (utils_search(p, paths_orig) == NULL) {
+			fprintf(stderr, "r%ld: in recon, not in orig: %s\n", revision, p);
+			ret = 1;
+		}
+	}
+	for (i = 0; i < paths_orig->nelts; i++) {
+		char *p = APR_ARRAY_IDX(paths_orig, i, char *);
+		if (utils_search(p, paths_recon) == NULL) {
+			fprintf(stderr, "r%ld: in orig, not in recon: %s\n", revision, p);
+			ret = 1;
+		}
+	}
+
+	cb_tree_clear(&tree);
+	return ret;
+}
+
+
+/* Verifies all revisions stored in the path repository */
+int path_repo_test_all(path_repo_t *repo, session_t *session, apr_pool_t *pool)
 {
 	svn_revnum_t rev = 0;
-	cb_tree_t tree = cb_tree_make();
 	apr_pool_t *revpool = svn_pool_create(pool);
+	int ret = 0;
 
 	L0("Checking path_repo until revision %ld...\n", repo->head);
-	while (++rev < repo->head) {
-		apr_array_header_t *paths_recon;
-		apr_array_header_t *paths_orig;
+	while (ret == 0 && ++rev < repo->head) {
 		datum key;
-		int i;
 
 		/* Skip all revisions that haven't been committed */
 		key.dptr = apr_itoa(pool, rev);
@@ -657,43 +705,10 @@ void path_repo_test_all(path_repo_t *repo, session_t *session, apr_pool_t *pool)
 			continue;
 		}
 
-		/* Retrieve reconstructed tree */
-		if (pr_reconstruct(repo, &tree, rev, revpool) != 0) {
-			fprintf(stderr, "Error reconstructing tree for revision %ld\n", rev);
-		}
-		paths_recon = pr_tree_to_array(&tree, "", revpool);
-
-		/* Retrieve actual tree -- assume the session is rooted at a directory */
-		paths_orig = apr_array_make(revpool, 0, sizeof(char *));
-		pr_fetch_paths(paths_orig, "", rev, session, revpool);
-		utils_sort(paths_orig);
-
-		/* Skip empty root element from original tree (HACK!) */
-		if (paths_orig->nelts > 0 && strlen(APR_ARRAY_IDX(paths_orig, 0, char *)) == 0) {
-			paths_orig->elts += sizeof(char *);
-			paths_orig->nelts--;
-		}
-
-		/* Compare trees */
-		if (paths_recon->nelts != paths_orig->nelts) {
-			fprintf(stderr, "r%ld: #recon = %d != %d = #orig\n", rev, paths_recon->nelts, paths_orig->nelts);
-		}
-		for (i = 0; i < paths_recon->nelts; i++) {
-			char *p = APR_ARRAY_IDX(paths_recon, i, char *);
-			if (utils_search(p, paths_orig) == NULL) {
-				fprintf(stderr, "r%ld: in recon, not in orig: %s\n", rev, p);
-			}
-		}
-		for (i = 0; i < paths_orig->nelts; i++) {
-			char *p = APR_ARRAY_IDX(paths_orig, i, char *);
-			if (utils_search(p, paths_recon) == NULL) {
-				fprintf(stderr, "r%ld: in orig, not in recon: %s\n", rev, p);
-			}
-		}
-
-		cb_tree_clear(&tree);
+		ret = path_repo_test(repo, session, rev, revpool);
 		svn_pool_clear(revpool);
 	}
+	return ret;
 }
 
 #endif /* DEBUG */
