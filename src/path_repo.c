@@ -43,7 +43,7 @@
 #include "path_repo.h"
 
 
-#define SNAPSHOT_INTERVAL (1<<11)  /* Interval for full-tree snapshots */
+#define SNAPSHOT_INTERVAL (1<<10)  /* Interval for full-tree snapshots */
 #define CACHE_SIZE 4               /* Number of cached full trees */
 
 
@@ -84,6 +84,8 @@ struct path_repo_t {
 #ifdef DEBUG
 	size_t delta_bytes;
 	size_t delta_bytes_raw;
+	int cache_hits;
+	int cache_misses;
 	apr_time_t recon_time;
 	apr_time_t store_time;
 #endif
@@ -108,6 +110,7 @@ static apr_status_t pr_cleanup(void *data)
 	L1("path_repo: stored deltas (raw): %d kB\n", repo->delta_bytes_raw / 1024);
 	L1("path_repo: total recon time:    %ld ms\n", apr_time_msec(repo->recon_time));
 	L1("path_repo: total store time:    %ld ms\n", apr_time_msec(repo->store_time));
+	L1("path_repo: cache miss rate:     %.2f%% (%d of %d)\n", 100.0f*repo->cache_misses / (repo->cache_hits+repo->cache_misses), repo->cache_misses, (repo->cache_hits+repo->cache_misses));
 #endif
 
 	cb_tree_clear(&repo->tree);
@@ -274,12 +277,18 @@ static cb_tree_t *pr_tree(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *
 	for (i = 0; i < repo->cache->nelts; i++) {
 		if (APR_ARRAY_IDX(repo->cache, i, pr_cache_entry_t).revision == revision) {
 			tree = &APR_ARRAY_IDX(repo->cache, i, pr_cache_entry_t).tree;
+#ifdef DEBUG
+			repo->cache_hits++;
+#endif
 			break;
 		}
 	}
 
 	/* Reconstruct tree if needed */
 	if (i >= repo->cache->nelts) {
+#ifdef DEBUG
+		repo->cache_misses++;
+#endif
 		tree = &APR_ARRAY_IDX(repo->cache, repo->cache_index, pr_cache_entry_t).tree;
 		if (tree->root != NULL) {
 			cb_tree_clear(tree);
