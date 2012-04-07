@@ -310,7 +310,7 @@ static svn_error_t *delta_check_replace(de_node_baton_t *node)
 		return SVN_NO_ERROR;
 	}
 
-	/* Final check: If the node is part of a failed copy operation
+	/* Next check: If the node is part of a failed copy operation
 	   and wasn't present in the previous revision, change operation to 'add'. */
 	if ((node->cp_info & CPI_FAILED) && node->action == 'R') {
 		char *ppath = svn_path_dirname(node->path, node->pool);
@@ -318,6 +318,16 @@ static svn_error_t *delta_check_replace(de_node_baton_t *node)
 		while (*relpath == '/') ++relpath;
 		check = path_repo_check_parent(de_baton->path_repo, ppath, relpath, de_baton->local_revnum - 1, node->pool);
 		DEBUG_MSG("delta_check_replace(%s): parent check: %s for %s at %ld [is %d]\n", node->path, ppath, relpath, de_baton->local_revnum - 1, check);
+		if (check < 0) {
+			return svn_error_createf(1, NULL, _("Failed to check parent relationship at previous revision %ld"), parent->copyfrom_rev_local);
+		} else if (!check) {
+			node->action = 'A';
+		}
+	}
+
+	/* Final check: modifications on previously non-existent items */
+	if (node->action == 'M' && de_baton->local_revnum > 0) {
+		check = path_repo_exists(de_baton->path_repo, node->path, de_baton->local_revnum - 1, node->pool);
 		if (check < 0) {
 			return svn_error_createf(1, NULL, _("Failed to check parent relationship at previous revision %ld"), parent->copyfrom_rev_local);
 		} else if (!check) {
@@ -1130,6 +1140,7 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 		node->action = 'A';
 	} else {
 		node->action = log->action;
+
 		/*
 		 * Check for copy. This needs to be done manually, since
 		 * svn_ra_do_diff does not supply any copy information to the
@@ -1140,9 +1151,10 @@ static svn_error_t *de_add_file(const char *path, void *parent_baton, const char
 			node->copyfrom_path = apr_pstrdup(node->pool, log->copyfrom_path);
 			node->copyfrom_revision = log->copyfrom_rev;
 		}
+
 		/*
 		 * If the node is preset in the log, we must not use the copy
-		 * information of the parent node
+		 * information of the parent node.
 		 */
 		if (!(node->cp_info & CPI_FAILED)) {
 			node->cp_info = CPI_NONE;

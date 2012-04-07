@@ -53,6 +53,9 @@ extern int path_repo_discard(path_repo_t *repo, apr_pool_t *pool);
 /* Commits a SVN log entry, using the given revision number */
 extern int path_repo_commit_log(path_repo_t *repo, session_t *session, dump_options_t *opts, log_revision_t *log, svn_revnum_t revision, apr_array_header_t *logs, apr_pool_t *pool);
 
+/* Checks if a path exists at a given revision */
+extern signed char path_repo_exists(path_repo_t *repo, const char *path, svn_revnum_t revision, apr_pool_t *pool);
+
 /* Checks the parent relation of two paths at a given revision */
 extern signed char path_repo_check_parent(path_repo_t *repo, const char *parent, const char *child, svn_revnum_t revision, apr_pool_t *pool);
 

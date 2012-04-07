@@ -613,6 +613,25 @@ int path_repo_commit_log(path_repo_t *repo, session_t *session, dump_options_t *
 }
 
 
+/* Checks if a path exists at a given revision */
+extern signed char path_repo_exists(path_repo_t *repo, const char *path, svn_revnum_t revision, apr_pool_t *pool)
+{
+	cb_tree_t *tree;
+	if (revision < 0) {
+		return 0;
+	}
+
+	tree = pr_tree(repo, revision, pool);
+	if (tree == NULL) {
+		return -1;
+	}
+	if (cb_tree_contains(tree, path)) {
+		return 1;
+	}
+	return 0;
+}
+
+
 /* Checks the parent relation of two paths at a given revision */
 signed char path_repo_check_parent(path_repo_t *repo, const char *parent, const char *child, svn_revnum_t revision, apr_pool_t *pool)
 {
