@@ -269,16 +269,23 @@ static char delta_check_copy(de_node_baton_t *node)
 }
 
 
-/* Checks if a 'replace' action should be replaced by an 'add' action */
-static svn_error_t *delta_check_replace(de_node_baton_t *node)
+/* Checks if a 'modify' or 'replace' action should be replaced by an 'add' action */
+static svn_error_t *delta_check_action(de_node_baton_t *node)
 {
 	char check;
 	const char *copyfrom_path, *relpath;
 	de_node_baton_t *parent;
 	de_baton_t *de_baton = node->de_baton;
 	session_t *session = de_baton->session;
+	dump_options_t *opts = node->de_baton->opts;
 
-	if (node->action != 'R') {
+	/* Easy case: 'add' and 'delete' won't need to be replaced */
+	if (node->action != 'R' && node->action != 'M') {
+		return SVN_NO_ERROR;
+	}
+
+	/* Check if we can use the information from the log */
+	if ((strlen(session->prefix) == 0) && ((opts->start == 0) || (opts->flags & DF_INCREMENTAL))) {
 		return SVN_NO_ERROR;
 	}
 
@@ -301,7 +308,7 @@ static svn_error_t *delta_check_replace(de_node_baton_t *node)
 		relpath = node->path + strlen(parent->path);
 		while (*relpath == '/') ++relpath;
 		check = path_repo_check_parent(de_baton->path_repo, copyfrom_path, relpath, parent->copyfrom_rev_local, node->pool);
-		DEBUG_MSG("delta_check_replace(%s): parent copy check %s -> %s for %s at %ld [is %d]\n", node->path, copyfrom_path, parent->path, relpath, parent->copyfrom_rev_local, check);
+		DEBUG_MSG("delta_check_action(%s): parent copy check %s -> %s for %s at %ld [is %d]\n", node->path, copyfrom_path, parent->path, relpath, parent->copyfrom_rev_local, check);
 		if (check < 0) {
 			return svn_error_createf(1, NULL, _("Failed to check parent relationship at previous revision %ld"), parent->copyfrom_rev_local);
 		} else if (!check) {
@@ -317,7 +324,7 @@ static svn_error_t *delta_check_replace(de_node_baton_t *node)
 		const char *relpath = node->path + strlen(ppath);
 		while (*relpath == '/') ++relpath;
 		check = path_repo_check_parent(de_baton->path_repo, ppath, relpath, de_baton->local_revnum - 1, node->pool);
-		DEBUG_MSG("delta_check_replace(%s): parent check: %s for %s at %ld [is %d]\n", node->path, ppath, relpath, de_baton->local_revnum - 1, check);
+		DEBUG_MSG("delta_check_action(%s): parent check: %s for %s at %ld [is %d]\n", node->path, ppath, relpath, de_baton->local_revnum - 1, check);
 		if (check < 0) {
 			return svn_error_createf(1, NULL, _("Failed to check parent relationship at previous revision %ld"), parent->copyfrom_rev_local);
 		} else if (!check) {
@@ -602,11 +609,9 @@ static svn_error_t *delta_dump_node(de_node_baton_t *node)
 	/* Check for potential copy. This is neede here because it might change the action. */
 	delta_check_copy(node);
 
-	/* Check whether the replace action is valid */
-	if (node->action == 'R') {
-		if ((err = delta_check_replace(node))) {
-			return err;
-		}
+	/* Check whether the action is valid */
+	if ((err = delta_check_action(node))) {
+		return err;
 	}
 
 	if (node->action == 'R') {
