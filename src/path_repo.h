@@ -62,7 +62,7 @@ extern signed char path_repo_check_parent(path_repo_t *repo, const char *parent,
 #ifdef DEBUG
 
 /* Testing */
-extern int path_repo_test(path_repo_t *repo, session_t *session, svn_revnum_t revision, apr_pool_t *pool);
+extern int path_repo_test(path_repo_t *repo, session_t *session, svn_revnum_t revision, svn_revnum_t svn_rev, apr_pool_t *pool);
 extern int path_repo_test_all(path_repo_t *repo, session_t *session, apr_pool_t *pool);
 
 #endif

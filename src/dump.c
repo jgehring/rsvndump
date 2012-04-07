@@ -548,7 +548,7 @@ char dump(session_t *session, dump_options_t *opts)
 				break;
 			}
 #ifdef DEBUG_PATH_REPO
-			if (path_repo_test(path_repo, session, local_rev, revpool) != 0) {
+			if (path_repo_test(path_repo, session, local_rev, APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision, revpool) != 0) {
 				ret = 1;
 				break;
 			}

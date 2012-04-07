@@ -656,7 +656,7 @@ signed char path_repo_check_parent(path_repo_t *repo, const char *parent, const 
 #ifdef DEBUG
 
 /* Verifies a given revision */
-int path_repo_test(path_repo_t *repo, session_t *session, svn_revnum_t revision, apr_pool_t *pool)
+int path_repo_test(path_repo_t *repo, session_t *session, svn_revnum_t revision, svn_revnum_t svn_rev, apr_pool_t *pool)
 {
 	apr_array_header_t *paths_recon;
 	apr_array_header_t *paths_orig;
@@ -672,7 +672,7 @@ int path_repo_test(path_repo_t *repo, session_t *session, svn_revnum_t revision,
 
 	/* Retrieve actual tree -- assume the session is rooted at a directory */
 	paths_orig = apr_array_make(pool, 0, sizeof(char *));
-	pr_fetch_paths(paths_orig, "", revision, session, pool);
+	pr_fetch_paths(paths_orig, "", svn_rev, session, pool);
 	utils_sort(paths_orig);
 
 	/* Skip empty root element from original tree (HACK!) */
@@ -724,7 +724,7 @@ int path_repo_test_all(path_repo_t *repo, session_t *session, apr_pool_t *pool)
 			continue;
 		}
 
-		ret = path_repo_test(repo, session, rev, revpool);
+		ret = path_repo_test(repo, session, rev, rev, revpool);
 		svn_pool_clear(revpool);
 	}
 	return ret;
