@@ -17,7 +17,7 @@ AC_DEFUN([FIND_GDBM], [
 			AC_MSG_CHECKING([checking for gdbm in $withval])
 			AC_CHECK_HEADER(gdbm.h, AC_CHECK_LIB(gdbm, gdbm_open, [gdbm_found=1]))
 			if test "$gdbm_found" != "0"; then
-				AC_SUBST(GDBM_LDFLAGS, [-L$withval/lib -lgdbm])
+				AC_SUBST(GDBM_LIBS, [-L$withval/lib -lgdbm])
 				AC_SUBST(GDBM_INCLUDES, [-I$withval/include])
 			fi
 			CPPFLAGS="$saved_cppflags"
@@ -26,7 +26,7 @@ AC_DEFUN([FIND_GDBM], [
 	],
 	[
 		AC_CHECK_HEADER(gdbm.h, AC_CHECK_LIB(gdbm, gdbm_open, [gdbm_found=1]))
-		AC_SUBST(GDBM_LDFLAGS, [-lgdbm])
+		AC_SUBST(GDBM_LIBS, [-lgdbm])
 	])
 
 	if test "$gdbm_found" != "1"; then

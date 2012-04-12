@@ -12,8 +12,8 @@ rsvndump_SOURCES = \
 	utils.c utils.h
 
 localedir = $(datadir)/locale
-AM_LDFLAGS = $(APR_LIBS) $(APU_LIBS) $(SVN_LDFLAGS) $(GDBM_LDFLAGS) $(LIBINTL)
-LIBS += $(top_builddir)/lib/libcompat.a
+AM_LDFLAGS = $(SVN_LDFLAGS)
+LIBS += $(top_builddir)/lib/libcompat.a $(APR_LIBS) $(APU_LIBS) $(GDBM_LIBS) $(LIBINTL) 
 AM_CFLAGS = -DLOCALEDIR=\"$(localedir)\" \
 	$(APR_CFLAGS) $(APR_CPPFLAGS) $(APR_INCLUDES) \
 	$(APU_INCLUDES) \
