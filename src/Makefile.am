@@ -13,7 +13,8 @@ rsvndump_SOURCES = \
 
 
 localedir = $(datadir)/locale
-AM_LDFLAGS = $(APR_LIBS) $(APU_LIBS) $(SVN_LDFLAGS) $(COMPAT_LIBS) $(LIBINTL)
+AM_LDFLAGS =  $(SVN_LDFLAGS)
+LIBS += $(APR_LIBS) $(APU_LIBS) $(COMPAT_LIBS) $(LIBINTL)
 AM_CFLAGS = -DLOCALEDIR=\"$(localedir)\" \
 	$(APR_CFLAGS) $(APR_CPPFLAGS) $(APR_INCLUDES) \
 	$(APU_INCLUDES) \
