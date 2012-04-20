@@ -8,5 +8,8 @@ human-readable C89 code, and should be more portable than the
 original version. Additionally, support for custom memory allocators
 has been added.
 
-Hereby placed under public domain, just like the Dan Bernstein's
-original implementation.
+Hereby placed under public domain, just like Dan Bernstein's original
+implementation.
+
+Please see [https://github.com/jgehring/critbit89] more information
+(although there isn't much more see).

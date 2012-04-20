@@ -1,5 +1,5 @@
 /*
- * critbit89 - A cribit tree implementation for strings in C89
+ * critbit89 - A crit-bit tree implementation for strings in C89
  * Written by Jonas Gehring <jonas@jgehring.net>
  */
 
@@ -180,10 +180,10 @@ int cb_tree_insert(cb_tree_t *tree, const char *str)
 	return 1;
 
 different_byte_found:
-	while (newotherbits & (newotherbits - 1)) {
-		newotherbits &= newotherbits - 1;
-	}
-	newotherbits ^= 255;
+	newotherbits |= newotherbits >> 1;
+	newotherbits |= newotherbits >> 2;
+	newotherbits |= newotherbits >> 4;
+	newotherbits = (newotherbits & ~(newotherbits >> 1)) ^ 255;
 	c = p[newbyte];
 	newdirection = (1 + (newotherbits | c)) >> 8;
 

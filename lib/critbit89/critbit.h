@@ -1,5 +1,5 @@
 /*
- * critbit89 - A cribit tree implementation for strings in C89
+ * critbit89 - A crit-bit tree implementation for strings in C89
  * Written by Jonas Gehring <jonas@jgehring.net>
  */
 
