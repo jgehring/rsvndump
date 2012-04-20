@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+#	Creates a new empty Subversion repository and imports anything from STDIN
+#
+
+REPO=`mktemp -d -t repoXXXXXX`
+svnadmin create ${REPO}
+
+echo "New repository is at $REPO"
+svnadmin load $* ${REPO}
