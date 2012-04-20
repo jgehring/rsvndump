@@ -473,9 +473,15 @@ char dump(session_t *session, dump_options_t *opts)
 		}
 
 		if ((opts->flags & DF_KEEP_REVNUMS) && !(opts->flags & DF_INITIAL_DRY_RUN)) {
+			apr_pool_t *padpool = svn_pool_create(revpool);
+
 			/* Padd with empty revisions if neccessary */
 			while (local_rev < APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision) {
-				dump_padding_revision(revpool, local_rev);
+				dump_padding_revision(padpool, local_rev);
+				if (path_repo_commit(path_repo, local_rev, padpool) != 0) {
+					ret = 1;
+					break;
+				}
 				if (loglevel == 0) {
 					L0(_("* Padded revision %ld.\n"), local_rev);
 				} else if (loglevel > 0) {
@@ -486,6 +492,8 @@ char dump(session_t *session, dump_options_t *opts)
 					dump_create_user_prefix(opts, session->pool);
 				}
 				++local_rev;
+
+				svn_pool_clear(padpool);
 			}
 
 			if (ret != 0) {
