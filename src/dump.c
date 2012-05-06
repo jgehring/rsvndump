@@ -377,15 +377,15 @@ char dump(session_t *session, dump_options_t *opts)
 			if (path_repo_commit_log(path_repo, session, opts, &APR_ARRAY_IDX(logs, local_rev, log_revision_t), phrev, logs, log_pool) != 0) {
 				return 1;
 			}
-			L2(_("\r\033[0KPreparing tree history... %ld"), local_rev);
+			L2("\r\033[0K%s%ld", _("Preparing tree history... "), local_rev);
 			if (loglevel >= 2) {
 				fflush(stderr);
 			}
 			++local_rev;
 		}
 		if (loglevel == 2) {
-			L2(_("\r\033[0KPreparing tree history... done\n"));
-		} else {
+			L2("\r\033[0K%s%s", _("Preparing tree history... "), _("done\n"));
+		} else  {
 			L1(_("done\n"));
 		}
 

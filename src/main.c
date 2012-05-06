@@ -276,9 +276,9 @@ int main(int argc, char **argv)
 			fprintf(stderr, _("WARNING: the '%s' option is deprecated.\n"), argv[i]);
 			++i;
 		} else if (!strcmp(argv[i], "--no-check-certificate")) {
-			fprintf(stderr, _("WARNING: the '%s' option is deprecated and will be IGNORED!.\n"), argv[i]);
+			fprintf(stderr, _("WARNING: the '%s' option is deprecated and will be IGNORED!\n"), argv[i]);
 		} else if (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--outfile")) {
-			fprintf(stderr, _("WARNING: the '%s' option is deprecated and will be IGNORED!.\n"), argv[i]);
+			fprintf(stderr, _("WARNING: the '%s' option is deprecated and will be IGNORED!\n"), argv[i]);
 			++i;
 
 		/* An url */
