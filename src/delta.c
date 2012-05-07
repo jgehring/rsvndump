@@ -326,7 +326,7 @@ static svn_error_t *delta_check_action(de_node_baton_t *node)
 		check = path_repo_check_parent(de_baton->path_repo, ppath, relpath, de_baton->local_revnum - 1, node->pool);
 		DEBUG_MSG("delta_check_action(%s): parent check: %s for %s at %ld [is %d]\n", node->path, ppath, relpath, de_baton->local_revnum - 1, check);
 		if (check < 0) {
-			return svn_error_createf(1, NULL, _("Failed to check parent relationship at previous revision %ld"), parent->copyfrom_rev_local);
+			return svn_error_createf(1, NULL, _("Failed to check parent relationship at previous revision %ld"), de_baton->local_revnum - 1);
 		} else if (!check) {
 			node->action = 'A';
 		}
@@ -336,7 +336,7 @@ static svn_error_t *delta_check_action(de_node_baton_t *node)
 	if (node->action == 'M' && de_baton->local_revnum > 0) {
 		check = path_repo_exists(de_baton->path_repo, node->path, de_baton->local_revnum - 1, node->pool);
 		if (check < 0) {
-			return svn_error_createf(1, NULL, _("Failed to check parent relationship at previous revision %ld"), parent->copyfrom_rev_local);
+			return svn_error_createf(1, NULL, _("Failed to check parent relationship at previous revision %ld"), de_baton->local_revnum - 1);
 		} else if (!check) {
 			node->action = 'A';
 		}
