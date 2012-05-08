@@ -27,12 +27,11 @@
 
 #include <svn_ra.h>
 
-#include <gdbm.h>
-
 #include "main.h"
 
 #include "delta.h"
 #include "logger.h"
+#include "mukv.h"
 #include "utils.h"
 
 #include "critbit89/critbit.h"
@@ -66,7 +65,7 @@ typedef struct {
 
 struct path_repo_t {
 	apr_pool_t *pool;
-	GDBM_FILE db;
+	mukv_t *db;
 
 	apr_pool_t *delta_pool;
 	apr_array_header_t *delta;
@@ -120,7 +119,7 @@ static apr_status_t pr_cleanup(void *data)
 		}
 	}
 
-	gdbm_close(repo->db);
+	mukv_close(repo->db);
 	return APR_SUCCESS;
 }
 
@@ -167,7 +166,7 @@ static apr_array_header_t *pr_tree_to_array(cb_tree_t *tree, const char *path, a
 
 
 /* Encodes a whole tree to a series of add operations */
-static int pr_encode(cb_tree_t *tree, char **data, int *len, apr_pool_t *pool)
+static int pr_encode(cb_tree_t *tree, char **data, size_t *len, apr_pool_t *pool)
 {
 	int i;
 	char *dptr;
@@ -214,7 +213,7 @@ static int pr_delta_apply(cb_tree_t *tree, const char *data, int len, apr_pool_t
 /* Reconstructs a tree for the given revision */
 static int pr_reconstruct(path_repo_t *repo, cb_tree_t *tree, svn_revnum_t revision, apr_pool_t *pool)
 {
-	datum key, val;
+	mdatum_t key, val;
 	svn_revnum_t r;
 	char *dptr;
 	size_t dsize;
@@ -228,8 +227,8 @@ static int pr_reconstruct(path_repo_t *repo, cb_tree_t *tree, svn_revnum_t revis
 		key.dptr = apr_itoa(pool, r);
 		key.dsize = strlen(key.dptr);
 
-		if (gdbm_exists(repo->db, key)) {
-			val = gdbm_fetch(repo->db, key);
+		if (mukv_exists(repo->db, key)) {
+			val = mukv_fetch(repo->db, key, pool);
 			if (val.dptr == NULL) {
 				fprintf(stderr, _("Error fetching tree delta for revision %ld\n"), r);
 				return -1;
@@ -255,7 +254,6 @@ static int pr_reconstruct(path_repo_t *repo, cb_tree_t *tree, svn_revnum_t revis
 #ifdef USE_SNAPPY
 			free(dptr);
 #endif
-			free(val.dptr);
 		}
 		++r;
 	}
@@ -390,9 +388,9 @@ path_repo_t *path_repo_create(const char *tmpdir, apr_pool_t *pool)
 
 	/* Open database */
 	db_path = apr_psprintf(pool, "%s/paths.db", tmpdir);
-	repo->db = gdbm_open(db_path, 0, GDBM_NEWDB, 0600, NULL);
+	repo->db = mukv_open(db_path, repo->pool);
 	if (repo->db == NULL) {
-		fprintf(stderr, _("Error creating path database (%s)\n"), gdbm_strerror(gdbm_errno));
+		fprintf(stderr, _("Error creating path database (%s)\n"), strerror(errno));
 		return NULL;
 	}
 
@@ -447,7 +445,7 @@ int path_repo_delete(path_repo_t *repo, const char *path, apr_pool_t *pool)
 /* Commits all scheduled actions, using the given revision number */
 int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 {
-	datum key, val;
+	mdatum_t key, val;
 	int i;
 	char *dptr = NULL;
 #ifdef USE_SNAPPY
@@ -505,7 +503,7 @@ int path_repo_commit(path_repo_t *repo, svn_revnum_t revision, apr_pool_t *pool)
 
 	key.dptr = apr_itoa(pool, revision);
 	key.dsize = strlen(key.dptr);
-	if (gdbm_store(repo->db, key, val, GDBM_INSERT) != 0) {
+	if (mukv_store(repo->db, key, val) != 0) {
 		fprintf(stderr, _("Error storing paths for revision %ld\n"), revision);
 		return -1;
 	}
@@ -724,12 +722,12 @@ int path_repo_test_all(path_repo_t *repo, session_t *session, apr_pool_t *pool)
 
 	L0("Checking path_repo until revision %ld...\n", repo->head);
 	while (ret == 0 && ++rev < repo->head) {
-		datum key;
+		mdatum_t key;
 
 		/* Skip all revisions that haven't been committed */
 		key.dptr = apr_itoa(pool, rev);
 		key.dsize = strlen(key.dptr);
-		if (!gdbm_exists(repo->db, key)) {
+		if (!mukv_exists(repo->db, key)) {
 			continue;
 		}
 

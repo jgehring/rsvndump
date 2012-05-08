@@ -5,6 +5,7 @@ rsvndump_SOURCES = \
 	log.c log.h \
 	logger.c logger.h \
 	main.c main.h \
+	mukv.c mukv.h \
 	path_repo.c path_repo.h \
 	property.c property.h \
 	rhash.c rhash.h \
