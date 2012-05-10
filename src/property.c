@@ -69,9 +69,10 @@ typedef struct {
 /* Property storage */
 struct property_storage_t {
 	apr_pool_t *pool;
-	apr_hash_t *refs;      /* Property IDs to reference */
-	apr_hash_t *entries;   /* Path to property ID pointer */
-	GDBM_FILE db;          /* DBM: ID to property data */
+	apr_hash_t *refs;     /* Property IDs to reference */
+	apr_hash_t *entries;  /* Path to property ID pointer */
+	GDBM_FILE db;         /* DBM: ID to property data */
+	apr_hash_t *gc;       /* Entries that reached zero reference count */
 
 #ifdef USE_SNAPPY
 	struct snappy_env snappy_env;
@@ -264,6 +265,7 @@ property_storage_t *property_storage_create(const char *tmpdir, apr_pool_t *pool
 
 	store->refs = apr_hash_make(store->pool);
 	store->entries = apr_hash_make(store->pool);
+	store->gc = apr_hash_make(store->pool);
 
 	/* Open database */
 	db_path = apr_psprintf(store->pool, "%s/props.db", tmpdir);
@@ -285,7 +287,7 @@ property_storage_t *property_storage_create(const char *tmpdir, apr_pool_t *pool
 }
 
 
-/* Saves the properties of the given path */
+/* Saves the properties of the given path and references them */
 int property_store(property_storage_t *store, const char *path, apr_hash_t *props, apr_pool_t *pool)
 {
 	size_t len;
@@ -370,7 +372,7 @@ int property_store(property_storage_t *store, const char *path, apr_hash_t *prop
 }
 
 
-/* Loads the properties of the given path (and removes the corresponding entry) */
+/* Loads the properties of the given path and dereferences them */
 int property_load(property_storage_t *store, const char *path, apr_hash_t *props, apr_pool_t *pool)
 {
 	datum key, value;
@@ -413,14 +415,11 @@ int property_load(property_storage_t *store, const char *path, apr_hash_t *props
 	apr_hash_set(store->entries, path, APR_HASH_KEY_STRING, NULL);
 	entry->ref->count--;
 
-	/* Remove item from database if reference count is zero */
+	/* Mark entries with zero reference count ready for cleanup */
 	if (entry->ref->count <= 0) {
-		apr_hash_set(store->refs, entry->ref->id, APR_MD5_DIGESTSIZE, NULL);
-		if (gdbm_delete(store->db, key) != 0) {
-			return -1;
-		}
-		free(entry->ref);
+		apr_hash_set(store->gc, entry->ref, sizeof(prop_ref_t *), entry->ref);
 	}
+
 	free(entry->path);
 	free(entry);
 	free(value.dptr);
@@ -428,7 +427,7 @@ int property_load(property_storage_t *store, const char *path, apr_hash_t *props
 }
 
 
-/* Removes the properties of the given path from the storage */
+/* Removes the properties of the given path from the storage (thus dereferencing them) */
 int property_delete(property_storage_t *store, const char *path, apr_pool_t *pool)
 {
 	prop_entry_t *entry;
@@ -442,19 +441,57 @@ int property_delete(property_storage_t *store, const char *path, apr_pool_t *poo
 	apr_hash_set(store->entries, path, APR_HASH_KEY_STRING, NULL);
 	entry->ref->count--;
 
-	/* Remove item from database if reference count is zero */
+	/* Mark entries with zero reference count ready for cleanup */
 	if (entry->ref->count <= 0) {
-		datum key;
-		key.dptr = (char *)entry->ref->id;
-		key.dsize = APR_MD5_DIGESTSIZE;
-
-		apr_hash_set(store->refs, entry->ref->id, APR_MD5_DIGESTSIZE, NULL);
-		if (gdbm_delete(store->db, key) != 0) {
-			return -1;
-		}
-		free(entry->ref);
+		apr_hash_set(store->gc, entry->ref, sizeof(prop_ref_t *), entry->ref);
 	}
+
 	free(entry->path);
 	free(entry);
+	return 0;
+}
+
+
+/* Removes properties from the storage that have zero reference count */
+int property_storage_cleanup(property_storage_t *store, apr_pool_t *pool)
+{
+	int n = 0;
+	apr_hash_index_t *hi;
+	prop_ref_t *ref;
+	prop_ref_t **tofree;
+
+	/* Any work to do? */
+	LDEBUG("property_storage_cleanup(): %d items in database, %d references\n", apr_hash_count(store->refs), apr_hash_count(store->entries));
+	if (apr_hash_count(store->gc) == 0) {
+		return 0;
+	}
+
+	tofree = apr_palloc(pool, apr_hash_count(store->gc) * sizeof(prop_ref_t *));
+
+	for (hi = apr_hash_first(pool, store->gc); hi; hi = apr_hash_next(hi)) {
+		apr_hash_this(hi, (const void **)&ref, NULL, NULL);
+
+		/* Remove item from database */
+		if (ref->count <= 0) {
+			datum key;
+			key.dptr = (char *)ref->id;
+			key.dsize = APR_MD5_DIGESTSIZE;
+
+			apr_hash_set(store->refs, ref->id, APR_MD5_DIGESTSIZE, NULL);
+			L0("removing %s\n", svn_md5_digest_to_cstring(ref->id, pool));
+			if (gdbm_delete(store->db, key) != 0) {
+				L0("failed\n");
+				return -1;
+			}
+			tofree[n++] = ref;
+		}
+	}
+
+	apr_hash_clear(store->gc);
+
+	LDEBUG("property_storage_cleanup(): Cleaned up %d properties\n", n);
+	while (--n >= 0) {
+		free(tofree[n]);
+	}
 	return 0;
 }

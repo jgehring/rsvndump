@@ -563,6 +563,13 @@ char dump(session_t *session, dump_options_t *opts)
 #endif
 		}
 
+		/* Cleanup property storage database after each revision */
+		if (property_storage_cleanup(property_storage, revpool) != 0) {
+			fprintf(stderr, _("Error cleaning up node property storage\n"));
+			ret = 1;
+			break;
+		}
+
 		if (loglevel == 0 && !(opts->flags & DF_INITIAL_DRY_RUN)) {
 			if (show_local_rev) {
 				L0(_("* Dumped revision %ld (local %ld).\n"), APR_ARRAY_IDX(logs, list_idx, log_revision_t).revision, local_rev);

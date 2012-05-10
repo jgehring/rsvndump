@@ -49,14 +49,17 @@ typedef struct property_storage_t property_storage_t;
 /* Initializes the property storage, binding it to the given pool */
 extern property_storage_t *property_storage_create(const char *tmpdir, apr_pool_t *pool);
 
-/* Saves the properties of the given path */
+/* Saves the properties of the given path and references them */
 extern int property_store(property_storage_t *store, const char *path, apr_hash_t *props, apr_pool_t *pool);
 
-/* Loads the properties of the given path and removes them from the storage */
+/* Loads the properties of the given path and dereferences them */
 extern int property_load(property_storage_t *store, const char *path, apr_hash_t *props, apr_pool_t *pool);
 
-/* Removes the properties of the given path from the storage */
+/* Removes the properties of the given path from the storage (thus dereferencing them) */
 extern int property_delete(property_storage_t *store, const char *path, apr_pool_t *pool);
+
+/* Removes properties from the storage that have zero reference count */
+extern int property_storage_cleanup(property_storage_t *store, apr_pool_t *pool);
 
 
 #endif
