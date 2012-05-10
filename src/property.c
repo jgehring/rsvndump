@@ -34,11 +34,10 @@
 #include <apr_md5.h>
 #include <apr_strings.h>
 
-#include <gdbm.h>
-
 #include "main.h"
 
 #include "logger.h"
+#include "mukv.h"
 
 #ifdef USE_SNAPPY
 	#include "snappy-c/snappy.h"
@@ -71,7 +70,7 @@ struct property_storage_t {
 	apr_pool_t *pool;
 	apr_hash_t *refs;     /* Property IDs to reference */
 	apr_hash_t *entries;  /* Path to property ID pointer */
-	GDBM_FILE db;         /* DBM: ID to property data */
+	mukv_t *db;           /* DBM: ID to property data */
 	apr_hash_t *gc;       /* Entries that reached zero reference count */
 
 #ifdef USE_SNAPPY
@@ -115,7 +114,7 @@ static apr_status_t prop_cleanup(void *param)
 		free(value);
 	}
 
-	gdbm_close(store->db);
+	mukv_close(store->db);
 	return APR_SUCCESS;
 }
 
@@ -269,9 +268,9 @@ property_storage_t *property_storage_create(const char *tmpdir, apr_pool_t *pool
 
 	/* Open database */
 	db_path = apr_psprintf(store->pool, "%s/props.db", tmpdir);
-	store->db = gdbm_open(db_path, 0, GDBM_NEWDB, 0600, NULL);
+	store->db = mukv_open(db_path, store->pool);
 	if (store->db == NULL) {
-		fprintf(stderr, "Error creating path database (%s)\n", gdbm_strerror(gdbm_errno));
+		fprintf(stderr, "Error creating path database (%s)\n", strerror(errno));
 		return NULL;
 	}
 
@@ -317,7 +316,7 @@ int property_store(property_storage_t *store, const char *path, apr_hash_t *prop
 
 	/* Check if this ID is already present */
 	if ((ref = apr_hash_get(store->refs, id, sizeof(id))) == NULL) {
-		datum key, value;
+		mdatum_t key, value;
 
 		ref = malloc(sizeof(prop_ref_t));
 		if (ref == NULL) {
@@ -350,7 +349,7 @@ int property_store(property_storage_t *store, const char *path, apr_hash_t *prop
 		/* Add new ID -> data mapping to database */
 		key.dptr = (char *)id;
 		key.dsize = sizeof(id);
-		if (gdbm_store(store->db, key, value, GDBM_INSERT) != 0) {
+		if (mukv_store(store->db, key, value) != 0) {
 			return -1;
 		}
 	}
@@ -375,7 +374,7 @@ int property_store(property_storage_t *store, const char *path, apr_hash_t *prop
 /* Loads the properties of the given path and dereferences them */
 int property_load(property_storage_t *store, const char *path, apr_hash_t *props, apr_pool_t *pool)
 {
-	datum key, value;
+	mdatum_t key, value;
 	prop_entry_t *entry;
 	char *dptr;
 	size_t dsize;
@@ -388,7 +387,7 @@ int property_load(property_storage_t *store, const char *path, apr_hash_t *props
 	/* Retrieve item from database */
 	key.dptr = (char *)entry->ref->id;
 	key.dsize = APR_MD5_DIGESTSIZE;
-	value = gdbm_fetch(store->db, key);
+	value = mukv_fetch(store->db, key, pool);
 	if (value.dptr == NULL) {
 		return -1;
 	}
@@ -422,7 +421,6 @@ int property_load(property_storage_t *store, const char *path, apr_hash_t *props
 
 	free(entry->path);
 	free(entry);
-	free(value.dptr);
 	return 0;
 }
 
@@ -473,14 +471,14 @@ int property_storage_cleanup(property_storage_t *store, apr_pool_t *pool)
 
 		/* Remove item from database */
 		if (ref->count <= 0) {
-			datum key;
+			mdatum_t key;
 			key.dptr = (char *)ref->id;
 			key.dsize = APR_MD5_DIGESTSIZE;
 
 			apr_hash_set(store->refs, ref->id, APR_MD5_DIGESTSIZE, NULL);
-			L0("removing %s\n", svn_md5_digest_to_cstring(ref->id, pool));
-			if (gdbm_delete(store->db, key) != 0) {
-				L0("failed\n");
+			LDEBUG("property_storage_cleanup(): removing %s\n", svn_md5_digest_to_cstring(ref->id, pool));
+			if (mukv_delete(store->db, key) != 0) {
+				LDEBUG("removal from database failed\n");
 				return -1;
 			}
 			tofree[n++] = ref;
