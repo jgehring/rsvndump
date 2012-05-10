@@ -12,7 +12,6 @@ AC_CONFIG_LIBOBJ_DIR([lib])
 sinclude(m4/find_apr.m4)
 sinclude(m4/find_apu.m4)
 sinclude(m4/find_svn.m4)
-sinclude(m4/find_gdbm.m4)
 sinclude(m4/rsvndump_conf.m4)
 
 # Optional features
@@ -82,8 +81,6 @@ AC_CHECK_LIB([svn_client-1], [svn_client_open_ra_session], ,[AC_MSG_ERROR([Necce
 AC_CHECK_LIB([svn_ra-1], [svn_ra_initialize], ,[AC_MSG_ERROR([Neccessary Subversion libraries are missing])], [-L$SVN_PREFIX/lib]) 
 AC_CHECK_LIB([svn_subr-1], [svn_auth_open], ,[AC_MSG_ERROR([Neccessary Subversion libraries are missing])], [-L$SVN_PREFIX/lib])
 AC_CHECK_LIB([svn_delta-1], [svn_txdelta_apply], ,[AC_MSG_ERROR([Neccessary Subversion libraries are missing])], [-L$SVN_PREFIX/lib])
-
-FIND_GDBM
 
 
 AC_CONFIG_FILES([Makefile])
