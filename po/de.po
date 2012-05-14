@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rsvndump 0.4.4\n"
 "Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2012-05-04 23:30+0200\n"
+"POT-Creation-Date: 2012-05-14 22:47+0200\n"
 "PO-Revision-Date: 2009-02-22 03:00+0100\n"
 "Last-Translator:  <jonas.gehring@boolsoft.org>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -32,35 +32,35 @@ msgid "Failed to check parent relationship at previous revision %ld"
 msgstr ""
 "Elternrelation in vergangener Revision %ld konnte nicht überprüft werden"
 
-#: src/delta.c:427
+#: src/delta.c:433
 msgid "Failed to propagate copy information"
 msgstr "Kopierstatus konnte nicht weitergegeben werden"
 
-#: src/delta.c:641
+#: src/delta.c:647
 #, c-format
 msgid "     * editing path : %s ... "
 msgstr "     * Bearbeite Pfad: %s ... "
 
-#: src/delta.c:648
+#: src/delta.c:654
 #, c-format
 msgid "     * adding path : %s ... "
 msgstr "     * Füge Pfad hinzu: %s ... "
 
-#: src/delta.c:655
+#: src/delta.c:661
 #, c-format
 msgid "     * deleting path : %s ... "
 msgstr "     * Lösche Pfad: %s ... "
 
-#: src/delta.c:983 src/delta.c:1038 src/delta.c:1179
+#: src/delta.c:989 src/delta.c:1044 src/delta.c:1185
 msgid "Unable to update local tree history"
 msgstr "Aktualisieren der lokalen Pfad-Historie nicht möglich"
 
-#: src/delta.c:1063 src/delta.c:1205
+#: src/delta.c:1069 src/delta.c:1211
 #, c-format
 msgid "Unable to load properties for %s (%d)\n"
 msgstr "Laden der Eigenschaften für %s nicht möglich (%d)\n"
 
-#: src/delta.c:1104 src/delta.c:1298
+#: src/delta.c:1110 src/delta.c:1304
 #, c-format
 msgid "Unable to store properties for %s (%d)\n"
 msgstr "Speichern der Eigenschaften für %s nicht möglich (%d)\n"
@@ -79,7 +79,7 @@ msgstr "FEHLER: URL '%s' wurde in Revision %ld nicht gefunden\n"
 msgid "Preparing tree history... "
 msgstr "Bereite Pfad-Historie vor... "
 
-#: src/dump.c:387 src/dump.c:389 src/dump.c:470 src/dump.c:576 src/log.c:199
+#: src/dump.c:387 src/dump.c:389 src/dump.c:470 src/dump.c:583 src/log.c:199
 #: src/log.c:261 src/log.c:263
 msgid "done\n"
 msgstr "fertig\n"
@@ -118,15 +118,20 @@ msgstr "Hole Basisrevision... "
 
 #: src/dump.c:568
 #, c-format
+msgid "Error cleaning up node property storage\n"
+msgstr ""
+
+#: src/dump.c:575
+#, c-format
 msgid "* Dumped revision %ld (local %ld).\n"
 msgstr "* Revision %ld gedumpt (lokal: %ld).\n"
 
-#: src/dump.c:570
+#: src/dump.c:577
 #, c-format
 msgid "* Dumped revision %ld.\n"
 msgstr " * Revision %ld gedumpt.\n"
 
-#: src/dump.c:574
+#: src/dump.c:581
 #, c-format
 msgid ""
 "\n"
