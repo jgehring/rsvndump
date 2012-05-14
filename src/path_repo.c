@@ -120,6 +120,10 @@ static apr_status_t pr_cleanup(void *data)
 	}
 
 	mukv_close(repo->db);
+
+#ifdef USE_SNAPPY
+	snappy_free_env(&repo->snappy_env);
+#endif
 	return APR_SUCCESS;
 }
 

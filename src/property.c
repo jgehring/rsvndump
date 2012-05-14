@@ -115,6 +115,10 @@ static apr_status_t prop_cleanup(void *param)
 	}
 
 	mukv_close(store->db);
+
+#ifdef USE_SNAPPY
+	snappy_free_env(&store->snappy_env);
+#endif
 	return APR_SUCCESS;
 }
 
