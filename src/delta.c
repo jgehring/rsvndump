@@ -1378,6 +1378,7 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 
 			if (!skip) {
 				de_node_baton_t *node = delta_create_node_no_parent(path, de_baton, de_baton->revision_pool);
+				node->kind = svn_node_none; /* Does not matter for deleted nodes */
 				node->action = log->action;
 				node->dump_needed = 1;
 
