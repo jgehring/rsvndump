@@ -85,7 +85,9 @@ extern void utils_handle_error(svn_error_t *error, FILE *stream, svn_boolean_t f
 #endif
 
 /* Use snappy compression for path repo and property storage */
-#define USE_SNAPPY
+#ifndef WIN32
+	#define USE_SNAPPY
+#endif
 
 /* This enables dumping of single files (not working yet) */
 /*#define USE_SINGLEFILE_DUMP*/

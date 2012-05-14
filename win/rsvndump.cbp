@@ -48,6 +48,7 @@
 			<Add directory="..\svn-win32\include\apr" />
 			<Add directory="..\svn-win32\include\apr-iconv" />
 			<Add directory="..\svn-win32\include\apr-util" />
+			<Add directory="..\lib" />
 		</Compiler>
 		<Linker>
 			<Add library="..\svn-win32\lib\apr\libapr-1.lib" />
@@ -74,6 +75,10 @@
 			<Add library="..\svn-win32\lib\libsvn_subr-1.lib" />
 			<Add library="..\svn-win32\lib\libsvn_wc-1.lib" />
 		</Linker>
+		<Unit filename="..\lib\critbit89\critbit.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\lib\critbit89\critbit.h" />
 		<Unit filename="..\src\delta.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -94,10 +99,14 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\src\main.h" />
-		<Unit filename="..\src\path_hash.c">
+		<Unit filename="..\src\mukv.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\src\path_hash.h" />
+		<Unit filename="..\src\mukv.h" />
+		<Unit filename="..\src\path_repo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\src\path_repo.h" />
 		<Unit filename="..\src\property.c">
 			<Option compilerVar="CC" />
 		</Unit>

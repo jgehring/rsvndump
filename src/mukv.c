@@ -23,7 +23,9 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include <unistd.h>
+#ifndef WIN32
+	#include <unistd.h>
+#endif
 
 #include <apr_strings.h>
 
