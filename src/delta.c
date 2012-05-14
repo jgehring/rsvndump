@@ -332,7 +332,7 @@ static svn_error_t *delta_check_action(de_node_baton_t *node)
 		}
 	}
 
-	/* Final check: modifications on previously non-existent items */
+	/* Next check: modifications on previously non-existent items */
 	if (node->action == 'M' && de_baton->local_revnum > 0) {
 		check = path_repo_exists(de_baton->path_repo, node->path, de_baton->local_revnum - 1, node->pool);
 		if (check < 0) {
@@ -340,6 +340,12 @@ static svn_error_t *delta_check_action(de_node_baton_t *node)
 		} else if (!check) {
 			node->action = 'A';
 		}
+	}
+
+	/* Not related to copying: When dumping a sub-directory, it can happen that
+	 * the root node is being reported as added. */
+	if (!strcmp(node->path, "/") && node->action == 'A') {
+		node->action = 'M';
 	}
 
 	return SVN_NO_ERROR;
