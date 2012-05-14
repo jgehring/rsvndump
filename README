@@ -1,5 +1,5 @@
-rsvndump 0.5.7
-Copyright (C) 2008-2011 by Jonas Gehring
+rsvndump 0.6
+Copyright (C) 2008-2012 by Jonas Gehring
 
 
 ABOUT
@@ -32,7 +32,7 @@ http://rsvndump.sourceforge.net/manpage.html
 
 CREDITS
 =======
-rsvndump 0.5.8
+rsvndump 0.6
 written by Jonas Gehring
 http://rsvndump.sourceforge.net
 
@@ -44,7 +44,7 @@ For more information, please refer to m4/find_apr.m4
 LICENSE
 =======
 rsvndump - remote Subversion repository dump
-Copyright (C) 2008-2011 Jonas Gehring
+Copyright (C) 2008-2012 Jonas Gehring
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

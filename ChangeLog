@@ -1,3 +1,15 @@
+2012-05-14  --  version 0.6
+
+	* Rewrote version path storage, now using crit-bits for storing
+	  path trees and a custom, simple key-value storage
+	* Rewrote property storage, now using reference counting
+	* Added compression for internal tree deltas and properties
+	  using Snappy (not on Windows yet)
+	* Fixed missing replacements of 'modify' actions with 'add' when
+	  dumping subdirectories.
+	* Fixed revision range handling when running in incremental mode
+	* Fixed ordering of linker arguments (#3515292)
+
 2012-03-11  --  version 0.5.8
 
 	* Fixed invalid dump output when directories have been copied and

@@ -1,6 +1,6 @@
 /*
  *      rsvndump - remote svn repository dump
- *      Copyright (C) 2008-2011 Jonas Gehring
+ *      Copyright (C) 2008-2012 Jonas Gehring
  *
  *      This program is free software: you can redistribute it and/or modify
  *      it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 /* Application-specific constants */
 #ifndef HAVE_CONFIG_H
 	#define PACKAGE "rsvndump"
-	#define PACKAGE_VERSION "0.5.8"
+	#define PACKAGE_VERSION "0.6"
 	#define PACKAGE_BUGREPORT "jonas.gehring@boolsoft.org"
 
 	/* Internationalization */

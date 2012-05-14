@@ -1,7 +1,8 @@
-== Schedule for 0.6 ==
-> Add log-window-size option (part of github pull request #1)
+== Schedule for 0.6.1 ==
+> Make snappy-c work with MSVC
 
 == Schedule for 0.x ==
+> Add log-window-size option (part of github pull request #1)
 > Add --no-stop-on-copy option
 > Direct dumping of deltas, thus elmiminating base revision fetching for
   incremental dumps in delta mode
