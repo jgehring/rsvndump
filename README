@@ -36,9 +36,17 @@ rsvndump 0.6
 written by Jonas Gehring
 http://rsvndump.sourceforge.net
 
-rsvndump uses autoconf macros from APR which are licensed under the Apache
-License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
-For more information, please refer to m4/find_apr.m4
+Snappy-c is a C port of the Google Snappy compressor, written by
+Andi Kleen. It is licensed under the New BSD License. Please refer to
+lib/snappy-c/LICENSE for more information.
+
+Autoconf macros for APR detection are licensed to the Apache
+Software Foundation (ASF) under the Apache License, Version 2.0
+(http://www.apache.org/licenses/LICENSE-2.0).  For more information,
+please refer to m4/find_apr.m4
+
+The critbit tree implementation in lib/critbit89 is placed under public
+domain, as is the original implementation by Dan Bernstein.
 
 
 LICENSE
