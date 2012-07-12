@@ -188,6 +188,7 @@ int main(int argc, char **argv)
 	opts = dump_options_create();
 
 	/* Parse arguments */
+	DEBUG_MSG("parsing arguments\n");
 	for (i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
 			print_usage();
@@ -303,6 +304,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Generate temporary directory */
+	DEBUG_MSG("creating temporary directory\n");
 #ifndef WIN32
 	tdir = getenv("TMPDIR");
 	if (tdir != NULL) {

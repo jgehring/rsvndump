@@ -34,6 +34,7 @@
 #include <time.h>
 
 #include "main.h"
+#include "logger.h"
 #include "utils.h"
 
 #include "session.h"
@@ -104,6 +105,7 @@ const char *session_obfuscate_rec(apr_pool_t *pool, apr_hash_t *hash, apr_hash_t
 session_t session_create()
 {
 	session_t session;
+	DEBUG_MSG("creating sessio\n");
 
 	session.ra = NULL;
 	session.url = NULL;
@@ -146,6 +148,8 @@ char session_open(session_t *session)
 	svn_auth_baton_t *auth_baton;
 	const char *root;
 	const char *config_dir = NULL;
+
+	DEBUG_MSG("setting up RA session\n");
 
 	/* Make sure the URL is properly encoded */
 	session->encoded_url = svn_path_uri_encode(svn_path_canonicalize(session->url, session->pool), session->pool);
@@ -201,6 +205,7 @@ char session_open(session_t *session)
 	ctx->auth_baton = auth_baton;
 
 	/* Setup the RA session */
+	DEBUG_MSG("opening RA session\n");
 	if ((err = svn_client_open_ra_session(&(session->ra), session->encoded_url, ctx, session->pool))) {
 		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
@@ -208,6 +213,7 @@ char session_open(session_t *session)
 	}
 
 	/* Determine the root (and the prefix) of the URL */
+	DEBUG_MSG("determining repository root\n");
 	if ((err = svn_ra_get_repos_root(session->ra, &root, session->pool))) {
 		utils_handle_error(err, stderr, FALSE, "ERROR: ");
 		svn_error_clear(err);
