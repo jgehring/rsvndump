@@ -68,7 +68,7 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 {
 	apr_hash_index_t *hi;
 	log_receiver_baton_t *data = (log_receiver_baton_t *)baton;
-	unsigned short int prefixlen = (unsigned short int)strlen(data->session->prefix);
+	size_t prefixlen = strlen(data->session->prefix);
 
 	data->log->revision = revision;
 	data->log->author = session_obfuscate_once(data->session, data->pool, apr_pstrdup(data->pool, author));
@@ -89,7 +89,7 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 		apr_hash_this(hi, (const void **)&key, NULL, (void **)&svalue);
 		key = session_obfuscate(data->session, pool, key);
 
-		DEBUG_MSG("Checking changed path:%s (prefix:%s)\n",key+1,data->session->prefix);
+		DEBUG_MSG("Checking changed path:%s (prefix:%s)\n",key+min(1,strlen(key)),data->session->prefix);
 
 		/* Skip this entry? */
 		/* It needs to be skipped if the key+1 doesn't match the prefix or if it does match and the next character isn't a slash */
