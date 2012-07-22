@@ -38,3 +38,7 @@ tests/db/dumps
 tests/db/cache
 tests/db/wcs
 tests/auto/work
+svn-win32
+bin
+win
+!win/rsvndump.cbp

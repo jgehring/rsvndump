@@ -68,6 +68,7 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 {
 	apr_hash_index_t *hi;
 	log_receiver_baton_t *data = (log_receiver_baton_t *)baton;
+	size_t prefixlen = strlen(data->session->prefix);
 
 	data->log->revision = revision;
 	data->log->author = session_obfuscate_once(data->session, data->pool, apr_pstrdup(data->pool, author));
@@ -88,8 +89,12 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 		apr_hash_this(hi, (const void **)&key, NULL, (void **)&svalue);
 		key = session_obfuscate(data->session, pool, key);
 
+		DEBUG_MSG("Checking changed path:%s (prefix:%s)\n",key+min(1,strlen(key)),data->session->prefix);
+
 		/* Skip this entry? */
-		if ((strlen(key) < 1) || strncmp(data->session->prefix, key+1, strlen(data->session->prefix))) {
+		/* It needs to be skipped if the key+1 doesn't match the prefix or if it does match and the next character isn't a slash */
+		if ((strlen(key) < 1) || strncmp(data->session->prefix, key+1, prefixlen)
+                || ( strlen(key+1) > prefixlen && (key+1)[prefixlen] != '/') ) {
 			DEBUG_MSG("%c %s [skipped]\n", svalue->action, key);
 			continue;
 		}
@@ -110,7 +115,7 @@ static svn_error_t *log_receiver(void *baton, apr_hash_t *changed_paths, svn_rev
 
 		/* Strip the prefix (or the leading slash) from the path */
 		if (*data->session->prefix != '\0') {
-			key += strlen(data->session->prefix) + 1;
+			key += prefixlen + 1;
 		}
 		if (*key == '/') {
 			key += 1;
