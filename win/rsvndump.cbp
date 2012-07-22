@@ -57,7 +57,7 @@
 			<Add library="..\svn-win32\lib\apr-util\xml.lib" />
 			<Add library="..\svn-win32\lib\neon\libneon.lib" />
 			<Add library="..\svn-win32\lib\neon\zlibstat.lib" />
-			<Add library="..\svn-win32\lib\serf\serf.lib" />
+			<Add library="..\svn-win32\lib\serf\serf-1.lib" />
 			<Add library="..\svn-win32\lib\sasl\libsasl.lib" />
 			<Add library="..\svn-win32\lib\libsvn_client-1.lib" />
 			<Add library="..\svn-win32\lib\libsvn_delta-1.lib" />
