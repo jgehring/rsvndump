@@ -111,12 +111,12 @@ static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 	 * The eos-character is used to force that the sscanf command
 	 * matches the whole string by ignoring it in the count comparison.
 	 */
-	if (sscanf(str, "%4s:%4s%c", tmp1, tmp2, &eos) == 2 && !strcmp(tmp1, head) && !strcmp(tmp2, head)) {
+	if (sscanf(str, "%4s:%4s%c", tmp1, tmp2, &eos) == 2 && !strcasecmp(tmp1, head) && !strcasecmp(tmp2, head)) {
 		*start = -1;
 		*end = -1;
 		return 0;
 	}
-	if (sscanf(str, "%ld:%4s%c", start, tmp1, &eos) == 2 && !strcmp(tmp1, head)) {
+	if (sscanf(str, "%ld:%4s%c", start, tmp1, &eos) == 2 && !strcasecmp(tmp1, head)) {
 		if (*start < 0) {
 			return 1;
 		}
@@ -136,7 +136,7 @@ static char parse_revnum(char *str, svn_revnum_t *start, svn_revnum_t *end)
 		*start = *end - 1;
 		return 0;
 	}
-	if (sscanf(str, "%4s%c", tmp1, &eos) == 1 && !strcmp(tmp1, head)) {
+	if (sscanf(str, "%4s%c", tmp1, &eos) == 1 && !strcasecmp(tmp1, head)) {
 		*start = -1;
 		*end = -1;
 		return 0;
