@@ -285,7 +285,7 @@ property_storage_t *property_storage_create(const char *tmpdir, apr_pool_t *pool
 	}
 #endif
 
-	apr_pool_cleanup_register(store->pool, store, prop_cleanup, NULL);
+	apr_pool_cleanup_register(store->pool, store, prop_cleanup, apr_pool_cleanup_null);
 	return store;
 }
 

@@ -405,7 +405,7 @@ path_repo_t *path_repo_create(const char *tmpdir, apr_pool_t *pool)
 	}
 #endif
 
-	apr_pool_cleanup_register(repo->pool, repo, pr_cleanup, NULL);
+	apr_pool_cleanup_register(repo->pool, repo, pr_cleanup, apr_pool_cleanup_null);
 	return repo;
 }
 
