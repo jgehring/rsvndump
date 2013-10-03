@@ -4,7 +4,7 @@
 #
 
 
-import os, platform, re, shutil, subprocess
+import os, platform, re, shutil, subprocess, sys
 
 import test, cache
 
@@ -343,6 +343,9 @@ def bspatch(id, file, patch):
 	try:
 		run("bspatch", file, tmp, patch, output = test.log(id), error = test.log(id))
 		shutil.move(tmp, file)
+	except OSError:
+		sys.stderr.write("'bspatch' executable missing?\n")
+		raise
 	except:
 		return False
 	return True
