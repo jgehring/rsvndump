@@ -30,6 +30,7 @@ fi
 # Checks for programs.
 AC_PROG_INSTALL
 AC_PROG_CC
+AM_PROG_AR
 AC_PROG_RANLIB
 if test "$USE_MAN" = "yes"; then
 	RSVN_CHECK_MAN_PROGS
