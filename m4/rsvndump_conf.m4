@@ -76,15 +76,9 @@ AC_DEFUN([RSVN_CHECK_MAN_PROGS], [
 	ver_maj=`echo $ver_info | sed 's/^.* \([[0-9]]\)*\.\([[0-9]]\)*\.\([[0-9]]*\).*$/\1/'`
 	ver_min=`echo $ver_info | sed 's/^.* \([[0-9]]\)*\.\([[0-9]]\)*\.\([[0-9]]*\).*$/\2/'`
 	ver_rev=`echo $ver_info | sed 's/^.* \([[0-9]]\)*\.\([[0-9]]\)*\.\([[0-9]]*\).*$/\3/'`
-	prog_version_ok="yes"
-	if test $ver_maj -lt 8; then
-		prog_version_ok="no"
-	fi
-	if test $ver_min -lt 4; then
-		prog_version_ok="no"
-	fi
-	if test $ver_rev -lt 0; then
-		prog_version_ok="no"
+	prog_version_ok=no
+	if test $ver_maj -gt 8 -o \( $ver_maj -eq 8 -a $ver_min -ge 4 \); then
+		prog_version_ok=yes
 	fi
 	if test "$prog_version_ok" !=  "yes"; then
 		AC_MSG_ERROR([Asciidoc >= 8.4 is needed. Please upgrade your installation])
