@@ -73,9 +73,9 @@ AC_DEFUN([RSVN_CHECK_MAN_PROGS], [
 		AC_MSG_ERROR([Asciidoc could not be located in your \$PATH])
 	fi
 	ver_info=`$ASCIIDOC --version`
-	ver_maj=`echo $ver_info | sed 's/^.* \([[0-9]]\+\)\.\([[0-9]]\+\)\.\([[0-9]]\+\).*$/\1/'`
-	ver_min=`echo $ver_info | sed 's/^.* \([[0-9]]\+\)\.\([[0-9]]\+\)\.\([[0-9]]\+\).*$/\2/'`
-	ver_rev=`echo $ver_info | sed 's/^.* \([[0-9]]\+\)\.\([[0-9]]\+\)\.\([[0-9]]\+\).*$/\3/'`
+	ver_maj=`echo $ver_info | sed -E 's/^.* ([[0-9]]+)\.([[0-9]]+)\.([[0-9]]+).*$/\1/'`
+	ver_min=`echo $ver_info | sed -E 's/^.* ([[0-9]]+)\.([[0-9]]+)\.([[0-9]]+).*$/\2/'`
+	ver_rev=`echo $ver_info | sed -E 's/^.* ([[0-9]]+)\.([[0-9]]+)\.([[0-9]]+).*$/\3/'`
 	prog_version_ok=no
 	if test $ver_maj -gt 8 -o \( $ver_maj -eq 8 -a $ver_min -ge 4 \); then
 		prog_version_ok=yes
@@ -91,9 +91,9 @@ AC_DEFUN([RSVN_CHECK_MAN_PROGS], [
 		AC_MSG_ERROR([xmlto could not be located in your \$PATH])
 	fi
 	ver_info=`$XMLTO --version`
-	ver_maj=`echo $ver_info | sed 's/^.* \([[0-9]]\+\)\.\([[0-9]]\+\)\.\([[0-9]]\+\).*$/\1/'`
-	ver_min=`echo $ver_info | sed 's/^.* \([[0-9]]\+\)\.\([[0-9]]\+\)\.\([[0-9]]\+\).*$/\2/'`
-	ver_rev=`echo $ver_info | sed 's/^.* \([[0-9]]\+\)\.\([[0-9]]\+\)\.\([[0-9]]\+\).*$/\3/'`
+	ver_maj=`echo $ver_info | sed -E 's/^.* ([[0-9]]+)\.([[0-9]]+)\.([[0-9]]+).*$/\1/'`
+	ver_min=`echo $ver_info | sed -E 's/^.* ([[0-9]]+)\.([[0-9]]+)\.([[0-9]]+).*$/\2/'`
+	ver_rev=`echo $ver_info | sed -E 's/^.* ([[0-9]]+)\.([[0-9]]+)\.([[0-9]]+).*$/\3/'`
 	prog_version_ok="yes"
 	if test $ver_maj -lt 0; then
 		prog_version_ok="no"
