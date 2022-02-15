@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!DOCTYPE html>
 <html>
   <head>
     <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
@@ -17,12 +17,16 @@
           <td><a href="http://flattr.com/thing/344002/rsvndump">
             <img src="flattrbutton.png" alt="Flattr this" border=0/>
           </a></td>
+          <td>
+            <span style="padding-left:110px"></span>
           </td>
-          <td><a href="http://sourceforge.net/projects/rsvndump">
-            <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=268687&amp;type=16" alt="Get rsvndump at SourceForge.net. Fast, secure and Free Open Source software downloads" border=1  />
-          </a></td>
         </tr></table>
       </div>
+
+      <!-- Github ribbon -->
+      <a href="https://github.com/jgehring/rsvndump">
+        <img style="position: absolute; top: 0px; right: 0px; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png">
+      </a>
 
       <div class="index">
         <ul>
@@ -50,7 +54,7 @@
         contains a <a href="http://subversion.apache.org/docs/release-notes/1.7.html#svnrdump">remote dumpfile tool</a>
         called <i>svnrdump</i>.  While both tools serve the same purpose,
         rsvndump is also able to dump a subdirectory of a repository by
-        resolving copy operation as needed, even without read access to
+        resolving copy operations as needed, even without read access to
         the repository root. Furthermore, rsvndump may work better with
         old Subversion servers (i.e. versions prior to 1.5).
 
@@ -61,6 +65,12 @@
         <hr />
         <a name="news"><h3>News</h3></a>
         <ul>
+          <li><h4>February 15th, 2022</h4>
+          <p>rsvndump 0.6.1 is now <a href="#content">available</a>, fixing a
+          bug where sub-directories which matching prefixes would be included in
+          the dump () and improving the autoconf setup. Many thanks to <a href="https://github.com/hartwork">@hartwork</a>
+          and <a href="https://github.com/wmbaum">@wmbaum</a> for their contributions!</p>
+
           <li><h4>May 14th, 2012</h4>
           <p>rsvndump 0.6 is now <a href="#content">available</a>,
           offering new features and fixing several bugs. The version
@@ -130,22 +140,6 @@
           <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
           is available as a tarball compressed using either gzip or bzip2 as
           well as in zip format.<br /></p></li>
-
-          <li><h4>February 13th, 2011</h4>
-          <p>rsvndump 0.5.4 is now <a href="#content">available</a>. This
-          release mainly fixes dumping with text deltas. In previous versions,
-          the delta didn't work and the full file content would be dumped in
-          svndiff format. Please note that these dumps could be imported just
-          fine and resulted in correct repositories.
-          Additionally, support for the <tt>--config-dir</tt> option of the
-          normal <i>svn</i> command-line client has been added, and a couple
-          of minor issues have been fixed. The build instructions for Windows
-          have been updated, too.
-          The full list of changes can be found in the
-          <a href="ChangeLog">ChangeLog</a>. As usual, the source package is
-          is available as a tarball compressed using either gzip or bzip2 as
-          well as in zip format.
-          </p></li>
         </ul>
         <p>Older news items can be found in the <a href="news-archive.html">news archive</a>.</p>
 
@@ -154,9 +148,9 @@
         <ul>
           <li><h4>Downloads:</h4>
             <ul>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.6.tar.gz">rsvndump-0.6.tar.gz</a></b> - Source code distribution</li>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.6.tar.bz2">rsvndump-0.6.tar.bz2</a></b> - Source code distribution</li>
-              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.6.zip">rsvndump-0.6.zip</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.6.1.tar.gz">rsvndump-0.6.1.tar.gz</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.6.1.tar.bz2">rsvndump-0.6.1.tar.bz2</a></b> - Source code distribution</li>
+              <li><b><a href="http://prdownloads.sourceforge.net/rsvndump/rsvndump-0.6.1.zip">rsvndump-0.6.1.zip</a></b> - Source code distribution</li>
               </ul>
             <p>Previous releases can be found on rsvndump's <a href="http://sourceforge.net/projects/rsvndump/files/">file list at SourceForge</a>.</p>
           </li>
@@ -164,12 +158,12 @@
           <li><h4>Distribution packages/ports:</h4>
             <p><b>NOTE</b>: These are not maintained by myself. Thanks go out to the respective packagers!</p>
             <ul>
-              <li><b><a href="http://aur.archlinux.org/packages.php?ID=30032">ArchLinux (AUR)</a></b></li>
-              <li><b><a href="https://admin.fedoraproject.org/pkgdb/acls/name/rsvndump">Fedora</a></b></li>
-              <li><b><a href="http://www.freshports.org/devel/rsvndump/">FreeBSD</a></b></li>
+              <li><b><a href="https://aur.archlinux.org/packages/rsvndump">ArchLinux (AUR)</a></b></li>
+              <li><b><a href="https://packages.fedoraproject.org/pkgs/rsvndump/rsvndump/">Fedora</a></b></li>
+              <li><b><a href="https://www.freshports.org/devel/rsvndump/">FreeBSD</a></b></li>
               <li><b><a href="http://packages.gentoo.org/package/dev-vcs/rsvndump">Gentoo</a></b></li>
-              <li><b><a href="http://maintainers.mandriva.com/viewpkg.php?pkg=15278">Mandriva</a></b></li>
               <li><b><a href="http://download.opensuse.org/repositories/devel:/tools:/scm:/svn/">openSUSE</a></b></li>
+              <li>... <a href="https://pkgs.org/search/?q=rsvndump">and others</a></li>
             </ul>
           </li>
 
@@ -185,14 +179,12 @@
 
           <li><h4>Hosted:</h4>
             <ul>
-              <li>The <a href="http://github.com/jgehring/rsvndump">Git repository</a> at GitHub</li>
-              <li>The <a href="http://sourceforge.net/projects/rsvndump">project page</a> at SourceForge,
-                including <a href="https://sourceforge.net/projects/rsvndump/forums">forums</a>
-                and a <a href="https://sourceforge.net/tracker/?group_id=268687">bug tracker</a></li>
+              <li>The <a href="http://github.com/jgehring/rsvndump">Git repository</a> with issue tracker at GitHub</li>
+              <li>The <a href="http://sourceforge.net/projects/rsvndump">project page</a> at SourceForge</li>
               <li>The <a href="http://freshmeat.net/projects/rsvndump">project page</a> at Freshmeat</li>
               <li>The <a href="http://ohloh.net/p/rsvndump">project page</a> at Ohloh</li>
               <li>The <a href="http://flattr.com/thing/344002/rsvndump">thing page</a> at Flattr for
-                donations via <a href="http://en.wikipedia.org/wiki/Micro-payment">micro-payment</a></li>
+                micropayment donations</li>
             </ul>
           </li>
         </ul>

@@ -1,3 +1,13 @@
+2022-02-15  --  version 0.6.1
+
+	* When dumping subdirectories, check for full paths (so
+	  that changes to /foobar/ won't included when dumping /foo/
+	  (by William Baum)
+	* Ignore case when checking for "HEAD" revision in argument
+	  parsing (by William Baum)
+	* Fixed asciidoc detection and improved autoconf setup
+	  (by Sebastian Pipping)
+
 2012-05-14  --  version 0.6
 
 	* Rewrote version path storage, now using crit-bits for storing

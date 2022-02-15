@@ -1,5 +1,5 @@
-rsvndump 0.6
-Copyright (C) 2008-2012 by Jonas Gehring
+rsvndump 0.6.1
+Copyright (C) 2008-present by Jonas Gehring
 
 
 ABOUT
@@ -32,7 +32,7 @@ http://rsvndump.sourceforge.net/manpage.html
 
 CREDITS
 =======
-rsvndump 0.6
+rsvndump 0.6.1
 written by Jonas Gehring
 http://rsvndump.sourceforge.net
 
@@ -52,7 +52,7 @@ domain, as is the original implementation by Dan Bernstein.
 LICENSE
 =======
 rsvndump - remote Subversion repository dump
-Copyright (C) 2008-2012 Jonas Gehring
+Copyright (C) 2008-present Jonas Gehring
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

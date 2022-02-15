@@ -40,9 +40,10 @@ cp "${ROOT}/ChangeLog" web/ChangeLog
 asciidoc -a "version=${2}" -a toc -d manpage -o web/manpage.html ${ROOT}/doc/${PROG}.txt 
 
 # Scramble email address
+TF=`mktemp`
 for i in web/*;
 do
-	sed -i 's/jonas\.gehring/$FORENAME\.$SURENAME/g' $i;
+	sed 's/jonas\.gehring/$FORENAME\.$SURENAME/g' "$i" > "$TF" 2>/dev/null && mv "$TF" "$i"
 done
 
 exit 0

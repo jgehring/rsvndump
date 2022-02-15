@@ -1,24 +1,30 @@
 body {
-	margin: 10px 40px 4px 40px;
-	background-color: #EBEBEB;
+  margin: 10px 40px 4px 40px;
+  background-color: #EBEBEB;
 }
 
 h2 {
-	text-align: center;
+  text-align: center;
 }
 
 div.body {
-	padding: 10px;
-	border: 1px solid #000000;
-	background-color: #FFFFFF;
+  padding: 10px;
+  border: 1px solid #000000;
+  background-color: #FFFFFF;
+  position: relative;
 }
 
 div.logos {
-	float: right;
+  float: right;
+}
+
+div.logos table {
+  border-spacing: 0px;
 }
 
 div.logos td {
   padding-left: 20px;
+  padding-top: 0.5em;
 }
 
 div.logos img {
@@ -26,20 +32,24 @@ div.logos img {
 }
 
 div.index {
-	margin: 1px;
-	float: left;
+  margin: 1px;
+  float: left;
 }
 
 div.main {
-	clear: both;
+  clear: both;
+}
+
+div.clear {
+  clear: both;
 }
 
 a {
-	text-decoration: none;
-	font-weight: bold;
+  text-decoration: none;
+  font-weight: bold;
 }
 
 ul {
-	padding-left: 30px;
-	list-style-type: disc;
+  padding-left: 30px;
+  list-style-type: disc;
 }

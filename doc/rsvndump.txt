@@ -201,10 +201,10 @@ SEE ALSO
 
 AUTHOR
 ------
-Written by Jonas Gehring, <\jonas.gehring@boolsoft.org>
+Written by Jonas Gehring, <\jonas@jgehring.net>
 
 
 COPYRIGHT
 ---------
-Copyright (C) 2008-2011 Jonas Gehring <\jonas.gehring@boolsoft.org>.
+Copyright (C) 2008-present Jonas Gehring <\jonas@jgehring.net>.
 Released under the GNU General Public License.

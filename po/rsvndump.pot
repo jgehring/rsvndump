@@ -1,14 +1,14 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Jonas Gerhring
-# This file is distributed under the same license as the PACKAGE package.
+# Copyright (C) YEAR Jonas Gehring
+# This file is distributed under the same license as the rsvndump package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: rsvndump 0.6\n"
-"Report-Msgid-Bugs-To: jonas.gehring@boolsoft.org\n"
-"POT-Creation-Date: 2012-05-14 22:47+0200\n"
+"Project-Id-Version: rsvndump 0.6.1\n"
+"Report-Msgid-Bugs-To: jonas@jgehring.net\n"
+"POT-Creation-Date: 2022-02-15 08:15+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -77,8 +77,8 @@ msgstr ""
 msgid "Preparing tree history... "
 msgstr ""
 
-#: src/dump.c:387 src/dump.c:389 src/dump.c:470 src/dump.c:583 src/log.c:199
-#: src/log.c:261 src/log.c:263
+#: src/dump.c:387 src/dump.c:389 src/dump.c:470 src/dump.c:583 src/log.c:202
+#: src/log.c:264 src/log.c:266
 msgid "done\n"
 msgstr ""
 
@@ -87,7 +87,7 @@ msgstr ""
 msgid "Fetching log for original revision %ld... "
 msgstr ""
 
-#: src/dump.c:465 src/log.c:183 src/log.c:192 src/log.c:254
+#: src/dump.c:465 src/log.c:186 src/log.c:195 src/log.c:257
 msgid "failed\n"
 msgstr ""
 
@@ -135,11 +135,11 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/log.c:146 src/log.c:252 src/log.c:261
+#: src/log.c:149 src/log.c:255 src/log.c:264
 msgid "Fetching logs... "
 msgstr ""
 
-#: src/log.c:181
+#: src/log.c:184
 msgid "Determining start and end revision... "
 msgstr ""
 
