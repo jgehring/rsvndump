@@ -37,6 +37,7 @@ if test "$USE_MAN" = "yes"; then
 fi
 
 AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.19.7])
 
 # Checks for headers
 AC_HEADER_DIRENT
