@@ -1,0 +1,88 @@
+#
+# Copyright (C) 2022-present Sebastian Pipping <sebastian@pipping.org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+name: Build and Test (Linux, Ubuntu 22.04 LTS)
+
+on:
+  pull_request:
+  push:
+  schedule:
+    - cron: '0 16 * * 5'  # Every Friday 4pm
+
+jobs:
+  build:
+    name: Build and Test (Linux, Ubuntu 22.04 LTS)
+    runs-on: ubuntu-22.04
+    steps:
+      - name: 'Install build dependencies'
+        run: |-
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends -V \
+            asciidoc \
+            autoconf \
+            automake \
+            bsdiff \
+            build-essential \
+            gettext \
+            libapr1-dev \
+            libaprutil1-dev \
+            libsvn-dev \
+            python2 \
+            xmlto
+
+      - name: 'Checkout Git branch'
+        uses: actions/checkout@v2
+
+      - name: 'Bootstrap'
+        run: |-
+          ./autogen.sh
+
+      - name: 'Configure #1'
+        run: |-
+          ./configure --enable-man
+
+      - name: 'Create release archive'
+        run: |-
+          make dist
+
+      - name: 'Configure #2'
+        run: |-
+          tar xf rsvndump-*.tar.gz
+          mkdir build
+          cd build
+          ../rsvndump-*/configure --enable-debug --enable-man
+
+      - name: 'Build'
+        run: |-
+          set -x
+          make -C build -j$(nproc)
+
+      - name: 'Install'
+        run: |-
+          set -x -o pipefail
+          make -C build DESTDIR="${PWD}"/ROOT install
+          find ROOT | sort | xargs ls -ld
+
+      - name: 'Run the test suite'
+        run: |-
+          ln -s ../build/src/rsvndump src/rsvndump  # make test runner happy
+          cd tests/db
+          set -x
+          ./tdb.py all
+          ./tdb.py all --verbose
+          ./tdb.py all --deltas
+          ./tdb.py all --deltas --keep-revnums
+          ./tdb.py all --keep-revnums
