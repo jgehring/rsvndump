@@ -6,7 +6,7 @@ AM_INIT_AUTOMAKE()
 AC_PREFIX_DEFAULT([/usr/local])
 test $prefix = NONE && prefix=/usr/local
 
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_LIBOBJ_DIR([lib])
 
 sinclude(m4/find_apr.m4)
