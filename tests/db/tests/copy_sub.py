@@ -68,8 +68,8 @@ def run(id, args = []):
 	tmp = test_api.mktemp(id)
 	o = open(tmp, "wb")
 	cnt = -1
-	for line in open(rdump_path):
-		if line == "svn:date\n":
+	for line in open(rdump_path, "rb"):
+		if line == b"svn:date\n":
 			cnt = 2
 		elif cnt > 0:
 			cnt -= 1
