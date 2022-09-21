@@ -69,10 +69,10 @@ def run(id, args = []):
 	# We need to strip the date property from the dumpfile generated
 	# by rsvndump in order to validate it properly
 	tmp = test_api.mktemp(id)
-	o = open(tmp, "w")
+	o = open(tmp, "wb")
 	cnt = -1
-	for line in open(rdump_path):
-		if line == "svn:date\n":
+	for line in open(rdump_path, "rb"):
+		if line == b"svn:date\n":
 			cnt = 2
 		elif cnt > 0:
 			cnt -= 1
