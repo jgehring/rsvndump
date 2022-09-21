@@ -17,7 +17,7 @@ def setup(step, log):
 	if step == 0:
 		os.mkdir("dir1")
 		f = open("dir1/file1","wb")
-		print >>f, "hello1"
+		f.write(b"hello1\n")
 		test_api.run("svn", "add", "dir1", output = log)
 		return True
 	elif step == 1:
@@ -38,7 +38,7 @@ def setup(step, log):
 		os.mkdir("dir3")
 		os.mkdir("dir3/subdir")
 		f = open("dir3/subdir/file1","wb")
-		print >>f, "hello1"
+		f.write(b"hello1\n")
 		test_api.run("svn", "add", "dir3", output = log)
 		test_api.run("svn", "propset", "svn:externals", "ext/subversion    http://svn.collab.net/repos/svn/trunk/", "dir3", output = log)
 		return True
@@ -51,7 +51,7 @@ def setup(step, log):
 		return True
 	elif step == 7:
 		f = open("dir1/file1","wb")
-		print >>f, "hello2"
+		f.write(b"hello2\n")
 		test_api.run("svn", "propset", "svn:eol-style", "LF", "dir1/file1", output = log)
 		return True
 	elif step == 8:

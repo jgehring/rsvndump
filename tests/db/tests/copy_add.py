@@ -17,17 +17,17 @@ def setup(step,log):
 		os.mkdir("a/dir1")
 		os.mkdir("a/dir2")
 		f = open("a/dir1/file1","wb")
-		print >>f, "file1"
+		f.write(b"file1\n")
 		f = open("a/dir1/file2","wb")
-		print >>f, "file2"
+		f.write(b"file2\n")
 		f = open("a/dir2/file3","wb")
-		print >>f, "file3"
+		f.write(b"file3\n")
 		test_api.run("svn", "add", "a", output = log)
 		return True
 	elif step == 1:
 		test_api.run("svn", "cp", "a", "b", output=log)
 		f = open("b/dir2/file4","wb")
-		print >>f, "file4"
+		f.write(b"file4\n")
 		test_api.run("svn", "add", "b/dir2/file4", output = log)
 		return True
 	else:

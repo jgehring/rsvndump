@@ -21,7 +21,7 @@ def setup(step, log):
 		wc_dir = os.path.split(os.getcwd())[1]+"/";
 		os.chdir("..");
 		f = open(wc_dir+"file1", "wb")
-		print >>f, "This is the original text"
+		f.write(b"This is the original text\n")
 		test_api.run("svn", "add", wc_dir+"file1", output = log)
 		return True
 	elif step == 1:
@@ -32,7 +32,7 @@ def setup(step, log):
 		os.chdir("..")
 		test_api.run("svn", "cp", wc_dir+"file1", wc_dir+"file3", output=log)
 		f = open(wc_dir+"file3", "wb")
-		print >>f, "This is the modified text"
+		f.write(b"This is the modified text\n")
 		return True
 	else:
 		return False

@@ -69,7 +69,7 @@ def insert(id, name, repos, wc, setup_fn, log):
 	m.update(f.read())
 	f.close()
 	f = open(cache_dir+"/"+name+".sha", "w")
-	print >>f, m.hexdigest(),
+	print(m.hexdigest(), end=' ', file=f)
 	f.close()
 
 
