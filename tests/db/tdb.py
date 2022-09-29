@@ -38,6 +38,7 @@ def print_help(cmd = None):
 
 # Runs a series of tests
 def runtests(tests, args):
+	ret = 0
 	for t in tests:
 		tid = test.id(t)
 		if not tid:
@@ -48,11 +49,11 @@ def runtests(tests, args):
 				print("OK     : "+test.info(t)+" ["+tid+"]");
 			else:
 				print("FAIL   : "+test.info(t)+" ["+tid+"]");
+				ret = 1
 		except:
 			print("EXCEPTION while running test with ID: "+tid);
 			raise
-			return 1
-	return 0
+	return ret
 
 
 # Program entry point
