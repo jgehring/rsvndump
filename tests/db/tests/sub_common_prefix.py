@@ -22,32 +22,32 @@ def setup(step, log):
 		os.mkdir("foobar/sdir1")
 
 		f = open("foo/file1","wb")
-		print >>f, "hello1"
+		f.write(b"hello1\n")
 		f = open("foo/sdir1/file1","wb")
-		print >>f, "hello2"
+		f.write(b"hello2\n")
 		f = open("foo/sdir2/file1","wb")
-		print >>f, "hello3"
+		f.write(b"hello3\n")
 		f = open("foobar/file1","wb")
-		print >>f, "hello bar"
+		f.write(b"hello bar\n")
 		f = open("foobar/sdir1/file1","wb")
-		print >>f, "hello bar sub"
+		f.write(b"hello bar sub\n")
 		test_api.run("svn", "add", "foo", output = log)
 		test_api.run("svn", "add", "foobar", output = log)
 		return True
 	elif step == 1:
 		f = open("foobar/file2","wb")
-		print >>f, "hello4"
+		f.write(b"hello4\n")
 		test_api.run("svn", "add", "foobar/file2", output = log)
 		return True
 	elif step == 2:
 		test_api.run("svn", "rm", "foobar/sdir1", output = log)
 		f = open("foo/file2","wb")
-		print >>f, "hello5"
+		f.write(b"hello5\n")
 		test_api.run("svn", "add", "foo/file2", output = log)
 		return True
 	elif step == 3:
 		f = open("foo/file3","wb")
-		print >>f, "hello5"
+		f.write(b"hello5\n")
 		test_api.run("svn", "add", "foo/file3", output = log)
 		return True
 	elif step == 4:

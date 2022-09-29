@@ -41,7 +41,7 @@ jobs:
             libapr1-dev \
             libaprutil1-dev \
             libsvn-dev \
-            python2 \
+            python3 \
             xmlto
 
       - name: 'Checkout Git branch'

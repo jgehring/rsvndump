@@ -65,11 +65,11 @@ def insert(id, name, repos, wc, setup_fn, log):
 
 	# Save the module's sha-1 sum
 	m = hashlib.sha224()
-	f = open(test.path(id), "r")
+	f = open(test.path(id), "rb")
 	m.update(f.read())
 	f.close()
 	f = open(cache_dir+"/"+name+".sha", "w")
-	print >>f, m.hexdigest(),
+	print(m.hexdigest(), end=' ', file=f)
 	f.close()
 
 

@@ -21,30 +21,30 @@ def setup(step, log):
 	elif step == 1:
 		os.makedirs("dir/dir1/subdir")
 		f = open("dir/dir1/file1", "wb")
-		print >>f, "bli"
+		f.write(b"bli\n")
 		f = open("dir/dir1/file2", "wb")
-		print >>f, "bla"
+		f.write(b"bla\n")
 		f = open("dir/dir1/subdir/file3", "wb")
-		print >>f, "blubb"
+		f.write(b"blubb\n")
 		f = open("dir/dir1/subdir/file4", "wb")
-		print >>f, "blubb 2"
+		f.write(b"blubb 2\n")
 		f = open("dir/dir1/subdir/file5", "wb")
-		print >>f, "blubb"
+		f.write(b"blubb\n")
 		f = open("dir/dir1/subdir/file6", "wb")
-		print >>f, "blubb 2"
+		f.write(b"blubb 2\n")
 		test_api.run("svn", "add", "dir/dir1", output = log)
 		return True
 	elif step == 2:
 		f = open("dir/dir1/subdir/file6", "wb")
-		print >>f, "fixed"
+		f.write(b"fixed\n")
 		return True
 	elif step == 3:
 		f = open("dir/dir2/file7", "wb")
-		print >>f, "schibu"
+		f.write(b"schibu\n")
 		f = open("dir/dir2/file8", "wb")
-		print >>f, "dubi"
+		f.write(b"dubi\n")
 		f = open("dir/dir2/file9", "wb")
-		print >>f, "du"
+		f.write(b"du\n")
 		test_api.run("svn", "add", "dir/dir2/file7", "dir/dir2/file8", "dir/dir2/file9", output = log)
 		return True
 	elif step == 4:
@@ -53,16 +53,16 @@ def setup(step, log):
 		return True
 	elif step == 5:
 		f = open("dir/dir2/Printer.java", "wb")
-		print >>f, "juhu"
+		f.write(b"juhu\n")
 		test_api.run("svn", "add", "dir/dir2/Printer.java", output = log)
 		return True
 	elif step == 6:
 		f = open("dir/dir2/file7", "wb")
-		print >>f, "yippie"
+		f.write(b"yippie\n")
 		return True
 	elif step == 7:
 		f = open("dir/dir2/file7", "wb")
-		print >>f, "yeah"
+		f.write(b"yeah\n")
 		return True
 	elif step == 8:
 		test_api.run("svn", "up", output = log)
@@ -70,9 +70,9 @@ def setup(step, log):
 		test_api.run("svn", "rm", "dir/dir1_new/file1", output = log)
 		test_api.run("svn", "rm", "dir/dir1_new/file2", output = log)
 		f = open("dir/dir1_new/file12.java", "wb")
-		print >>f, "some"
+		f.write(b"some\n")
 		f = open("dir/dir1_new/file13.java", "wb")
-		print >>f, "content"
+		f.write(b"content\n")
 		test_api.run("svn", "add", "dir/dir1_new/file12.java", "dir/dir1_new/file13.java", output = log)
 #		test_api.run("svn", "rm", "dir2/subdir/file5", output = log)
 #		test_api.run("svn", "rm", "dir2/subdir/file6", output = log)

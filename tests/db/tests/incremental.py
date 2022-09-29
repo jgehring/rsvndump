@@ -17,8 +17,8 @@ def setup(step, log):
 	if step == 0:
 		os.mkdir("dir1")
 		f = open("dir1/file1", "wb")
-		print >>f, "hello1"
-		print >>f, "hello2"
+		f.write(b"hello1\n")
+		f.write(b"hello2\n")
 		test_api.run("svn", "add", "dir1", output = log)
 		return True
 	elif step == 1:
@@ -26,7 +26,7 @@ def setup(step, log):
 		return True
 	elif step == 2:
 		f = open("dir1/file2", "wb")
-		print >>f, "hello3"
+		f.write(b"hello3\n")
 		test_api.run("svn", "add", "dir1/file2", output = log)
 		return True
 	elif step == 3:
@@ -34,21 +34,21 @@ def setup(step, log):
 		return True
 	elif step == 4:
 		f = open("dir2/file2", "ab")
-		print >>f, "hello4"
+		f.write(b"hello4\n")
 		return True
 	elif step == 5:
 		os.mkdir("dir2/sdir1")
 		f = open("dir2/sdir1/file1", "wb")
-		print >>f, "hello5"
+		f.write(b"hello5\n")
 		f = open("dir1/file1", "wb")
-		print >>f, "hello6"
+		f.write(b"hello6\n")
 		test_api.run("svn", "add", "dir2/sdir1", output = log)
 		return True
 	elif step == 6:
 		f = open("dir2/sdir1/file1", "wb")
-		print >>f, "hello7"
+		f.write(b"hello7\n")
 		f = open("dir2/sdir1/file2", "wb")
-		print >>f, "hello8"
+		f.write(b"hello8\n")
 		test_api.run("svn", "add", "dir2/sdir1/file2", output = log)
 		return True
 	else:

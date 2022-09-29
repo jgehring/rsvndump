@@ -66,7 +66,7 @@ def name(id):
 def log(id, msg):
 	logfile = test.log(id)
 	f = open(logfile, "a+")
-	print >>f, msg
+	print(msg, file=f)
 	f.close()
 
 
