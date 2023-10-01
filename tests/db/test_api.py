@@ -81,13 +81,13 @@ def setup_repos(id, setup_fn):
 
 
 # Dumps the repository using svnadmin and returns the dumpfile path
-def dump_original(id, repos = None):
+def dump_original(id, args = [], repos = None):
 	log(id, "\n*** dump_original ("+str(id)+")\n")
 
 	if not repos:
 		repos = test.repo(id)
 	dump = test.dumps(id)+"/original.dump"
-	run("svnadmin", "dump", repos, output = dump, error = test.log(id))
+	run("svnadmin", "dump", *args, repos, output = dump, error = test.log(id))
 	return dump
 
 
@@ -189,7 +189,7 @@ def repos_load(id, dumpfile):
 	run("svnadmin", "create", tmp, output = test.log(id))
 	run("svnadmin", "load", tmp, input = dumpfile, output = test.log(id))
 
-	return tmp 
+	return tmp
 
 
 # Loads the specified dumpfile into a temporary repository and dumps it
@@ -223,7 +223,7 @@ def dump_reload_rsvndump(id, dumpfile, args):
 
 
 # Loads the specified dumpfile into a temporary repository and dumps a
-# given subdirectory of it using rsvndump 
+# given subdirectory of it using rsvndump
 def dump_reload_rsvndump_sub(id, dumpfile, path, args):
 	log(id, "\n*** dump_reload ("+str(id)+")\n")
 

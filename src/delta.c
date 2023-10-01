@@ -1323,6 +1323,8 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 	de_baton_t *de_baton = (de_baton_t *)edit_baton;
 	apr_hash_index_t *hi;
 	svn_error_t *err;
+	dump_options_t *opts = de_baton->opts;
+	log_revision_t *log_revision = de_baton->log_revision;
 
 	/* Recursively dump all nodes touched by this revision */
 	if ((err = delta_dump_node_recursive((de_node_baton_t *)de_baton->root_node))) {
@@ -1380,6 +1382,16 @@ static svn_error_t *de_close_edit(void *edit_baton, apr_pool_t *pool)
 				}
 
 				parent = svn_path_dirname(parent, pool);
+			}
+
+			if (!skip && opts->start > 1 && log_revision->revision == opts->start) {
+				/*
+				 * When performing a dump not starting at initial revision and the first dumped
+				 * revision contains a delete operation on a path added in an ancestor revision,
+				 * ensure to not insert a delete node in the dump file as no corresponding add
+				 * node was inserted for it.
+				 */
+				skip = !path_repo_exists(de_baton->path_repo, path, de_baton->local_revnum, pool);
 			}
 
 			if (!skip) {
@@ -1516,7 +1528,7 @@ void delta_setup_editor(delta_editor_info_t *info, log_revision_t *log_revision,
 
 		md5_hash = rhash_make(hash_pool);
 		delta_hash = rhash_make(hash_pool);
-		
+
 		hashes_created = 1;
 	}
 }
