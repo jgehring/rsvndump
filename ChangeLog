@@ -1,3 +1,10 @@
+2023-10-01  --  version 0.6.2
+
+	* Fix edge-case where delete actions are issued for non-existent paths,
+	  causing unloadable dumps (by Antoine Lambert)
+	* Testing framework updated to Python 3
+	  (by Sebastian Pipping)
+
 2022-02-15  --  version 0.6.1
 
 	* When dumping subdirectories, check for full paths (so
