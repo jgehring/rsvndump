@@ -45,7 +45,7 @@ jobs:
             xmlto
 
       - name: 'Checkout Git branch'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 'Bootstrap'
         run: |-
